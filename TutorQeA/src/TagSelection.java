@@ -14,6 +14,8 @@ public class TagSelection extends PApplet{
 		noStroke();
 		frameRate(30);
 
+		
+		
 	}
 
 	public void draw() {

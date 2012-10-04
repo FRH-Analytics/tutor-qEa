@@ -7,6 +7,7 @@ import processing.core.PFont;
 // Version 1.2, 18th July, 2009. 
 // Author Jo Wood. 
 
+
 public class ASketch extends EmbeddedSketch {
 
 	// ----------------------- Object variables -------------------------
