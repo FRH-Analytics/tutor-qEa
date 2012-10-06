@@ -9,7 +9,7 @@ import processing.core.PApplet;
 import processing.core.PFont;
 import au.com.bytecode.opencsv.CSVReader;
 
-public class TagSelection extends PApplet {
+public class Sketch2 extends PApplet {
 
 	private static final long serialVersionUID = 1L;
 
