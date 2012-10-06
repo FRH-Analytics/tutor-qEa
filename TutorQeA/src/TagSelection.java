@@ -13,7 +13,7 @@ public class TagSelection extends PApplet {
 
 	private static final long serialVersionUID = 1L;
 
-	BarChart barChart;
+	BarChart barChart; 
 	float[] values = { 76, 24, 39, 18, 20 };
 	ColourTable barColours = ColourTable.getPresetColourTable(ColourTable.PAIRED_12);
 
