@@ -1,11 +1,8 @@
-library(foreach)
-library(doMC)
-
 ############# FUNCTIONS #############
-FakeQuestionFeatures = function(){
+FakequestionFeatures = function(questionsFile, questionFeaturesFile){
     
     # Reading the Questions database
-    questions = read.csv("../TutorQeA/data/Questions.csv")
+    questions = read.csv(questionsFile)
     questionIds = questions$Id
     rm(questions)
     
@@ -18,7 +15,7 @@ FakeQuestionFeatures = function(){
                         "WeigthedScore", "FirstAnswerTimeDelay", "AcceptedAnswerTimeDelay", "LastAnswerTimeDelay", 
                         "FirstAnswerScore", "AcceptedAnswerScore", "LastAnswerScore", "MaxScore", 
                         "AcceptedAnswerBodyWordsNumber", "MaxBodyWordsNumber", "AnswersWithCode", "AnswersWithImages",
-                        "AnswersWithLinks", "AcceptedAnswerCommentsNumber", "CommentsNumberMedian", "AnswersWithComments", 
+                        "AnswersWithLinks", "AcceptedAnswerCommentsNumber", "CommentsNumberMedian",
                         "CommunityAndUserAnswersRatio", "QuestionCommentsScoreAverage", "MaxQuestionCommentsScore",
                         "QuestionComnentWordsNumber", "FirstCommentAge", "LastCommentAge", "AskerQuestionComments", 
                         "HasCommentAfterAnswer", "TotalAnswerComments", "AnswersWithComments", "MaxCommentsScore", 
@@ -31,20 +28,36 @@ FakeQuestionFeatures = function(){
     print(noquote("Generating random feature values for all questions..."))
     newFeatures = foreach(i = questionIds, .combine = rbind) %dopar%
 {
-    c(i, round(runif(colNum - 2, min=0, max = 100), digits = 1), sample(1:8, size = 1))
+    c(i, 
+      round(rnorm(colNum - 2, mean=200, sd = 150) + i, digits = 1), 
+      (round(rpois(1, 100), 0) %% 8)+1)
 }
     
-    QuestionFeatures = as.data.frame(newFeatures)
-    colnames(QuestionFeatures) = c("Id", defaultFeatures, derivedFeatures, clusteringApproaches)
+    questionFeatures = as.data.frame(newFeatures)
+    colnames(questionFeatures) = c("Id", defaultFeatures, derivedFeatures, clusteringApproaches)
     
     # Persisting the data
-    print(noquote("Persisting the QuestionFeatures data..."))
-    write.csv(QuestionFeatures, file = "../TutorQeA/data/QuestionFeatures.csv", row.names = F)
+    print(noquote("Persisting the questionFeatures data..."))
+    write.csv(questionFeatures, file = questionFeaturesFile, row.names = F)
 }
+
+# Calculate the Cluster Centroids (DEPRECATED, it is being calculated with JAVA!)
+# ClusterCentroids = function(questionFeaturesFile, clusterCentroidsFile){
+#     # Reading the QuestionFeatures
+#     print(noquote("Reading the QuestionFeatures data..."))
+#     questionFeatures = read.csv(questionFeaturesFile)
+#     
+#     print(noquote("Calculating the mean of the instances per group..."))
+#     clusterCentroids = ddply(questionFeatures, .(Cluster), colMeans)
+#     clusterCentroids = clusterCentroids[,-1]
+#     
+#     # Persisting the data
+#     print(noquote("Persisting the ClusterCentroids data..."))
+#     write.csv(clusterCentroids, file = clusterCentroidsFile, row.names = F)
+# }
 
 # Remove useless attributes from the Questions table
 QuestionsClean = function(){
-    
     questions = read.csv("../TutorQeA/data/Questions.csv")
     
     questions = questions[,c("Id", "AcceptedAnswerId", "CreationDate", "Score", "ViewCount", 
@@ -58,9 +71,13 @@ QuestionsClean = function(){
 
 
 ############# MAIN #############
+library(foreach)
+library(plyr)
+library(doMC)
+
 # Register the Cores of the Machine (runs only in Unix)
 registerDoMC()
 
-# FakeQuestionFeatures()
+FakequestionFeatures("../TutorQeA/data/Questions.csv", "../TutorQeA/data/QuestionFeatures.csv")
 # QuestionsClean()
-
+ClusterCentroids("../TutorQeA/data/QuestionFeatures.csv", "../TutorQeA/data/ClusterCentroids.csv")
