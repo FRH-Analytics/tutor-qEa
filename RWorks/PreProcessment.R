@@ -1,5 +1,5 @@
 ############# FUNCTIONS #############
-FakequestionFeatures = function(questionsFile, questionFeaturesFile){
+CreateFakeQuestionFeatures = function(questionsFile, questionFeaturesFile){
     
     # Reading the Questions database
     questions = read.csv(questionsFile)
@@ -41,34 +41,87 @@ FakequestionFeatures = function(questionsFile, questionFeaturesFile){
     write.csv(questionFeatures, file = questionFeaturesFile, row.names = F)
 }
 
-# Calculate the Cluster Centroids (DEPRECATED, it is being calculated with JAVA!)
-# ClusterCentroids = function(questionFeaturesFile, clusterCentroidsFile){
-#     # Reading the QuestionFeatures
-#     print(noquote("Reading the QuestionFeatures data..."))
-#     questionFeatures = read.csv(questionFeaturesFile)
-#     
-#     print(noquote("Calculating the mean of the instances per group..."))
-#     clusterCentroids = ddply(questionFeatures, .(Cluster), colMeans)
-#     clusterCentroids = clusterCentroids[,-1]
-#     
-#     # Persisting the data
-#     print(noquote("Persisting the ClusterCentroids data..."))
-#     write.csv(clusterCentroids, file = clusterCentroidsFile, row.names = F)
-# }
-
-# Remove useless attributes from the Questions table
-QuestionsClean = function(){
+# Remove useless attributes from the Questions and Answers table
+RemoveUnusedCollumns = function(){
     questions = read.csv("../TutorQeA/data/Questions.csv")
+    answers = read.csv("../TutorQeA/data/Answers.csv")
     
     questions = questions[,c("Id", "AcceptedAnswerId", "CreationDate", "Score", "ViewCount", 
                              "Body", "OwnerUserId", "OwnerDisplayName", "LastActivityDate", 
                              "Title", "Tags", "AnswerCount", "CommentCount", "FavoriteCount", 
                              "CommunityOwnedDate")]
+    answers = answers[,c("Id", "ParentId", "CreationDate", "Score", "Body", "OwnerUserId", 
+                         "OwnerDisplayName", "CommunityOwnedDate")]
     
-    write.csv(questions, file = "../TutorQeA/data/Questions.csv", row.names = F)    
+    write.csv(questions, file = "../TutorQeA/data/Questions.csv", row.names = F)      
+    write.csv(answers, file = "../TutorQeA/data/Answers.csv", row.names = F)
+}
+    
+CheckForeignKeysBetweenTables = function(){
+    qIds = read.csv("../TutorQeA/data/Questions.csv")$Id
+    
+    # Answers.ParentId %in% Questions.Id
+    print(noquote("Checking: Answers.ParentId %in% Questions.Id"))
+    answers = read.csv("../TutorQeA/data/Answers.csv")
+    answers = answers[answers$ParentId %in% qIds,] # 0 rows deleted...
+    write.csv(answers, file = "../TutorQeA/data/Answers.csv", row.names = F)
+    rm(answers)
+    
+    # PostTags.PostId %in% Questions.Id
+    print(noquote("Checking: PostTags.PostId %in% Questions.Id"))
+    postTags = read.csv("../TutorQeA/data/PostTags.csv")
+    postTags = postTags[postTags$PostId %in% qIds,] # 19 rows deleted!
+    write.csv(postTags, file = "../TutorQeA/data/PostTags.csv", row.names = F)
+    rm(postTags)
+    
+    # Comment-Questions.PostId %in% Questions.Id
+    print(noquote("Checking: Comment-Questions.PostId %in% Questions.Id"))
+    commentQ = read.csv("../TutorQeA/data/Comments-Questions.csv")
+    commentQ = commentQ[commentQ$PostId %in% qIds,] # 0 rows deleted...
+    write.csv(commentQ, file = "../TutorQeA/data/Comments-Questions.csv", row.names = F)
+    rm(commentQ)
+    
+    # Comment-Answers.PostId %in% Answers.Id
+    print(noquote("Checking: Comment-Answers.PostId %in% Answers.Id"))
+    commentA = read.csv("../TutorQeA/data/Comments-Answers.csv")
+    aIds = read.csv("../TutorQeA/data/Answers.csv")$Id
+    commentA = commentA[commentA$PostId %in% aIds,] # 0 rows deleted...
+    write.csv(commentA, file = "../TutorQeA/data/Comments-Answers.csv", row.names = F)
+    rm(commentA, aIds)
     
 }
 
+CreateTagLinks = function(){
+
+    print(noquote("Creating TagLinks Table..."))
+    
+    postTags = read.csv("../TutorQeA/data/PostTags.csv")
+    
+    # Aggregate by Tag
+    tagQuestionsList = dlply(postTags, .(TagId), function(x) list(Tag = x$TagId[1], 
+                                                                    Questions = x$PostId))
+    
+    # Loop over each Tag and QuestionList 
+    tagLinks = foreach(tagQuest = tagQuestionsList, .combine = rbind) %dopar%
+    {
+        # Get the PostTags that are not from this Tag and that contains Questions in common
+        relatedPostTags = postTags[postTags$TagId != tagQuest[[1]] & 
+                                   postTags$PostId %in% tagQuest[[2]],]
+        if (nrow(relatedPostTags) > 0){
+            # Count the Weight of the Tag Links
+            linkedTags = count(relatedPostTags, .(TagId))
+            # Organize the output data.frame
+            linkedTags$TagIdOne = tagQuest[[1]]
+            colnames(linkedTags) = c("TagIdTwo", "Weight", "TagIdOne")
+            linkedTags = linkedTags[,c("TagIdOne", "TagIdTwo", "Weight")]
+            linkedTags
+        }else{
+            NULL
+        }
+    }
+    
+    write.csv(tagLinks, file = "../TutorQeA/data/TagLinks2.csv", row.names = F)
+}
 
 ############# MAIN #############
 library(foreach)
@@ -78,6 +131,7 @@ library(doMC)
 # Register the Cores of the Machine (runs only in Unix)
 registerDoMC()
 
-FakequestionFeatures("../TutorQeA/data/Questions.csv", "../TutorQeA/data/QuestionFeatures.csv")
-# QuestionsClean()
-ClusterCentroids("../TutorQeA/data/QuestionFeatures.csv", "../TutorQeA/data/ClusterCentroids.csv")
+RemoveUnusedCollumns()
+CheckForeignKeysBetweenTables()
+CreateTagLinks()
+CreateFakeQuestionFeatures("../TutorQeA/data/Questions.csv", "../TutorQeA/data/QuestionFeatures.csv")
