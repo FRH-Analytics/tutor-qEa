@@ -27,9 +27,14 @@ public class Sketch2 extends PApplet {
 	int legendYOrigin;
 	int legendWidth;
 	int legendHeight;
+	int legendPadding;
+	int ellipseWidth;
+	int ellipseHeight;
 
 	int defaultFontSize;
 	int defaultFontColor;
+
+	int maxClusterNumber;
 
 	/**
 	 * Initialises the sketch, loads data into the chart and customises its
@@ -64,6 +69,13 @@ public class Sketch2 extends PApplet {
 		legendWidth = 100;
 		legendHeight = 240;
 
+		legendPadding = 8;
+		ellipseWidth = 15;
+		ellipseHeight = ellipseWidth;
+
+		// Cluster fields
+		maxClusterNumber = 8;
+
 		// Read files with the Important DATA (raw file path)
 		try {
 			// TODO: Change these file paths to a file (outside from the git
@@ -79,13 +91,13 @@ public class Sketch2 extends PApplet {
 		ArrayList<Integer> tagList = new ArrayList<Integer>();
 		tagList.add(41);
 		tagList.add(111);
-		// tagList.add(264);
+		tagList.add(264);
 		// tagList.add(294);
 		// tagList.add(528);
 		ArrayList<String> tagNameList = new ArrayList<String>();
 		tagNameList.add("r");
 		tagNameList.add("regression");
-		// tagNameList.add("logistic-regression");
+		tagNameList.add("logistic-regression");
 		// tagNameList.add("roc");
 		// tagNameList.add("hmm");
 		QeAData.setTagList(tagList, tagNameList);
@@ -108,12 +120,13 @@ public class Sketch2 extends PApplet {
 
 		// TODO: enable the noLoop() before deploy the application. This noLoop
 		// will improve the app performance.
-		// noLoop();
+		noLoop();
 	}
 
 	public void mousePressed() {
 		if (mouseButton == LEFT) {
-			mouseOverCluster();
+			// TODO: call the Sketch 3 event!
+			getLegendClusterSelected(mouseX, mouseY);
 		}
 	}
 
@@ -123,54 +136,47 @@ public class Sketch2 extends PApplet {
 		rect(legendXOrigin, legendYOrigin, legendWidth, legendHeight, 4, 4, 4,
 				4);
 
-		int legendPadding = 8;
-		int ellipseWidth = 15;
-		int ellipseHeight = ellipseWidth;
-
 		int clusterIndex;
 		int clusterNum = ChartData.getArrayDataIndex().length;
-
+		int legendPartitionSize = legendHeight / maxClusterNumber;
 		ellipseMode(CORNER);
 
 		for (int i = 0; i < clusterNum; i++) {
 			clusterIndex = Math.round(ChartData.getArrayDataIndex()[i]);
 
-			fill(0);
+			fill(ChartData.RGBA_COLOURS[i][0], ChartData.RGBA_COLOURS[i][1],
+					ChartData.RGBA_COLOURS[i][2], ChartData.RGBA_COLOURS[i][3]);
 			ellipse(legendXOrigin + legendPadding, legendYOrigin
-					+ legendPadding + (legendHeight / clusterNum) * i,
-					ellipseWidth, ellipseHeight);
+					+ legendPadding
+					+ (legendHeight / 2 - clusterNum / 2 * legendPartitionSize)
+					+ legendPartitionSize * i, ellipseWidth, ellipseHeight);
 
 			fill(defaultFontColor);
 			text("Cluster " + clusterIndex, legendXOrigin + ellipseWidth + 2
 					* legendPadding, legendYOrigin + legendPadding
-					+ defaultFontSize + (legendHeight / clusterNum) * i);
+					+ (legendHeight / 2 - clusterNum / 2 * legendPartitionSize)
+					+ defaultFontSize + legendPartitionSize * i);
 		}
 	}
 
-	private boolean mouseOverCluster() {
-		PVector mouse = new PVector(mouseX, mouseY);
-		PVector chartPoint = xyChart.getScreenToData(mouse);
+	private int getLegendClusterSelected(int x, int y) {
+		int clusterNum = ChartData.getArrayDataIndex().length;
+		int legendPartitionSize = legendHeight / maxClusterNumber;
 
-		if (chartPoint != null) {
-			// int clusterRadius = 80;
+		int clusterIndex = -1;
+		int xInside = x - (legendXOrigin + legendPadding);
+		int yInside = y
+				- (legendYOrigin + legendPadding + (legendHeight / 2 - clusterNum
+						/ 2 * legendPartitionSize));
 
-			System.out.println(chartPoint);
-			System.out.println();
-			System.out.println(ChartData.getPoints().get(1));
-			System.out.println(ChartData.getSizeArray()[1]);
-			// System.out.println(ChartData.getMaxSize());
-			System.out.println(chartPoint.dist(ChartData.getPoints().get(1)));
-			System.out.println();
-			System.out.println();
-			// for (PVector clusterPoint : ChartData.getPoints()) {
-			// System.out.println(clusterPoint);
-			// }
-			// PVector clusterPoint = xyChart.getDataToScreen(chartPoint);
-			// System.out.println(clusterPoint);
-			// System.out.println();
-			return (true);
+		if (xInside > 0 && yInside > 0
+				&& yInside <= (clusterNum * legendPartitionSize)) {
+			clusterIndex = (int) Math.ceil(yInside
+					/ (double) legendPartitionSize);
 		}
-		return (false);
+
+		return (clusterIndex);
+
 	}
 
 	private void resetChartData() {
@@ -198,7 +204,14 @@ public class Sketch2 extends PApplet {
 			xyChart.setPointSize(ChartData.getSizeArray(), xyChartMaxPointSize);
 			// 12 different colors
 			xyChart.setPointColour(ChartData.getArrayDataIndex(),
-					ColourTable.getPresetColourTable(ColourTable.SET3_12));
+					ChartData.getColourTable());
+
+			// System.out.println(ChartData.getColourTable());
+			// System.out.println();
+			// System.out.println(ChartData.getColourTable().findColour(1));
+			// System.out.println();
+			// System.out.println(new ColourRule(1, ChartData.getColourTable()
+			// .findColour(1)));
 
 			// Draw a title and a subtitle over the top of the chart.
 			// Subtitle with the tag names
@@ -482,6 +495,15 @@ class QuestionData {
 class ChartData {
 	private static ArrayList<PVector> points = new ArrayList<PVector>();
 	private static ArrayList<Float> sizes = new ArrayList<Float>();
+	private static int alpha = 150;
+
+	public static final int[][] RGBA_COLOURS = { { 141, 211, 199, alpha },
+			{ 255, 255, 179, alpha }, { 190, 186, 218, alpha },
+			{ 251, 128, 114, alpha }, { 128, 177, 211, alpha },
+			{ 253, 180, 98, alpha }, { 179, 222, 105, alpha },
+			{ 252, 205, 229, alpha }, { 217, 217, 217, alpha },
+			{ 188, 128, 189, alpha }, { 204, 235, 197, alpha },
+			{ 255, 237, 111, alpha } };
 
 	public static void addData(float x, float y, float size) {
 		points.add(new PVector(x, y));
@@ -511,15 +533,6 @@ class ChartData {
 		return floatArray;
 	}
 
-	// public static float getMaxSize() {
-	// float max = 0;
-	//
-	// for (Float f : getSizeArrayList()) {
-	// max = (f > max) ? f : max;
-	// }
-	// return max;
-	// }
-
 	public static float[] getArrayDataIndex() {
 		float[] colourData = new float[getSizeArrayList().size()];
 		for (int i = 0; i < colourData.length; i++) {
@@ -528,11 +541,13 @@ class ChartData {
 		return colourData;
 	}
 
-	// public static float getMinY() {
-	// float minX = Float.MAX_VALUE;
-	// for (PVector p : points) {
-	// minX = (p.x < minX) ? p.x : minX;
-	// }
-	// return minX;
-	// }
+	public static ColourTable getColourTable() {
+		ColourTable c = new ColourTable();
+		// Based on ColourTable.SET3_12
+		for (int i = 0; i < RGBA_COLOURS.length; i++) {
+			c.addDiscreteColourRule(i + 1, RGBA_COLOURS[i][0],
+					RGBA_COLOURS[i][1], RGBA_COLOURS[i][2], RGBA_COLOURS[i][3]);
+		}
+		return (c);
+	}
 }
