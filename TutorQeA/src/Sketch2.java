@@ -16,7 +16,20 @@ public class Sketch2 extends PApplet {
 
 	private static final long serialVersionUID = 1L;
 	XYChart xyChart;
-	ChartData chartData;
+
+	int xyChartXOrigin;
+	int xyChartYOrigin;
+	int xyChartWidth;
+	int xyChartHeight;
+	int xyChartMaxPointSize;
+
+	int legendXOrigin;
+	int legendYOrigin;
+	int legendWidth;
+	int legendHeight;
+
+	int defaultFontSize;
+	int defaultFontColor;
 
 	/**
 	 * Initialises the sketch, loads data into the chart and customises its
@@ -25,29 +38,44 @@ public class Sketch2 extends PApplet {
 	public void setup() {
 		size(800, 500);
 		smooth();
-		// noLoop();
 
-		PFont font = createFont("Helvetica", 11);
-		textFont(font, 10);
+		// Font
+		defaultFontSize = 11;
+		defaultFontColor = 120;
+		PFont font = createFont("Helvetica", defaultFontSize);
+		textFont(font);
 
-		// Create CHART
+		// Create CHART and SET attributes
 		xyChart = new XYChart(this);
 		xyChart.setYFormat("#####");
 		xyChart.setXFormat("#####");
 		xyChart.setXAxisLabel("Answer Count");
 		xyChart.setYAxisLabel("Question Score");
 
-		// Create the ChartData container
-		chartData = new ChartData();
+		xyChartXOrigin = 15;
+		xyChartYOrigin = 15;
+		xyChartWidth = width - 130;
+		xyChartHeight = height - 30;
+		xyChartMaxPointSize = 80;
 
-		// Read files (raw file path)
+		// Legend size
+		legendXOrigin = xyChartXOrigin + (xyChartWidth);
+		legendYOrigin = xyChartYOrigin + (xyChartHeight / 4);
+		legendWidth = 100;
+		legendHeight = 240;
+
+		// Read files with the Important DATA (raw file path)
 		try {
+			// TODO: Change these file paths to a file (outside from the git
+			// repository)
 			QeAData.readPostTags("/home/augusto/git/tutor-qEa/TutorQeA/data/PostTags.csv");
 			QeAData.readQuestionFeatures("/home/augusto/git/tutor-qEa/TutorQeA/data/QuestionFeatures.csv");
 		} catch (IOException e) {
 			e.printStackTrace();
+			System.exit(1);
 		}
 
+		// Testing....
 		ArrayList<Integer> tagList = new ArrayList<Integer>();
 		tagList.add(41);
 		tagList.add(111);
@@ -63,57 +91,132 @@ public class Sketch2 extends PApplet {
 		QeAData.setTagList(tagList, tagNameList);
 	}
 
-	/**
-	 * Draws the chart and a title.
-	 */
 	public void draw() {
 		background(255);
-		textSize(9);
 
 		// Reset the data
 		resetChartData();
 		// Rebuild the chart
 		rebuildChart();
 
-		xyChart.draw(15, 15, width - 30, height - 30);
+		textSize(defaultFontSize);
+		xyChart.draw(xyChartXOrigin, xyChartYOrigin, xyChartWidth,
+				xyChartHeight);
 
-		// Draw a title over the top of the chart.
-		fill(120);
-		textSize(20);
-		text("Questions Clustered", 70, 30);
-		textSize(11);
-		text("Centroid visualization only", 70, 45);
+		// Draw chart legend
+		drawXYChartLegend();
+
+		// TODO: enable the noLoop() before deploy the application. This noLoop
+		// will improve the app performance.
+		// noLoop();
 	}
 
-	public void resetChartData() {
-		chartData.removeAllData();
+	public void mousePressed() {
+		if (mouseButton == LEFT) {
+			mouseOverCluster();
+		}
+	}
+
+	private void drawXYChartLegend() {
+		fill(255);
+		// noStroke();
+		rect(legendXOrigin, legendYOrigin, legendWidth, legendHeight, 4, 4, 4,
+				4);
+
+		int legendPadding = 8;
+		int ellipseWidth = 15;
+		int ellipseHeight = ellipseWidth;
+
+		int clusterIndex;
+		int clusterNum = ChartData.getArrayDataIndex().length;
+
+		ellipseMode(CORNER);
+
+		for (int i = 0; i < clusterNum; i++) {
+			clusterIndex = Math.round(ChartData.getArrayDataIndex()[i]);
+
+			fill(0);
+			ellipse(legendXOrigin + legendPadding, legendYOrigin
+					+ legendPadding + (legendHeight / clusterNum) * i,
+					ellipseWidth, ellipseHeight);
+
+			fill(defaultFontColor);
+			text("Cluster " + clusterIndex, legendXOrigin + ellipseWidth + 2
+					* legendPadding, legendYOrigin + legendPadding
+					+ defaultFontSize + (legendHeight / clusterNum) * i);
+		}
+	}
+
+	private boolean mouseOverCluster() {
+		PVector mouse = new PVector(mouseX, mouseY);
+		PVector chartPoint = xyChart.getScreenToData(mouse);
+
+		if (chartPoint != null) {
+			// int clusterRadius = 80;
+
+			System.out.println(chartPoint);
+			System.out.println();
+			System.out.println(ChartData.getPoints().get(1));
+			System.out.println(ChartData.getSizeArray()[1]);
+			// System.out.println(ChartData.getMaxSize());
+			System.out.println(chartPoint.dist(ChartData.getPoints().get(1)));
+			System.out.println();
+			System.out.println();
+			// for (PVector clusterPoint : ChartData.getPoints()) {
+			// System.out.println(clusterPoint);
+			// }
+			// PVector clusterPoint = xyChart.getDataToScreen(chartPoint);
+			// System.out.println(clusterPoint);
+			// System.out.println();
+			return (true);
+		}
+		return (false);
+	}
+
+	private void resetChartData() {
+		ChartData.removeAllData();
 
 		Enumeration<CentroidData> centroidEnum = QeAData.getCentroidDataList();
 		CentroidData centroidTmp;
 		while (centroidEnum.hasMoreElements()) {
 			centroidTmp = centroidEnum.nextElement();
 
-			chartData.addData(centroidTmp.getMeanAnswerCount(),
+			ChartData.addData(centroidTmp.getMeanAnswerCount(),
 					centroidTmp.getMeanScore(), centroidTmp.getClusterSize());
 		}
 	}
 
-	public void rebuildChart() {
-		if (!chartData.getPoints().isEmpty()) {
-			xyChart.setData(chartData.getPoints());
+	private void rebuildChart() {
+		if (!ChartData.getPoints().isEmpty()) {
+			xyChart.setData(ChartData.getPoints());
 
 			// Axis formatting and labels.
 			xyChart.showXAxis(true);
 			xyChart.showYAxis(true);
 
 			// Symbol colours
-			xyChart.setPointSize(chartData.getSizeArray(),
-					chartData.getMaxSize());
+			xyChart.setPointSize(ChartData.getSizeArray(), xyChartMaxPointSize);
 			// 12 different colors
-			xyChart.setPointColour(chartData.getColourData(),
+			xyChart.setPointColour(ChartData.getArrayDataIndex(),
 					ColourTable.getPresetColourTable(ColourTable.SET3_12));
 
-			System.out.println(QeAData.getChosenTagNames());
+			// Draw a title and a subtitle over the top of the chart.
+			// Subtitle with the tag names
+			StringBuilder tagTitle = new StringBuilder("Tags: ");
+			for (String tag : QeAData.getChosenTagNames()) {
+				tagTitle.append(tag);
+				tagTitle.append(" > ");
+			}
+			String title = "Question Clustering - Centroid Visualization";
+			String subtitle = tagTitle.toString().substring(0,
+					tagTitle.length() - 3);
+
+			// Draw a title over the top of the chart.
+			fill(defaultFontColor);
+			textSize(20);
+			text(title, xyChartXOrigin + 55, xyChartYOrigin + 15);
+			textSize(15);
+			text(subtitle, xyChartXOrigin + 55, xyChartYOrigin + 35);
 		}
 	}
 }
@@ -377,52 +480,47 @@ class QuestionData {
 }
 
 class ChartData {
-	private ArrayList<PVector> points;
-	private ArrayList<Float> sizes;
+	private static ArrayList<PVector> points = new ArrayList<PVector>();
+	private static ArrayList<Float> sizes = new ArrayList<Float>();
 
-	public ChartData() {
-		this.points = new ArrayList<PVector>();
-		this.sizes = new ArrayList<Float>();
-	}
-
-	public void addData(float x, float y, float size) {
+	public static void addData(float x, float y, float size) {
 		points.add(new PVector(x, y));
 		sizes.add(size);
 	}
 
-	public void removeAllData() {
+	public static void removeAllData() {
 		points.clear();
 		sizes.clear();
 	}
 
-	public ArrayList<PVector> getPoints() {
-		return this.points;
+	public static ArrayList<PVector> getPoints() {
+		return points;
 	}
 
-	public ArrayList<Float> getSizeArrayList() {
-		return this.sizes;
+	public static ArrayList<Float> getSizeArrayList() {
+		return sizes;
 	}
 
-	public float[] getSizeArray() {
-		float[] floatArray = new float[this.sizes.size()];
+	public static float[] getSizeArray() {
+		float[] floatArray = new float[sizes.size()];
 
 		for (int i = 0; i < floatArray.length; i++) {
-			Float f = this.sizes.get(i);
+			Float f = sizes.get(i);
 			floatArray[i] = (f != null ? f : Float.NaN);
 		}
 		return floatArray;
 	}
 
-	public float getMaxSize() {
-		float max = 0;
+	// public static float getMaxSize() {
+	// float max = 0;
+	//
+	// for (Float f : getSizeArrayList()) {
+	// max = (f > max) ? f : max;
+	// }
+	// return max;
+	// }
 
-		for (Float f : getSizeArrayList()) {
-			max = (f > max) ? f : max;
-		}
-		return max;
-	}
-
-	public float[] getColourData() {
+	public static float[] getArrayDataIndex() {
 		float[] colourData = new float[getSizeArrayList().size()];
 		for (int i = 0; i < colourData.length; i++) {
 			colourData[i] = i + 1;
@@ -430,11 +528,11 @@ class ChartData {
 		return colourData;
 	}
 
-	public float getMinY() {
-		float minX = Float.MAX_VALUE;
-		for (PVector p : points) {
-			minX = (p.x < minX) ? p.x : minX;
-		}
-		return minX;
-	}
+	// public static float getMinY() {
+	// float minX = Float.MAX_VALUE;
+	// for (PVector p : points) {
+	// minX = (p.x < minX) ? p.x : minX;
+	// }
+	// return minX;
+	// }
 }
