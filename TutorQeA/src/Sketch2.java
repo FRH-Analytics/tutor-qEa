@@ -14,6 +14,7 @@ import au.com.bytecode.opencsv.CSVReader;
 
 public class Sketch2 extends PApplet {
 
+	private static final long serialVersionUID = 1L;
 	XYChart clustersChart;
 	ChartData chartData;
 
@@ -47,7 +48,9 @@ public class Sketch2 extends PApplet {
 			e.printStackTrace();
 		}
 
-		QeAData.addTag(1);
+		ArrayList<Integer> tagList = new ArrayList<Integer>();
+		tagList.add(41);
+		QeAData.setTagList(tagList);
 	}
 
 	/**
@@ -103,8 +106,11 @@ public class Sketch2 extends PApplet {
 
 class QeAData {
 
-	// ArrayList with the chosen tags, the order says the intern relationship
+	// ArrayList with the chosen tags, the order expresses the intern
+	// relationship between the tags
 	private static ArrayList<Integer> chosenTags = new ArrayList<Integer>();
+	// ArrayList with the chosen questions filtered after chosing the tags
+	private static ArrayList<Integer> chosenQuestions = new ArrayList<Integer>();
 
 	// Data in Memory
 	private static Hashtable<Integer, ArrayList<Integer>> tagToQuestions = new Hashtable<Integer, ArrayList<Integer>>(
@@ -114,30 +120,54 @@ class QeAData {
 	private static Hashtable<Integer, QuestionData> questionIdsToData = new Hashtable<Integer, QuestionData>();
 	private static Hashtable<Integer, CentroidData> centroidIdsToData = new Hashtable<Integer, CentroidData>();
 
-	public static void addTag(int tagId) {
+	public static void setTagList(ArrayList<Integer> tagList) {
 
-		if (!tagToQuestions.containsKey(tagId)) {
-			System.err.println("Unexistent Tag ID: " + tagId);
-			System.exit(1);
-		}
-		chosenTags.add(tagId);
-		ArrayList<Integer> questions = tagToQuestions.get(tagId);
-		QuestionData questionDataTmp;
+		if (!tagList.equals(chosenTags)) {
+			// CLEAR the chosenTags, chosenQuestions and centroidIdsToData
+			chosenTags.clear();
+			chosenQuestions.clear();
+			centroidIdsToData.clear();
 
-		for (Integer qId : questions) {
-			questionDataTmp = questionIdsToData.get(qId);
+			QuestionData questionDataTmp;
 
-			if (!centroidIdsToData.containsKey(questionDataTmp.getCluster())) {
-				centroidIdsToData.put(questionDataTmp.getCluster(),
-						new CentroidData(questionDataTmp.getCluster()));
+			for (Integer tagId : tagList) {
+				if (!tagToQuestions.containsKey(tagId)) {
+					System.err.println("Unexistent Tag ID: " + tagList);
+					System.exit(1);
+				}
+
+				chosenTags.add(tagId);
+				int qId;
+				// If there is any chosen question
+				if (!chosenQuestions.isEmpty()) {
+					for (int i = 0; i < chosenQuestions.size(); i++) {
+						qId = chosenQuestions.get(i);
+						// For each old question check if it contains the new
+						// tag and remove it if doesn't
+						if (!questionToTags.get(qId).contains(tagId)) {
+							chosenQuestions.remove(i);
+						}
+					}
+				} else {
+					chosenQuestions = tagToQuestions.get(tagId);
+				}
 			}
-			centroidIdsToData.get(questionDataTmp.getCluster()).addQuestion(
-					questionDataTmp.getId(), questionDataTmp.getAnswerCount(),
-					questionDataTmp.getScore());
+
+			for (Integer qId : chosenQuestions) {
+				questionDataTmp = questionIdsToData.get(qId);
+
+				if (!centroidIdsToData
+						.containsKey(questionDataTmp.getCluster())) {
+					centroidIdsToData.put(questionDataTmp.getCluster(),
+							new CentroidData(questionDataTmp.getCluster()));
+				}
+				centroidIdsToData.get(questionDataTmp.getCluster())
+						.addQuestion(questionDataTmp.getId(),
+								questionDataTmp.getAnswerCount(),
+								questionDataTmp.getScore());
+			}
 		}
 	}
-
-	// removeTag
 
 	@SuppressWarnings("unchecked")
 	public static void readPostTags(String csvAbsolutePath) throws IOException {
@@ -198,7 +228,6 @@ class QeAData {
 			questionId = Integer.valueOf(nextLine[0]);
 			score = Math.round(Float.valueOf(nextLine[1]));
 			answerCount = Math.round(Float.valueOf(nextLine[3]));
-			// The last column is the cluster id
 			clusterId = Integer.valueOf(nextLine[nextLine.length - 1]);
 
 			questionIdsToData.put(questionId, new QuestionData(questionId,
