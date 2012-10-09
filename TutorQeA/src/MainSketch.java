@@ -1,10 +1,9 @@
+import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 
-import processing.core.PApplet;
+import org.gicentre.utils.multisketch.SketchPanel;
 
-// Simple example to show how two sketches can be embedded in a single window. 
-// Version 1.2, 18th July, 2009. 
-// Author Jo Wood. 
+import processing.core.PApplet;
 
 public class MainSketch extends PApplet {
 
@@ -14,12 +13,12 @@ public class MainSketch extends PApplet {
 	 * Places two embedded sketches inside this one.
 	 */
 	public void setup() {
-		size(1100, 410);
-		setLayout(new GridLayout(0, 2));
+		size(800, 500);
+		setLayout(new GridLayout(0, 1));
 		noLoop();
 
 //		Sketch1 sketch1 = new Sketch1();
-//		Sketch2 sketch2 = new Sketch2();
+		Sketch2 sketch2 = new Sketch2();
 //		Sketch3 sketch3 = new Sketch3();
 //		Sketch4 sketch4 = new Sketch4();
 
@@ -27,9 +26,9 @@ public class MainSketch extends PApplet {
 //		add(sp1);
 //		sketch1.setIsActive(true);
 //
-//		SketchPanel sp2 = new SketchPanel(this, sketch2);
-//		add(sp2);
-//		sketch2.setIsActive(true);
+		SketchPanel sp2 = new SketchPanel(this, sketch2);
+		add(sp2);
+		sketch2.setIsActive(true);
 
 //		SketchPanel sp3 = new SketchPanel(this, sketch3);
 //		add(sp3);

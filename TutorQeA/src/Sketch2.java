@@ -1,18 +1,17 @@
-import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Enumeration;
-import java.util.Hashtable;
 
 import org.gicentre.utils.colour.ColourTable;
+import org.gicentre.utils.multisketch.EmbeddedSketch;
 import org.gicentre.utils.stat.XYChart;
 
-import processing.core.PApplet;
 import processing.core.PFont;
 import processing.core.PVector;
-import au.com.bytecode.opencsv.CSVReader;
+import util.CentroidData;
+import util.QeAData;
 
-public class Sketch2 extends PApplet {
+public class Sketch2 extends EmbeddedSketch {
 
 	private static final long serialVersionUID = 1L;
 	XYChart xyChart;
@@ -58,9 +57,9 @@ public class Sketch2 extends PApplet {
 		xyChart.setYAxisLabel("Question Score");
 
 		xyChartXOrigin = 15;
-		xyChartYOrigin = 15;
-		xyChartWidth = width - 130;
-		xyChartHeight = height - 30;
+		xyChartYOrigin = 50;
+		xyChartWidth = width - (100 + 2 * xyChartXOrigin);
+		xyChartHeight = height - xyChartYOrigin;
 		xyChartMaxPointSize = 80;
 
 		// Legend size
@@ -77,16 +76,16 @@ public class Sketch2 extends PApplet {
 		maxClusterNumber = 8;
 
 		// Read files with the Important DATA (raw file path)
+		// TODO: After all, put this call in the Main
 		try {
-			// TODO: Change these file paths to a file (outside from the git
-			// repository)
-			QeAData.readPostTags("/home/augusto/git/tutor-qEa/TutorQeA/data/PostTags.csv");
-			QeAData.readQuestionFeatures("/home/augusto/git/tutor-qEa/TutorQeA/data/QuestionFeatures.csv");
+			QeAData.readPostTagsFile();
+			QeAData.readQuestionFeaturesFile();
 		} catch (IOException e) {
 			e.printStackTrace();
 			System.exit(1);
 		}
 
+		// TODO: Delete all this!
 		// Testing....
 		ArrayList<Integer> tagList = new ArrayList<Integer>();
 		tagList.add(41);
@@ -101,15 +100,16 @@ public class Sketch2 extends PApplet {
 		// tagNameList.add("roc");
 		// tagNameList.add("hmm");
 		QeAData.setTagList(tagList, tagNameList);
+
+		// Reset the data
+		updateChartData();
 	}
 
 	public void draw() {
 		background(255);
 
-		// Reset the data
-		resetChartData();
 		// Rebuild the chart
-		rebuildChart();
+		drawXYChart();
 
 		textSize(defaultFontSize);
 		xyChart.draw(xyChartXOrigin, xyChartYOrigin, xyChartWidth,
@@ -120,21 +120,54 @@ public class Sketch2 extends PApplet {
 
 		// TODO: enable the noLoop() before deploy the application. This noLoop
 		// will improve the app performance.
-		noLoop();
+		 noLoop();
 	}
 
 	public void mousePressed() {
 		if (mouseButton == LEFT) {
 			// TODO: call the Sketch 3 event!
-			getLegendClusterSelected(mouseX, mouseY);
+			getClusterSelectedInLegend(mouseX, mouseY);
 		}
 	}
 
+	private void drawXYChart() {
+		if (!ChartData.getPoints().isEmpty()) {
+			xyChart.setData(ChartData.getPoints());
+
+			// Axis formatting and labels.
+			xyChart.showXAxis(true);
+			xyChart.showYAxis(true);
+
+			// Symbol colours
+			xyChart.setPointSize(ChartData.getSizeArray(), xyChartMaxPointSize);
+			// 12 different colors
+			xyChart.setPointColour(ChartData.getArrayDataIndex(),
+					ChartData.getColourTable());
+
+			// Draw a title and a subtitle over the top of the chart.
+			// Subtitle with the tag names
+			StringBuilder tagTitle = new StringBuilder("Tags: ");
+			for (String tag : QeAData.getChosenTagNames()) {
+				tagTitle.append(tag);
+				tagTitle.append(" > ");
+			}
+			String title = "Question Clustering - Centroid Visualization";
+			String subtitle = tagTitle.toString().substring(0,
+					tagTitle.length() - 3);
+
+			// Draw a title over the top of the chart.
+			fill(defaultFontColor);
+			textSize(20);
+			text(title, xyChartXOrigin + 55, xyChartYOrigin - 20);
+			textSize(15);
+			text(subtitle, xyChartXOrigin + 55, xyChartYOrigin);
+		}
+	}
+	
 	private void drawXYChartLegend() {
 		fill(255);
-		// noStroke();
-		rect(legendXOrigin, legendYOrigin, legendWidth, legendHeight, 4, 4, 4,
-				4);
+		noStroke();
+		rect(legendXOrigin, legendYOrigin, legendWidth, legendHeight);
 
 		int clusterIndex;
 		int clusterNum = ChartData.getArrayDataIndex().length;
@@ -159,7 +192,7 @@ public class Sketch2 extends PApplet {
 		}
 	}
 
-	private int getLegendClusterSelected(int x, int y) {
+	private int getClusterSelectedInLegend(int x, int y) {
 		int clusterNum = ChartData.getArrayDataIndex().length;
 		int legendPartitionSize = legendHeight / maxClusterNumber;
 
@@ -179,7 +212,7 @@ public class Sketch2 extends PApplet {
 
 	}
 
-	private void resetChartData() {
+	private void updateChartData() {
 		ChartData.removeAllData();
 
 		Enumeration<CentroidData> centroidEnum = QeAData.getCentroidDataList();
@@ -190,306 +223,8 @@ public class Sketch2 extends PApplet {
 			ChartData.addData(centroidTmp.getMeanAnswerCount(),
 					centroidTmp.getMeanScore(), centroidTmp.getClusterSize());
 		}
+		loop();
 	}
-
-	private void rebuildChart() {
-		if (!ChartData.getPoints().isEmpty()) {
-			xyChart.setData(ChartData.getPoints());
-
-			// Axis formatting and labels.
-			xyChart.showXAxis(true);
-			xyChart.showYAxis(true);
-
-			// Symbol colours
-			xyChart.setPointSize(ChartData.getSizeArray(), xyChartMaxPointSize);
-			// 12 different colors
-			xyChart.setPointColour(ChartData.getArrayDataIndex(),
-					ChartData.getColourTable());
-
-			// System.out.println(ChartData.getColourTable());
-			// System.out.println();
-			// System.out.println(ChartData.getColourTable().findColour(1));
-			// System.out.println();
-			// System.out.println(new ColourRule(1, ChartData.getColourTable()
-			// .findColour(1)));
-
-			// Draw a title and a subtitle over the top of the chart.
-			// Subtitle with the tag names
-			StringBuilder tagTitle = new StringBuilder("Tags: ");
-			for (String tag : QeAData.getChosenTagNames()) {
-				tagTitle.append(tag);
-				tagTitle.append(" > ");
-			}
-			String title = "Question Clustering - Centroid Visualization";
-			String subtitle = tagTitle.toString().substring(0,
-					tagTitle.length() - 3);
-
-			// Draw a title over the top of the chart.
-			fill(defaultFontColor);
-			textSize(20);
-			text(title, xyChartXOrigin + 55, xyChartYOrigin + 15);
-			textSize(15);
-			text(subtitle, xyChartXOrigin + 55, xyChartYOrigin + 35);
-		}
-	}
-}
-
-class QeAData {
-
-	// ArrayList with the chosen tags, the order expresses the intern
-	// relationship between the tags
-	private static ArrayList<Integer> chosenTags = new ArrayList<Integer>();
-	private static ArrayList<String> chosenTagNames = new ArrayList<String>();
-	// ArrayList with the chosen questions filtered after chosing the tags
-	private static ArrayList<Integer> chosenQuestions = new ArrayList<Integer>();
-
-	// Data in Memory
-	private static Hashtable<Integer, ArrayList<Integer>> tagToQuestions = new Hashtable<Integer, ArrayList<Integer>>(
-			100);
-	private static Hashtable<Integer, ArrayList<Integer>> questionToTags = new Hashtable<Integer, ArrayList<Integer>>(
-			2000);
-	private static Hashtable<Integer, QuestionData> questionIdsToData = new Hashtable<Integer, QuestionData>();
-	private static Hashtable<Integer, CentroidData> centroidIdsToData = new Hashtable<Integer, CentroidData>();
-
-	@SuppressWarnings("unchecked")
-	public static void setTagList(ArrayList<Integer> tagList,
-			ArrayList<String> tagNameList) {
-
-		if (tagList.size() == tagNameList.size() && !tagList.equals(chosenTags)) {
-			// CLEAR the chosenTags, chosenQuestions and centroidIdsToData
-			chosenTags.clear();
-			chosenQuestions.clear();
-			centroidIdsToData.clear();
-
-			QuestionData questionDataTmp;
-			ArrayList<Integer> nextChosenQuestions;
-			int tagId;
-			String tagName;
-
-			for (int i = 0; i < tagList.size(); i++) {
-				tagId = tagList.get(i);
-				tagName = tagNameList.get(i);
-
-				if (!tagToQuestions.containsKey(tagId)) {
-					System.err.println("Unexistent Tag ID: " + tagList);
-					System.exit(1);
-				}
-
-				chosenTags.add(tagId);
-				chosenTagNames.add(tagName);
-				int qId;
-				// If there is any chosen question
-				if (!chosenQuestions.isEmpty()) {
-
-					nextChosenQuestions = new ArrayList<Integer>();
-					for (int j = 0; j < chosenQuestions.size(); j++) {
-						qId = chosenQuestions.get(j);
-						// For each old question check if it contains the new
-						// tag and remove it if doesn't
-						if (questionToTags.get(qId).contains(tagId)) {
-							nextChosenQuestions.add(qId);
-						}
-					}
-
-					chosenQuestions = (ArrayList<Integer>) nextChosenQuestions
-							.clone();
-
-					if (chosenQuestions.isEmpty()) {
-						// Avoiding the repetition of the emptiness initial
-						// condition below...
-						break;
-					}
-				} else {
-					chosenQuestions = tagToQuestions.get(tagId);
-				}
-			}
-
-			// Define the Centroids Data
-			for (Integer qId : chosenQuestions) {
-				questionDataTmp = questionIdsToData.get(qId);
-
-				if (!centroidIdsToData
-						.containsKey(questionDataTmp.getCluster())) {
-					centroidIdsToData.put(questionDataTmp.getCluster(),
-							new CentroidData(questionDataTmp.getCluster()));
-				}
-				centroidIdsToData.get(questionDataTmp.getCluster())
-						.addQuestion(questionDataTmp.getId(),
-								questionDataTmp.getAnswerCount(),
-								questionDataTmp.getScore());
-			}
-		}
-	}
-
-	@SuppressWarnings("unchecked")
-	public static void readPostTags(String csvAbsolutePath) throws IOException {
-		CSVReader csvReader = new CSVReader(new FileReader(csvAbsolutePath));
-
-		int question, tag;
-		ArrayList<Integer> tmpList;
-
-		// Reads the file header
-		String[] nextLine = csvReader.readNext();
-		while ((nextLine = csvReader.readNext()) != null) {
-			question = Integer.valueOf(nextLine[0]);
-			tag = Integer.valueOf(nextLine[1]);
-
-			// TAG -> QUESTIONS
-			if (tagToQuestions.containsKey(tag)) {
-				tmpList = tagToQuestions.get(tag);
-
-				if (tmpList == null) {
-					tmpList = new ArrayList<Integer>();
-				}
-			} else {
-				tmpList = new ArrayList<Integer>();
-			}
-
-			tmpList.add(question);
-			tagToQuestions.put(tag, ((ArrayList<Integer>) tmpList.clone()));
-
-			// QUESTIONS -> TAG
-			if (questionToTags.containsKey(question)) {
-				tmpList = questionToTags.get(question);
-
-				if (tmpList == null) {
-					tmpList = new ArrayList<Integer>();
-				}
-			} else {
-				tmpList = new ArrayList<Integer>();
-			}
-
-			tmpList.add(tag);
-			questionToTags
-					.put(question, ((ArrayList<Integer>) tmpList.clone()));
-		}
-
-	}
-
-	public static void readQuestionFeatures(String csvAbsolutePath)
-			throws IOException {
-		CSVReader csvReader = new CSVReader(new FileReader(csvAbsolutePath));
-
-		// Unique features used... At this moment...
-		int questionId, clusterId, score, answerCount;
-
-		// Reads the file header
-		String[] nextLine = csvReader.readNext();
-		while ((nextLine = csvReader.readNext()) != null) {
-
-			questionId = Integer.valueOf(nextLine[0]);
-			score = Math.round(Float.valueOf(nextLine[1]));
-			answerCount = Math.round(Float.valueOf(nextLine[3]));
-			clusterId = Integer.valueOf(nextLine[nextLine.length - 1]);
-
-			questionIdsToData.put(questionId, new QuestionData(questionId,
-					answerCount, score, clusterId));
-		}
-	}
-
-	public static Hashtable<Integer, ArrayList<Integer>> getTagToQuestions() {
-		return tagToQuestions;
-	}
-
-	public static Hashtable<Integer, ArrayList<Integer>> getQuestionToTags() {
-		return questionToTags;
-	}
-
-	public static Hashtable<Integer, QuestionData> getQuestionIdsToData() {
-		return questionIdsToData;
-	}
-
-	public static Hashtable<Integer, CentroidData> getCentroidIdsToData() {
-		return centroidIdsToData;
-	}
-
-	public static Enumeration<CentroidData> getCentroidDataList() {
-		return centroidIdsToData.elements();
-	}
-
-	public static ArrayList<Integer> getChosenTags() {
-		return chosenTags;
-	}
-
-	public static ArrayList<String> getChosenTagNames() {
-		return chosenTagNames;
-	}
-
-	public static ArrayList<Integer> getChosenQuestions() {
-		return chosenQuestions;
-	}
-
-}
-
-class CentroidData {
-
-	private int clusterId;
-	private int answerCount;
-	private int score;
-	private ArrayList<Integer> questionIds;
-
-	public CentroidData(int clusterId) {
-		this.clusterId = clusterId;
-		this.answerCount = 0;
-		this.score = 0;
-
-		questionIds = new ArrayList<Integer>();
-	}
-
-	public void addQuestion(int id, int answerCount, int score) {
-		questionIds.add(id);
-		this.answerCount += answerCount;
-		this.score += score;
-	}
-
-	public int getClusterSize() {
-		return questionIds.size();
-	}
-
-	public float getMeanAnswerCount() {
-		return (getClusterSize() > 0) ? this.answerCount / getClusterSize() : 0;
-	}
-
-	public float getMeanScore() {
-		return (getClusterSize() > 0) ? this.score / getClusterSize() : 0;
-	}
-
-	public int getClusterId() {
-		return clusterId;
-	}
-
-	public ArrayList<Integer> getQuestionIds() {
-		return questionIds;
-	}
-}
-
-class QuestionData {
-
-	private int id, answerCount, score, cluster;
-
-	public QuestionData(int id, int answerCount, int score, int cluster) {
-		this.id = id;
-		this.answerCount = answerCount;
-		this.score = score;
-		this.cluster = cluster;
-	}
-
-	public int getId() {
-		return id;
-	}
-
-	public int getAnswerCount() {
-		return answerCount;
-	}
-
-	public int getScore() {
-		return score;
-	}
-
-	public int getCluster() {
-		return cluster;
-	}
-
 }
 
 class ChartData {
