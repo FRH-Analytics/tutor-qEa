@@ -123,6 +123,25 @@ CreateTagLinks = function(){
     write.csv(tagLinks, file = "../TutorQeA/data/TagLinks2.csv", row.names = F)
 }
 
+CreateQuestionData = function(){
+    print(noquote("Creating the QuestionData table (keeping only the needed collumns from Questions)..."))
+    questions = read.csv("../TutorQeA/data/Questions.csv")
+    questions.data = questions[,c("Id", "Title")]
+    write.csv(questions.data, file = "../TutorQeA/data/QuestionData.csv", row.names = F)
+}
+
+CreateQuestionAnswers = function(){
+    print(noquote("Creating the QuestionAnswers table (ordered by: QuestionId and Answer$CreationDate)..."))
+    answers = read.csv("../TutorQeA/data/Answers.csv")
+    
+    question.answers = answers[,c("ParentId", "Id", "Score", "CreationDate")]
+    colnames(question.answers) = c("QuestionId", "AnswerId", "Score", "CreationDate")
+    question.answers = question.answers[order(question.answers$QuestionId, 
+                               as.POSIXct(question.answers$CreationDate), decreasing=F),]
+    
+    write.csv(question.answers, file = "../TutorQeA/data/QuestionAnswers.csv", row.names = F)
+}
+
 ############# MAIN #############
 library(foreach)
 library(plyr)
@@ -131,7 +150,8 @@ library(doMC)
 # Register the Cores of the Machine (runs only in Unix)
 registerDoMC()
 
-RemoveUnusedCollumns()
-CheckForeignKeysBetweenTables()
-CreateTagLinks()
-CreateFakeQuestionFeatures("../TutorQeA/data/Questions.csv", "../TutorQeA/data/QuestionFeatures.csv")
+# RemoveUnusedCollumns()
+# CheckForeignKeysBetweenTables()
+# CreateTagLinks()
+# CreateFakeQuestionFeatures("../TutorQeA/data/Questions.csv", "../TutorQeA/data/QuestionFeatures.csv")
+CreateQuestionData()

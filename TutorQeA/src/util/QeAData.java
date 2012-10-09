@@ -2,7 +2,11 @@ package util;
 
 import java.io.FileReader;
 import java.io.IOException;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Enumeration;
 import java.util.Hashtable;
 
@@ -12,9 +16,10 @@ public class QeAData {
 
 	// TODO: Change these file paths to a file (outside from the git
 	// repository)
-	private static final String QUESTIONS_FILE = "/home/augusto/git/tutor-qEa/TutorQeA/data/Questions2.csv";
 	private static final String POST_TAGS_FILE = "/home/augusto/git/tutor-qEa/TutorQeA/data/PostTags.csv";
+	private static final String QUESTIONS_DATA_FILE = "/home/augusto/git/tutor-qEa/TutorQeA/data/QuestionData.csv";
 	private static final String QUESTIONS_FEATURE_FILE = "/home/augusto/git/tutor-qEa/TutorQeA/data/QuestionFeatures.csv";
+	private static final String QUESTION_ANSWERS_FILE = "/home/augusto/git/tutor-qEa/TutorQeA/data/QuestionAnswers.csv";
 
 	// ArrayList with the chosen tags, the order expresses the intern
 	// relationship between the tags
@@ -32,6 +37,7 @@ public class QeAData {
 	private static Hashtable<Integer, CentroidData> centroidIdsToData = new Hashtable<Integer, CentroidData>();
 
 	private static Hashtable<Integer, QuestionData> questionIdsToData = new Hashtable<Integer, QuestionData>();
+	private static Hashtable<Integer, ArrayList<AnswerData>> questionIdsToAnswers = new Hashtable<Integer, ArrayList<AnswerData>>();
 
 	@SuppressWarnings("unchecked")
 	public static void setTagList(ArrayList<Integer> tagList,
@@ -170,7 +176,7 @@ public class QeAData {
 	}
 
 	public static void readQuestionsDataFile() throws IOException {
-		CSVReader csvReader = new CSVReader(new FileReader(QUESTIONS_FILE));
+		CSVReader csvReader = new CSVReader(new FileReader(QUESTIONS_DATA_FILE));
 
 		// Unique features used... At this moment...
 		int questionId;
@@ -183,6 +189,37 @@ public class QeAData {
 			title = nextLine[1];
 			questionIdsToData.put(questionId, new QuestionData(questionId,
 					title));
+		}
+	}
+
+	public static void readQuestionAnswersFile() throws IOException,
+			ParseException {
+		CSVReader csvReader = new CSVReader(new FileReader(
+				QUESTION_ANSWERS_FILE));
+
+		// Unique features used... At this moment...
+		int questionId;
+		int answerId;
+		int score;
+		Date creationDate;
+
+		DateFormat format = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
+
+		// Reads the file header
+		String[] nextLine = csvReader.readNext();
+		while ((nextLine = csvReader.readNext()) != null) {
+			questionId = Integer.valueOf(nextLine[0]);
+			answerId = Integer.valueOf(nextLine[1]);
+			score = Integer.valueOf(nextLine[2]);
+			creationDate = format.parse(nextLine[3]);
+
+			if (!questionIdsToAnswers.containsKey(questionId)) {
+				questionIdsToAnswers.put(questionId,
+						new ArrayList<AnswerData>());
+			}
+
+			questionIdsToAnswers.get(questionId).add(
+					new AnswerData(answerId, score, creationDate));
 		}
 	}
 
