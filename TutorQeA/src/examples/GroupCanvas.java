@@ -1,3 +1,4 @@
+package examples;
 import processing.core.PApplet;
 import controlP5.Canvas;
 import controlP5.ControlP5;

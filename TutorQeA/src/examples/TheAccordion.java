@@ -1,3 +1,4 @@
+package examples;
 import processing.core.PApplet;
 import controlP5.Accordion;
 import controlP5.ControlP5;
@@ -62,7 +63,7 @@ public class TheAccordion extends PApplet{
 	  // group number 3, contains a bang and a slider
 	  Group g3 = cp5.addGroup("myGroup3")
 	                .setBackgroundColor(color(0, 64))
-	                .setBackgroundHeight(150)
+	                .setBackgroundHeight(50)
 	                ;
 	  
 	  cp5.addBang("shuffle")

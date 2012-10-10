@@ -258,4 +258,8 @@ public class QeAData {
 	public static ArrayList<Integer> getChosenQuestions() {
 		return chosenQuestions;
 	}
+	
+	public static Hashtable<Integer, ArrayList<AnswerData>> getQuestionIdsToAnswers() {
+		return questionIdsToAnswers;
+	}
 }
