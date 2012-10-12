@@ -1,0 +1,7 @@
+Augusto
+* Adicionar a quantidade de comentários no QuestionData
+* Juntar os dados das questões em um único objeto (QeAData)
+* Ver segundo TODO na Sketch3
+
+* Unir Sketches 2 e 3.
+ 

@@ -126,7 +126,7 @@ CreateTagLinks = function(){
 CreateQuestionData = function(){
     print(noquote("Creating the QuestionData table (keeping only the needed collumns from Questions)..."))
     questions = read.csv("../TutorQeA/data/Questions.csv")
-    questions.data = questions[,c("Id", "Title")]
+    questions.data = questions[,c("Id", "Title", "Score")]
     write.csv(questions.data, file = "../TutorQeA/data/QuestionData.csv", row.names = F)
 }
 

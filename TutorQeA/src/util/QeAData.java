@@ -179,7 +179,7 @@ public class QeAData {
 		CSVReader csvReader = new CSVReader(new FileReader(QUESTIONS_DATA_FILE));
 
 		// Unique features used... At this moment...
-		int questionId;
+		int questionId, score;
 		String title;
 
 		// Reads the file header
@@ -187,8 +187,9 @@ public class QeAData {
 		while ((nextLine = csvReader.readNext()) != null) {
 			questionId = Integer.valueOf(nextLine[0]);
 			title = nextLine[1];
+			score = Integer.valueOf(nextLine[2]);
 			questionIdsToData.put(questionId, new QuestionData(questionId,
-					title));
+					title, score));
 		}
 	}
 

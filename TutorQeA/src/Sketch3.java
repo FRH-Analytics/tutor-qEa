@@ -1,11 +1,14 @@
 import java.io.IOException;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.TreeSet;
 
 import processing.core.PApplet;
 import processing.core.PFont;
 import util.AnswerData;
 import util.QeAData;
+import util.QuestionData;
 import controlP5.Accordion;
 import controlP5.Canvas;
 import controlP5.ControlP5;
@@ -20,7 +23,7 @@ public class Sketch3 extends PApplet {
 	int questionRectHeight;
 	int questionRectPadding;
 
-	ArrayList<Integer> questionIds;
+	TreeSet<QuestionData> sortedQuestions;
 
 	ControlP5 cp5;
 	Accordion accordion;
@@ -40,7 +43,8 @@ public class Sketch3 extends PApplet {
 		questionRectPadding = 5;
 
 		// Instantiates the objects
-		questionIds = new ArrayList<Integer>();
+		sortedQuestions = new TreeSet<QuestionData>(
+				new QuestionDescComparator());
 
 		// TODO: After all, move this calls to Main
 		try {
@@ -68,24 +72,33 @@ public class Sketch3 extends PApplet {
 	}
 
 	private void drawQuestionsAccordion() {
-		int qId;
-		if (questionIds.size() > 0) {
+		if (sortedQuestions.size() > 0) {
 
 			accordion = cp5.addAccordion("QuestionsAccordion")
 					.setPosition(questionRectPadding, questionRectPadding)
 					.setWidth(width - questionRectPadding);
 
 			Group g1;
-			for (int j = 0; j < questionIds.size(); j++) {
-				qId = questionIds.get(j);
+			int scoreMapValue;
+			for (QuestionData qData : sortedQuestions) {
 
-				// ADD QUESTION TITLE
-				g1 = cp5.addGroup(String.valueOf(qId))
+				colorMode(HSB);
+				// TODO: SET BACKGROUND COLOR OF THE GROUP BAR based on the
+				// COMMENT COUNT of the Questions
+				scoreMapValue = (int) map(qData.getScore(), sortedQuestions
+						.last().getScore(), sortedQuestions.first().getScore(),
+						0, 255);
+				
+				// ADD the QUESTION SCORE, TITLE and SATURATION+BRIGHTNESS
+				g1 = cp5.addGroup(String.valueOf(qData.getId()))
 						.setLabel(
-								QeAData.getQuestionIdsToData().get(qId)
-										.getTitle()).setBackgroundColor(150)
+								qData.getScore() + " votes - "
+										+ qData.getTitle())
 						.setBarHeight(questionRectHeight)
-						.setBackgroundHeight(answerRectHeight);
+						.setBackgroundHeight(answerRectHeight)
+						.setColorBackground(
+								color(160, scoreMapValue, scoreMapValue));
+				colorMode(RGB);
 
 				PFont pfont = createFont("Helvetica", defaultFontSize, true);
 				controlP5.ControlFont font = new controlP5.ControlFont(pfont,
@@ -95,8 +108,8 @@ public class Sketch3 extends PApplet {
 						.setFont(font).getStyle().marginLeft = 10;
 
 				// ADD ANSWER CANVAS
-				g1.addCanvas(new AnswerCanvas(qId, width - questionRectPadding,
-						answerRectHeight - 5));
+				g1.addCanvas(new AnswerCanvas(qData.getId(), width
+						- questionRectPadding, answerRectHeight - 5));
 
 				accordion.addItem(g1);
 			}
@@ -106,12 +119,24 @@ public class Sketch3 extends PApplet {
 		}
 	}
 
-	@SuppressWarnings("unchecked")
 	public void updateQuestions(ArrayList<Integer> newQuestionIds) {
-		if (!newQuestionIds.equals(questionIds)) {
-			cp5.remove("QuestionsAccordion");
-			questionIds = (ArrayList<Integer>) newQuestionIds.clone();
-			drawQuestionsAccordion();
+		// Remove the old Accordion
+		cp5.remove("QuestionsAccordion");
+
+		// Sort the new question id based on the question data
+		for (Integer id : newQuestionIds) {
+			sortedQuestions.add(QeAData.getQuestionIdsToData().get(id));
+		}
+
+		// Redraw the Accordion
+		drawQuestionsAccordion();
+	}
+	
+	class QuestionDescComparator implements Comparator<QuestionData> {
+
+		@Override
+		public int compare(QuestionData q1, QuestionData q2) {
+			return q2.getScore() - q1.getScore();
 		}
 	}
 
@@ -145,7 +170,7 @@ public class Sketch3 extends PApplet {
 			}
 
 			p.ellipseMode(RADIUS);
-			
+
 			float ballPadding = 10;
 			float ballCenter;
 			float ballRadius;
@@ -154,13 +179,14 @@ public class Sketch3 extends PApplet {
 					questionId)) {
 				p.fill(color(50, 100, 150));
 
-				ballRadius = map(ans.getScore(), 0, maxScore, 0, canvasHeight/2);
-				
+				ballRadius = map(ans.getScore(), 0, maxScore, 0,
+						canvasHeight / 2);
+
 				// Ball shift
 				ballShift += ballRadius;
 				// Ball center
 				ballCenter = 70 + maxScore - ballRadius;
-				
+
 				ellipse(ballShift, ballCenter, ballRadius, ballRadius);
 
 				// Ball shift
