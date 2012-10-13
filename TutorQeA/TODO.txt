@@ -1,5 +1,5 @@
 TODO Augusto:
-	* Unir Sketches 2 e 3.
+	* Unir Sketches 2 e 3. (DOING)
 
 	* Modificar o xyChart para outro código que possamos manipular 
 

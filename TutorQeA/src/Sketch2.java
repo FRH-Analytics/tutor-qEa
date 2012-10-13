@@ -40,7 +40,7 @@ public class Sketch2 extends EmbeddedSketch {
 	 * appearance.
 	 */
 	public void setup() {
-		size(800, 500);
+		size(500, 350);
 		smooth();
 
 		// Font
@@ -120,7 +120,7 @@ public class Sketch2 extends EmbeddedSketch {
 
 		// TODO: enable the noLoop() before deploy the application. This noLoop
 		// will improve the app performance.
-		noLoop();
+		// noLoop();
 	}
 
 	public void mousePressed() {
