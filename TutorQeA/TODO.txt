@@ -1,7 +1,9 @@
-Augusto
-* Adicionar a quantidade de comentários no QuestionData
-* Juntar os dados das questões em um único objeto (QeAData)
-* Ver segundo TODO na Sketch3
+TODO Augusto:
+	* Unir Sketches 2 e 3.
 
-* Unir Sketches 2 e 3.
- 
+	* Modificar o xyChart para outro código que possamos manipular 
+
+	* Adicionar HoverQueries:
+		* Sobre as perguntas listadas mostrando: CommentCount e Score
+		* Sobre o xyChart, mostrando os dados de cada cluster
+	* Permitir o clique nos clusters

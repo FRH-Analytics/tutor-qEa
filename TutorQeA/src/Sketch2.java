@@ -51,19 +51,19 @@ public class Sketch2 extends EmbeddedSketch {
 
 		// Create CHART and SET attributes
 		xyChart = new XYChart(this);
-		xyChart.setYFormat("#####");
-		xyChart.setXFormat("#####");
+		xyChart.setYFormat("####.###");
+		xyChart.setXFormat("####.###");
 		xyChart.setXAxisLabel("Answer Count");
 		xyChart.setYAxisLabel("Question Score");
 
 		xyChartXOrigin = 15;
 		xyChartYOrigin = 50;
-		xyChartWidth = width - (100 + 2 * xyChartXOrigin);
+		xyChartWidth = width - (135 + 2 * xyChartXOrigin);
 		xyChartHeight = height - xyChartYOrigin;
 		xyChartMaxPointSize = 80;
 
 		// Legend size
-		legendXOrigin = xyChartXOrigin + (xyChartWidth);
+		legendXOrigin = xyChartXOrigin + (xyChartWidth) + 35;
 		legendYOrigin = xyChartYOrigin + (xyChartHeight / 4);
 		legendWidth = 100;
 		legendHeight = 240;
@@ -79,7 +79,7 @@ public class Sketch2 extends EmbeddedSketch {
 		// TODO: After all, put this call in the Main
 		try {
 			QeAData.readPostTagsFile();
-			QeAData.readQuestionFeaturesFile();
+			QeAData.readQuestionsDataFile();
 		} catch (IOException e) {
 			e.printStackTrace();
 			System.exit(1);
@@ -88,17 +88,17 @@ public class Sketch2 extends EmbeddedSketch {
 		// TODO: Delete all this!
 		// Testing....
 		ArrayList<Integer> tagList = new ArrayList<Integer>();
-		tagList.add(41);
-		tagList.add(111);
-		tagList.add(264);
+		// tagList.add(41);
+		// tagList.add(111);
+		// tagList.add(264);
 		// tagList.add(294);
-		// tagList.add(528);
+		tagList.add(528);
 		ArrayList<String> tagNameList = new ArrayList<String>();
-		tagNameList.add("r");
-		tagNameList.add("regression");
-		tagNameList.add("logistic-regression");
+		// tagNameList.add("r");
+		// tagNameList.add("regression");
+		// tagNameList.add("logistic-regression");
 		// tagNameList.add("roc");
-		// tagNameList.add("hmm");
+		tagNameList.add("hmm");
 		QeAData.setTagList(tagList, tagNameList);
 
 		// Reset the data
@@ -109,7 +109,7 @@ public class Sketch2 extends EmbeddedSketch {
 		background(255);
 
 		// Rebuild the chart
-		drawXYChart();
+		prepareXYChart();
 
 		textSize(defaultFontSize);
 		xyChart.draw(xyChartXOrigin, xyChartYOrigin, xyChartWidth,
@@ -120,17 +120,21 @@ public class Sketch2 extends EmbeddedSketch {
 
 		// TODO: enable the noLoop() before deploy the application. This noLoop
 		// will improve the app performance.
-		 noLoop();
+		noLoop();
 	}
 
 	public void mousePressed() {
 		if (mouseButton == LEFT) {
+			int selectedCluster = getClusterSelectedInLegend(mouseX, mouseY);
 			// TODO: call the Sketch 3 event!
-			getClusterSelectedInLegend(mouseX, mouseY);
+			if (selectedCluster != -1) {
+				System.out.println("Cluster selected: " + selectedCluster);
+			}
+
 		}
 	}
 
-	private void drawXYChart() {
+	private void prepareXYChart() {
 		if (!ChartData.getPoints().isEmpty()) {
 			xyChart.setData(ChartData.getPoints());
 
@@ -149,11 +153,11 @@ public class Sketch2 extends EmbeddedSketch {
 			StringBuilder tagTitle = new StringBuilder("Tags: ");
 			for (String tag : QeAData.getChosenTagNames()) {
 				tagTitle.append(tag);
-				tagTitle.append(" > ");
+				tagTitle.append(", ");
 			}
 			String title = "Question Clustering - Centroid Visualization";
 			String subtitle = tagTitle.toString().substring(0,
-					tagTitle.length() - 3);
+					tagTitle.length() - 2);
 
 			// Draw a title over the top of the chart.
 			fill(defaultFontColor);
@@ -163,7 +167,7 @@ public class Sketch2 extends EmbeddedSketch {
 			text(subtitle, xyChartXOrigin + 55, xyChartYOrigin);
 		}
 	}
-	
+
 	private void drawXYChartLegend() {
 		fill(255);
 		noStroke();
@@ -209,7 +213,6 @@ public class Sketch2 extends EmbeddedSketch {
 		}
 
 		return (clusterIndex);
-
 	}
 
 	private void updateChartData() {

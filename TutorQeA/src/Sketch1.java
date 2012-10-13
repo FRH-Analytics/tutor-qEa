@@ -29,12 +29,12 @@ public class Sketch1 extends PApplet {
 	private static HashMap<Integer, String> tagDictionary = new HashMap<Integer, String>();
 	private static HashMap<Integer, String> tagLinks = new HashMap<Integer, String>();
 
-	private ArrayList<Integer> selectedTags = new ArrayList<>();
-	private List<String> relatedTags = new ArrayList<>();
+	private ArrayList<Integer> selectedTags = new ArrayList<Integer>();
+	private List<String> relatedTags = new ArrayList<String>();
 
 	ControlP5 cp5;
 
-	ArrayList<DropdownList> lists = new ArrayList<>();
+	ArrayList<DropdownList> lists = new ArrayList<DropdownList>();
 
 	PFont font = createFont("arial", 12);
 
@@ -120,8 +120,8 @@ public class Sketch1 extends PApplet {
 		for (DropdownList list : lists) {
 			list.remove();
 		}
-		lists = new ArrayList<>();
-		relatedTags = new ArrayList<>();
+		lists = new ArrayList<DropdownList>();
+		relatedTags = new ArrayList<String>();
 	}
 
 	public void readCSVFile(HashMap<Integer, String> table) throws IOException {

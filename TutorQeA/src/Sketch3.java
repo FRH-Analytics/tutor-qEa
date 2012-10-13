@@ -83,10 +83,8 @@ public class Sketch3 extends PApplet {
 			for (QuestionData qData : sortedQuestions) {
 
 				colorMode(HSB);
-				// TODO: SET BACKGROUND COLOR OF THE GROUP BAR based on the
-				// COMMENT COUNT of the Questions
-				scoreMapValue = (int) map(qData.getScore(), sortedQuestions
-						.last().getScore(), sortedQuestions.first().getScore(),
+				scoreMapValue = (int) map(qData.getCommentCount(), sortedQuestions
+						.last().getCommentCount(), sortedQuestions.first().getCommentCount(),
 						0, 255);
 				
 				// ADD the QUESTION SCORE, TITLE and SATURATION+BRIGHTNESS

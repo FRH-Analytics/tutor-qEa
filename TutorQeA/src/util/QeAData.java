@@ -18,7 +18,6 @@ public class QeAData {
 	// repository)
 	private static final String POST_TAGS_FILE = "/home/augusto/git/tutor-qEa/TutorQeA/data/PostTags.csv";
 	private static final String QUESTIONS_DATA_FILE = "/home/augusto/git/tutor-qEa/TutorQeA/data/QuestionData.csv";
-	private static final String QUESTIONS_FEATURE_FILE = "/home/augusto/git/tutor-qEa/TutorQeA/data/QuestionFeatures.csv";
 	private static final String QUESTION_ANSWERS_FILE = "/home/augusto/git/tutor-qEa/TutorQeA/data/QuestionAnswers.csv";
 
 	// ArrayList with the chosen tags, the order expresses the intern
@@ -33,7 +32,6 @@ public class QeAData {
 			100);
 	private static Hashtable<Integer, ArrayList<Integer>> questionToTags = new Hashtable<Integer, ArrayList<Integer>>(
 			2000);
-	private static Hashtable<Integer, QuestionFeatures> questionIdsToFeature = new Hashtable<Integer, QuestionFeatures>();
 	private static Hashtable<Integer, CentroidData> centroidIdsToData = new Hashtable<Integer, CentroidData>();
 
 	private static Hashtable<Integer, QuestionData> questionIdsToData = new Hashtable<Integer, QuestionData>();
@@ -49,7 +47,6 @@ public class QeAData {
 			chosenQuestions.clear();
 			centroidIdsToData.clear();
 
-			QuestionFeatures questionDataTmp;
 			ArrayList<Integer> nextChosenQuestions;
 			int tagId;
 			String tagName;
@@ -93,8 +90,9 @@ public class QeAData {
 			}
 
 			// Define the Centroids Data
+			QuestionData questionDataTmp;
 			for (Integer qId : chosenQuestions) {
-				questionDataTmp = questionIdsToFeature.get(qId);
+				questionDataTmp = questionIdsToData.get(qId);
 
 				if (!centroidIdsToData
 						.containsKey(questionDataTmp.getCluster())) {
@@ -154,32 +152,11 @@ public class QeAData {
 
 	}
 
-	public static void readQuestionFeaturesFile() throws IOException {
-		CSVReader csvReader = new CSVReader(new FileReader(
-				QUESTIONS_FEATURE_FILE));
-
-		// Unique features used... At this moment...
-		int questionId, clusterId, score, answerCount;
-
-		// Reads the file header
-		String[] nextLine = csvReader.readNext();
-		while ((nextLine = csvReader.readNext()) != null) {
-
-			questionId = Integer.valueOf(nextLine[0]);
-			score = Math.round(Float.valueOf(nextLine[1]));
-			answerCount = Math.round(Float.valueOf(nextLine[3]));
-			clusterId = Integer.valueOf(nextLine[nextLine.length - 1]);
-
-			questionIdsToFeature.put(questionId, new QuestionFeatures(
-					questionId, answerCount, score, clusterId));
-		}
-	}
-
 	public static void readQuestionsDataFile() throws IOException {
 		CSVReader csvReader = new CSVReader(new FileReader(QUESTIONS_DATA_FILE));
 
-		// Unique features used... At this moment...
-		int questionId, score;
+		// Unique collumns used... At this moment...
+		int questionId, score, answerCount, commentCount, cluster;
 		String title;
 
 		// Reads the file header
@@ -188,8 +165,11 @@ public class QeAData {
 			questionId = Integer.valueOf(nextLine[0]);
 			title = nextLine[1];
 			score = Integer.valueOf(nextLine[2]);
+			answerCount = Integer.valueOf(nextLine[3]);
+			commentCount = Integer.valueOf(nextLine[4]);
+			cluster = Integer.valueOf(nextLine[5]);
 			questionIdsToData.put(questionId, new QuestionData(questionId,
-					title, score));
+					title, score, answerCount, commentCount, cluster));
 		}
 	}
 
@@ -232,10 +212,6 @@ public class QeAData {
 		return questionToTags;
 	}
 
-	public static Hashtable<Integer, QuestionFeatures> getQuestionIdsToFeature() {
-		return questionIdsToFeature;
-	}
-
 	public static Hashtable<Integer, QuestionData> getQuestionIdsToData() {
 		return questionIdsToData;
 	}
@@ -259,7 +235,7 @@ public class QeAData {
 	public static ArrayList<Integer> getChosenQuestions() {
 		return chosenQuestions;
 	}
-	
+
 	public static Hashtable<Integer, ArrayList<AnswerData>> getQuestionIdsToAnswers() {
 		return questionIdsToAnswers;
 	}

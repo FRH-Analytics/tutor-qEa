@@ -126,7 +126,16 @@ CreateTagLinks = function(){
 CreateQuestionData = function(){
     print(noquote("Creating the QuestionData table (keeping only the needed collumns from Questions)..."))
     questions = read.csv("../TutorQeA/data/Questions.csv")
-    questions.data = questions[,c("Id", "Title", "Score")]
+    
+    print(noquote("Selecting the question collumns..."))
+    questions.data = questions[,c("Id", "Title", "Score", "AnswerCount", "CommentCount")]
+    questions.data[is.na(questions.data$AnswerCount),]$AnswerCount = 0
+    questions.data[is.na(questions.data$CommentCount),]$CommentCount = 0
+    
+    print(noquote("Adding the Cluster collumn from QuestionFeatures..."))
+    questions.features = read.csv("../TutorQeA/data/QuestionFeatures.csv")
+    questions.data = merge(questions.data, questions.features[,c("Id", "Cluster")], by = "Id")
+    
     write.csv(questions.data, file = "../TutorQeA/data/QuestionData.csv", row.names = F)
 }
 
