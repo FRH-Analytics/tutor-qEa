@@ -1,10 +1,13 @@
 package examples;
 
+import java.util.ArrayList;
+
 import processing.core.PApplet;
 import controlP5.Accordion;
 import controlP5.Canvas;
 import controlP5.ControlP5;
 import controlP5.Group;
+import controlP5.ListBox;
 
 public class GroupCanvas extends PApplet {
 
@@ -15,24 +18,31 @@ public class GroupCanvas extends PApplet {
 		smooth();
 
 		cp5 = new ControlP5(this);
-		
-		Group g1 = cp5.addGroup("myGroup")
-				.setLabel("Testing Canvas").setWidth(50).setBackgroundHeight(210);
 
-		Group g2 = cp5.addGroup("myGroup")
-				.setLabel("Testing Canvas").setWidth(50).setBackgroundHeight(100);
+		Group g1 = cp5.addGroup("myGroup").setLabel("Testing Canvas")
+				.setWidth(50).setBackgroundHeight(210);
+
+		Group g2 = cp5.addGroup("myGroup").setLabel("Testing Canvas")
+				.setWidth(50).setBackgroundHeight(100);
 
 		g1.addCanvas(new TestCanvas());
 		g2.addCanvas(new TestCanvas());
-		
-		Accordion acc = cp5.addAccordion("newAcc").addItem(g1).addItem(g2);
-		acc.open();
-		acc.setCollapseMode(Accordion.MULTI);
-		
+
+		Accordion acc = new Accordion(cp5, "newAcc").addItem(g1).addItem(g2)
+				.open().setCollapseMode(Accordion.MULTI).setPosition(100, 100);
+
+		ListBox l = cp5.addListBox("190190").setPosition(20, 20).setWidth(100)
+				.setSize(120, 120).setItemHeight(15).setBarHeight(15);
+		ArrayList<Group> l1 = new ArrayList<Group>();
+		l1.add(g1);
+		l1.add(g2);
+		l.addItems(l1);
+		l.setScrollbarVisible(true);
+
 	}
 
 	public void draw() {
-		background(0);
+		background(255);
 	}
 
 	class TestCanvas extends Canvas {

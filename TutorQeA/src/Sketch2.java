@@ -131,7 +131,7 @@ public class Sketch2 {
 			if (selectedCluster != -1) {
 				pApplet.getSketch3().updateQuestions(
 						QeAData.getQuestionIdsByCluster(selectedCluster));
-//				System.out.println("Cluster selected: " + selectedCluster);
+				// System.out.println("Cluster selected: " + selectedCluster);
 			}
 
 		}
@@ -303,5 +303,38 @@ class ChartData {
 					RGBA_COLOURS[i][1], RGBA_COLOURS[i][2], RGBA_COLOURS[i][3]);
 		}
 		return (c);
+	}
+
+	// MAX and MIN values
+	public static float getMinX() {
+		float minX = Float.MAX_VALUE;
+		for (PVector point : points) {
+			minX = (point.x < minX) ? point.x : minX;
+		}
+		return minX;
+	}
+
+	public static float getMinY() {
+		float minY = Float.MAX_VALUE;
+		for (PVector point : points) {
+			minY = (point.y < minY) ? point.y : minY;
+		}
+		return minY;
+	}
+
+	public static float getMaxX() {
+		float maxX = Float.MIN_VALUE;
+		for (PVector point : points) {
+			maxX = (point.x > maxX) ? point.x : maxX;
+		}
+		return maxX;
+	}
+
+	public static float getMaxY() {
+		float maxY = 0;
+		for (PVector point : points) {
+			maxY = (point.y > maxY) ? point.y : maxY;
+		}
+		return maxY;
 	}
 }

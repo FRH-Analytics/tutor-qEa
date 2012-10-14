@@ -1,7 +1,7 @@
 TODO Augusto:
-	* Modificar o xyChart para outro código que possamos manipular 
+	* Substituir novo plot no MainSketch
 
 	* Adicionar HoverQueries:
 		* Sobre as perguntas listadas mostrando: CommentCount e Score
 		* Sobre o xyChart, mostrando os dados de cada cluster
-	* Permitir o clique nos clusters
+	* Permitir clique nos clusters

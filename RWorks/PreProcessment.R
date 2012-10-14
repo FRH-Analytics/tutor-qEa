@@ -56,7 +56,7 @@ RemoveUnusedCollumns = function(){
     write.csv(questions, file = "../TutorQeA/data/Questions.csv", row.names = F)      
     write.csv(answers, file = "../TutorQeA/data/Answers.csv", row.names = F)
 }
-    
+
 CheckForeignKeysBetweenTables = function(){
     qIds = read.csv("../TutorQeA/data/Questions.csv")$Id
     
@@ -92,33 +92,33 @@ CheckForeignKeysBetweenTables = function(){
 }
 
 CreateTagLinks = function(){
-
+    
     print(noquote("Creating TagLinks Table..."))
     
     postTags = read.csv("../TutorQeA/data/PostTags.csv")
     
     # Aggregate by Tag
     tagQuestionsList = dlply(postTags, .(TagId), function(x) list(Tag = x$TagId[1], 
-                                                                    Questions = x$PostId))
+                                                                  Questions = x$PostId))
     
     # Loop over each Tag and QuestionList 
     tagLinks = foreach(tagQuest = tagQuestionsList, .combine = rbind) %dopar%
-    {
-        # Get the PostTags that are not from this Tag and that contains Questions in common
-        relatedPostTags = postTags[postTags$TagId != tagQuest[[1]] & 
-                                   postTags$PostId %in% tagQuest[[2]],]
-        if (nrow(relatedPostTags) > 0){
-            # Count the Weight of the Tag Links
-            linkedTags = count(relatedPostTags, .(TagId))
-            # Organize the output data.frame
-            linkedTags$TagIdOne = tagQuest[[1]]
-            colnames(linkedTags) = c("TagIdTwo", "Weight", "TagIdOne")
-            linkedTags = linkedTags[,c("TagIdOne", "TagIdTwo", "Weight")]
-            linkedTags
-        }else{
-            NULL
-        }
+{
+    # Get the PostTags that are not from this Tag and that contains Questions in common
+    relatedPostTags = postTags[postTags$TagId != tagQuest[[1]] & 
+        postTags$PostId %in% tagQuest[[2]],]
+    if (nrow(relatedPostTags) > 0){
+        # Count the Weight of the Tag Links
+        linkedTags = count(relatedPostTags, .(TagId))
+        # Organize the output data.frame
+        linkedTags$TagIdOne = tagQuest[[1]]
+        colnames(linkedTags) = c("TagIdTwo", "Weight", "TagIdOne")
+        linkedTags = linkedTags[,c("TagIdOne", "TagIdTwo", "Weight")]
+        linkedTags
+    }else{
+        NULL
     }
+}
     
     write.csv(tagLinks, file = "../TutorQeA/data/TagLinks2.csv", row.names = F)
 }
@@ -146,7 +146,8 @@ CreateQuestionAnswers = function(){
     question.answers = answers[,c("ParentId", "Id", "Score", "CreationDate")]
     colnames(question.answers) = c("QuestionId", "AnswerId", "Score", "CreationDate")
     question.answers = question.answers[order(question.answers$QuestionId, 
-                               as.POSIXct(question.answers$CreationDate), decreasing=F),]
+                                              strptime(question.answers$CreationDate, "%Y-%m-%d %H:%M:%S"),
+                                              decreasing=F),]
     
     write.csv(question.answers, file = "../TutorQeA/data/QuestionAnswers.csv", row.names = F)
 }
@@ -154,10 +155,12 @@ CreateQuestionAnswers = function(){
 ############# MAIN #############
 library(foreach)
 library(plyr)
-library(doMC)
 
-# Register the Cores of the Machine (runs only in Unix)
-registerDoMC()
+# Register the Cores of the Machine (runs only in Linux)
+if (Sys.info()["sysname"] == "Linux"){
+    library(doMC)
+    registerDoMC()
+}
 
 # RemoveUnusedCollumns()
 # CheckForeignKeysBetweenTables()
