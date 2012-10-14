@@ -106,6 +106,16 @@ public class QeAData {
 			}
 		}
 	}
+	
+	public static ArrayList<Integer> getQuestionIdsByCluster(int cluster){
+		ArrayList<Integer> clusterQuestions = new ArrayList<Integer>();
+		for (Integer qId : chosenQuestions) {
+			if (questionIdsToData.get(qId).getCluster() == cluster){
+				clusterQuestions.add(qId);				
+			}
+		}
+		return(clusterQuestions);
+	}
 
 	@SuppressWarnings("unchecked")
 	public static void readPostTagsFile() throws IOException {

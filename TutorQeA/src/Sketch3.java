@@ -1,5 +1,3 @@
-import java.io.IOException;
-import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.TreeSet;
@@ -14,10 +12,9 @@ import controlP5.Canvas;
 import controlP5.ControlP5;
 import controlP5.Group;
 
-public class Sketch3 extends PApplet {
+public class Sketch3 {
 
-	private static final long serialVersionUID = 1L;
-	int defaultFontSize;
+	int questionFontSize;
 
 	int answerRectHeight;
 	int questionRectHeight;
@@ -28,65 +25,61 @@ public class Sketch3 extends PApplet {
 	ControlP5 cp5;
 	Accordion accordion;
 
+	PApplet pApplet;
+	int myWidth;
+	int myHeight;
+	int myXOrigin;
+	int myYOrigin;
+
+	public Sketch3(PApplet parent, int xOrigin, int yOrigin, int width,
+			int height) {
+		pApplet = parent;
+
+		myXOrigin = xOrigin;
+		myYOrigin = yOrigin;
+		myWidth = width;
+		myHeight = height;
+	}
+
 	public void setup() {
-		size(800, 500);
-		smooth();
-
-		// Font
-		defaultFontSize = 15;
-
-		cp5 = new ControlP5(this);
+		cp5 = new ControlP5(pApplet);
 
 		// Question Rectangles
-		questionRectHeight = 25;
-		answerRectHeight = 75;
-		questionRectPadding = 5;
+		questionRectHeight = myHeight / 25;
+		questionRectPadding = myWidth / 50;
+		answerRectHeight = myHeight / 7;
+
+		// Font
+		questionFontSize = questionRectHeight / 2;
 
 		// Instantiates the objects
 		sortedQuestions = new TreeSet<QuestionData>(
 				new QuestionDescComparator());
-
-		// TODO: After all, move this calls to Main
-		try {
-			QeAData.readQuestionsDataFile();
-			QeAData.readQuestionAnswersFile();
-		} catch (IOException e) {
-			e.printStackTrace();
-			System.exit(1);
-		} catch (ParseException e) {
-			e.printStackTrace();
-			System.exit(1);
-		}
-
-		// Testing...
-		ArrayList<Integer> newIds = new ArrayList<Integer>();
-		newIds.add(1);
-		newIds.add(2);
-		newIds.add(4);
-
-		updateQuestions(newIds);
 	}
 
 	public void draw() {
-		background(255);
+		//
 	}
 
 	private void drawQuestionsAccordion() {
 		if (sortedQuestions.size() > 0) {
 
-			accordion = cp5.addAccordion("QuestionsAccordion")
-					.setPosition(questionRectPadding, questionRectPadding)
-					.setWidth(width - questionRectPadding);
+			accordion = cp5
+					.addAccordion("QuestionsAccordion")
+					.setPosition(myXOrigin + questionRectPadding,
+							myYOrigin + questionRectPadding)
+					.setWidth(myWidth - 2 * questionRectPadding)
+					.setMinItemHeight(20);
 
 			Group g1;
 			int scoreMapValue;
 			for (QuestionData qData : sortedQuestions) {
 
-				colorMode(HSB);
-				scoreMapValue = (int) map(qData.getCommentCount(), sortedQuestions
-						.last().getCommentCount(), sortedQuestions.first().getCommentCount(),
-						0, 255);
-				
+				pApplet.colorMode(PApplet.HSB);
+				scoreMapValue = (int) PApplet.map(qData.getCommentCount(),
+						sortedQuestions.last().getCommentCount(),
+						sortedQuestions.first().getCommentCount(), 50, 200);
+
 				// ADD the QUESTION SCORE, TITLE and SATURATION+BRIGHTNESS
 				g1 = cp5.addGroup(String.valueOf(qData.getId()))
 						.setLabel(
@@ -95,19 +88,20 @@ public class Sketch3 extends PApplet {
 						.setBarHeight(questionRectHeight)
 						.setBackgroundHeight(answerRectHeight)
 						.setColorBackground(
-								color(160, scoreMapValue, scoreMapValue));
-				colorMode(RGB);
+								pApplet.color(100, scoreMapValue, scoreMapValue));
+				pApplet.colorMode(PApplet.RGB);
 
-				PFont pfont = createFont("Helvetica", defaultFontSize, true);
+				PFont pfont = pApplet.createFont("Helvetica", questionFontSize,
+						true);
 				controlP5.ControlFont font = new controlP5.ControlFont(pfont,
-						defaultFontSize);
+						questionFontSize);
 
 				g1.getCaptionLabel().toUpperCase(false).setLetterSpacing(3)
 						.setFont(font).getStyle().marginLeft = 10;
 
 				// ADD ANSWER CANVAS
-				g1.addCanvas(new AnswerCanvas(qData.getId(), width
-						- questionRectPadding, answerRectHeight - 5));
+				g1.addCanvas(new AnswerCanvas(qData.getId(), accordion
+						.getWidth(), answerRectHeight));
 
 				accordion.addItem(g1);
 			}
@@ -118,8 +112,10 @@ public class Sketch3 extends PApplet {
 	}
 
 	public void updateQuestions(ArrayList<Integer> newQuestionIds) {
-		// Remove the old Accordion
+		// Removes the old Accordion
 		cp5.remove("QuestionsAccordion");
+
+		sortedQuestions.clear();
 
 		// Sort the new question id based on the question data
 		for (Integer id : newQuestionIds) {
@@ -129,7 +125,7 @@ public class Sketch3 extends PApplet {
 		// Redraw the Accordion
 		drawQuestionsAccordion();
 	}
-	
+
 	class QuestionDescComparator implements Comparator<QuestionData> {
 
 		@Override
@@ -154,41 +150,47 @@ public class Sketch3 extends PApplet {
 		}
 
 		public void draw(PApplet p) {
-			p.fill(225);
-			p.rect(0, 0, canvasWidth, (float) 1.5 * canvasHeight);
+			p.fill(200, 100);
+			p.rect(0, 0, canvasWidth, canvasHeight);
 
-			// DRAW timeline
+			// There are questions without answers!!!
+			if (QeAData.getQuestionIdsToAnswers().get(questionId) != null) {
+				// DRAW timeline
 
-			// DRAW answer balls
-			int maxScore = 0;
-			for (AnswerData ans : QeAData.getQuestionIdsToAnswers().get(
-					questionId)) {
-				maxScore = (ans.getScore() > maxScore) ? ans.getScore()
-						: maxScore;
-			}
+				// DRAW answer balls
+				int maxScore = 0;
+				for (AnswerData ans : QeAData.getQuestionIdsToAnswers().get(
+						questionId)) {
+					maxScore = (ans.getScore() > maxScore) ? ans.getScore()
+							: maxScore;
+				}
 
-			p.ellipseMode(RADIUS);
+				p.ellipseMode(PApplet.RADIUS);
 
-			float ballPadding = 10;
-			float ballCenter;
-			float ballRadius;
-			float ballShift = ballPadding;
-			for (AnswerData ans : QeAData.getQuestionIdsToAnswers().get(
-					questionId)) {
-				p.fill(color(50, 100, 150));
+				float ballPadding = 10;
+				float ballRadius;
+				float maxBallRadius = PApplet.map(maxScore, 0, maxScore,
+						canvasHeight / 15, canvasHeight / 3);
+				
+				float ballYCenter = (canvasHeight / 2) + maxBallRadius;
+				float ballXCenter = ballPadding;
+				
+				for (AnswerData ans : QeAData.getQuestionIdsToAnswers().get(
+						questionId)) {
+					p.fill(pApplet.color(50, 200, 150, 150));
 
-				ballRadius = map(ans.getScore(), 0, maxScore, 0,
-						canvasHeight / 2);
+					ballRadius = PApplet.map(ans.getScore(), 0, maxScore,
+							canvasHeight / 15, canvasHeight / 3);
 
-				// Ball shift
-				ballShift += ballRadius;
-				// Ball center
-				ballCenter = 70 + maxScore - ballRadius;
+					// Ball shift
+					ballXCenter += ballRadius;
 
-				ellipse(ballShift, ballCenter, ballRadius, ballRadius);
+					pApplet.ellipse(ballXCenter, ballYCenter - ballRadius, ballRadius,
+							ballRadius);
 
-				// Ball shift
-				ballShift += ballRadius + ballPadding;
+					// Ball shift
+					ballXCenter += ballRadius + ballPadding;
+				}
 			}
 		}
 	}

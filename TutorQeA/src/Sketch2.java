@@ -1,19 +1,17 @@
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Enumeration;
 
 import org.gicentre.utils.colour.ColourTable;
-import org.gicentre.utils.multisketch.EmbeddedSketch;
 import org.gicentre.utils.stat.XYChart;
 
+import processing.core.PApplet;
 import processing.core.PFont;
 import processing.core.PVector;
 import util.CentroidData;
 import util.QeAData;
 
-public class Sketch2 extends EmbeddedSketch {
+public class Sketch2 {
 
-	private static final long serialVersionUID = 1L;
 	XYChart xyChart;
 
 	int xyChartXOrigin;
@@ -35,55 +33,58 @@ public class Sketch2 extends EmbeddedSketch {
 
 	int maxClusterNumber;
 
+	MainSketch pApplet;
+	int myWidth;
+	int myHeight;
+	int myXOrigin;
+	int myYOrigin;
+
+	public Sketch2(MainSketch parent, int xOrigin, int yOrigin, int width,
+			int height) {
+		pApplet = parent;
+
+		myXOrigin = xOrigin;
+		myYOrigin = yOrigin;
+		myWidth = width;
+		myHeight = height;
+	}
+
 	/**
 	 * Initialises the sketch, loads data into the chart and customises its
 	 * appearance.
 	 */
 	public void setup() {
-		size(500, 350);
-		smooth();
-
 		// Font
 		defaultFontSize = 11;
 		defaultFontColor = 120;
-		PFont font = createFont("Helvetica", defaultFontSize);
-		textFont(font);
+		PFont font = pApplet.createFont("Helvetica", defaultFontSize);
+		pApplet.textFont(font);
 
 		// Create CHART and SET attributes
-		xyChart = new XYChart(this);
+		xyChart = new XYChart(pApplet);
 		xyChart.setYFormat("####.###");
 		xyChart.setXFormat("####.###");
 		xyChart.setXAxisLabel("Answer Count");
 		xyChart.setYAxisLabel("Question Score");
 
-		xyChartXOrigin = 15;
-		xyChartYOrigin = 50;
-		xyChartWidth = width - (135 + 2 * xyChartXOrigin);
-		xyChartHeight = height - xyChartYOrigin;
-		xyChartMaxPointSize = 80;
+		xyChartXOrigin = myXOrigin + (myWidth / 40);
+		xyChartYOrigin = myYOrigin + 50;
+		xyChartWidth = myWidth - ((myWidth / 6) + 2 * xyChartXOrigin);
+		xyChartHeight = myHeight - xyChartYOrigin;
+		xyChartMaxPointSize = myWidth / 10;
 
 		// Legend size
-		legendXOrigin = xyChartXOrigin + (xyChartWidth) + 35;
+		legendXOrigin = xyChartXOrigin + (xyChartWidth) + (myWidth / 20);
 		legendYOrigin = xyChartYOrigin + (xyChartHeight / 4);
-		legendWidth = 100;
-		legendHeight = 240;
+		legendWidth = (myWidth / 8);
+		legendHeight = (myWidth / 3);
 
-		legendPadding = 8;
-		ellipseWidth = 15;
+		legendPadding = (myWidth / 100);
+		ellipseWidth = (myWidth / 50);
 		ellipseHeight = ellipseWidth;
 
 		// Cluster fields
 		maxClusterNumber = 8;
-
-		// Read files with the Important DATA (raw file path)
-		// TODO: After all, put this call in the Main
-		try {
-			QeAData.readPostTagsFile();
-			QeAData.readQuestionsDataFile();
-		} catch (IOException e) {
-			e.printStackTrace();
-			System.exit(1);
-		}
 
 		// TODO: Delete all this!
 		// Testing....
@@ -106,12 +107,12 @@ public class Sketch2 extends EmbeddedSketch {
 	}
 
 	public void draw() {
-		background(255);
+		pApplet.background(255);
 
 		// Rebuild the chart
 		prepareXYChart();
 
-		textSize(defaultFontSize);
+		pApplet.textSize(defaultFontSize);
 		xyChart.draw(xyChartXOrigin, xyChartYOrigin, xyChartWidth,
 				xyChartHeight);
 
@@ -120,15 +121,17 @@ public class Sketch2 extends EmbeddedSketch {
 
 		// TODO: enable the noLoop() before deploy the application. This noLoop
 		// will improve the app performance.
-		// noLoop();
+		// pApplet.noLoop();
 	}
 
 	public void mousePressed() {
-		if (mouseButton == LEFT) {
-			int selectedCluster = getClusterSelectedInLegend(mouseX, mouseY);
-			// TODO: call the Sketch 3 event!
+		if (pApplet.mouseButton == PApplet.LEFT) {
+			int selectedCluster = getClusterSelectedInLegend(pApplet.mouseX,
+					pApplet.mouseY);
 			if (selectedCluster != -1) {
-				System.out.println("Cluster selected: " + selectedCluster);
+				pApplet.getSketch3().updateQuestions(
+						QeAData.getQuestionIdsByCluster(selectedCluster));
+//				System.out.println("Cluster selected: " + selectedCluster);
 			}
 
 		}
@@ -160,39 +163,52 @@ public class Sketch2 extends EmbeddedSketch {
 					tagTitle.length() - 2);
 
 			// Draw a title over the top of the chart.
-			fill(defaultFontColor);
-			textSize(20);
-			text(title, xyChartXOrigin + 55, xyChartYOrigin - 20);
-			textSize(15);
-			text(subtitle, xyChartXOrigin + 55, xyChartYOrigin);
+			pApplet.fill(defaultFontColor);
+
+			// Cool and adaptable sizes
+			int titleSize = myWidth / 40;
+			int subtitleSize = myWidth / 50;
+			int titlePadding = (myWidth > 600) ? myWidth / 20 : 30;
+
+			pApplet.textSize(titleSize);
+			pApplet.text(title, xyChartXOrigin + titlePadding, xyChartYOrigin
+					- titleSize);
+			pApplet.textSize(subtitleSize);
+			pApplet.text(subtitle, xyChartXOrigin + titlePadding,
+					xyChartYOrigin);
 		}
 	}
 
 	private void drawXYChartLegend() {
-		fill(255);
-		noStroke();
-		rect(legendXOrigin, legendYOrigin, legendWidth, legendHeight);
+		pApplet.fill(255);
+		pApplet.noStroke();
+		pApplet.rect(legendXOrigin, legendYOrigin, legendWidth, legendHeight);
 
 		int clusterIndex;
 		int clusterNum = ChartData.getArrayDataIndex().length;
 		int legendPartitionSize = legendHeight / maxClusterNumber;
-		ellipseMode(CORNER);
+		pApplet.ellipseMode(PApplet.CORNER);
 
 		for (int i = 0; i < clusterNum; i++) {
 			clusterIndex = Math.round(ChartData.getArrayDataIndex()[i]);
 
-			fill(ChartData.RGBA_COLOURS[i][0], ChartData.RGBA_COLOURS[i][1],
-					ChartData.RGBA_COLOURS[i][2], ChartData.RGBA_COLOURS[i][3]);
-			ellipse(legendXOrigin + legendPadding, legendYOrigin
+			pApplet.fill(ChartData.RGBA_COLOURS[i][0],
+					ChartData.RGBA_COLOURS[i][1], ChartData.RGBA_COLOURS[i][2],
+					ChartData.RGBA_COLOURS[i][3]);
+			pApplet.ellipse(legendXOrigin + legendPadding, legendYOrigin
 					+ legendPadding
 					+ (legendHeight / 2 - clusterNum / 2 * legendPartitionSize)
 					+ legendPartitionSize * i, ellipseWidth, ellipseHeight);
 
-			fill(defaultFontColor);
-			text("Cluster " + clusterIndex, legendXOrigin + ellipseWidth + 2
-					* legendPadding, legendYOrigin + legendPadding
+			int legendSize = myWidth / 60;
+
+			pApplet.textSize(legendSize);
+			pApplet.fill(defaultFontColor);
+			pApplet.text("Cluster " + clusterIndex, legendXOrigin
+					+ ellipseWidth + 2 * legendPadding, legendYOrigin
+					+ legendPadding
 					+ (legendHeight / 2 - clusterNum / 2 * legendPartitionSize)
-					+ defaultFontSize + legendPartitionSize * i);
+					+ legendSize + legendPartitionSize * i);
 		}
 	}
 
@@ -215,7 +231,7 @@ public class Sketch2 extends EmbeddedSketch {
 		return (clusterIndex);
 	}
 
-	private void updateChartData() {
+	public void updateChartData() {
 		ChartData.removeAllData();
 
 		Enumeration<CentroidData> centroidEnum = QeAData.getCentroidDataList();
@@ -226,7 +242,7 @@ public class Sketch2 extends EmbeddedSketch {
 			ChartData.addData(centroidTmp.getMeanAnswerCount(),
 					centroidTmp.getMeanScore(), centroidTmp.getClusterSize());
 		}
-		loop();
+		pApplet.loop();
 	}
 }
 

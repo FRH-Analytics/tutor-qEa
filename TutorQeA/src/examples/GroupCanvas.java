@@ -1,7 +1,10 @@
 package examples;
+
 import processing.core.PApplet;
+import controlP5.Accordion;
 import controlP5.Canvas;
 import controlP5.ControlP5;
+import controlP5.Group;
 
 public class GroupCanvas extends PApplet {
 
@@ -12,9 +15,20 @@ public class GroupCanvas extends PApplet {
 		smooth();
 
 		cp5 = new ControlP5(this);
-		cp5.addGroup("myGroup").setLabel("Testing Canvas")
-				.setPosition(100, 200).setWidth(200)
-				.addCanvas(new TestCanvas());
+		
+		Group g1 = cp5.addGroup("myGroup")
+				.setLabel("Testing Canvas").setWidth(50).setBackgroundHeight(210);
+
+		Group g2 = cp5.addGroup("myGroup")
+				.setLabel("Testing Canvas").setWidth(50).setBackgroundHeight(100);
+
+		g1.addCanvas(new TestCanvas());
+		g2.addCanvas(new TestCanvas());
+		
+		Accordion acc = cp5.addAccordion("newAcc").addItem(g1).addItem(g2);
+		acc.open();
+		acc.setCollapseMode(Accordion.MULTI);
+		
 	}
 
 	public void draw() {
@@ -40,7 +54,8 @@ public class GroupCanvas extends PApplet {
 			p.fill(255, 150);
 			a += 0.01;
 			ellipse(100, 100, abs(sin(a) * 150), abs(sin(a) * 150));
-			ellipse(40, 40, abs(sin(a + (float)0.5) * 50), abs(sin(a + (float)0.5) * 50));
+			ellipse(40, 40, abs(sin(a + (float) 0.5) * 50), abs(sin(a
+					+ (float) 0.5) * 50));
 			ellipse(60, 140, abs(cos(a) * 80), abs(cos(a) * 80));
 		}
 	}
