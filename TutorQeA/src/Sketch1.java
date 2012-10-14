@@ -3,20 +3,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 
 import au.com.bytecode.opencsv.CSVReader;
 
-import controlP5.ControlEvent;
-import controlP5.ControlP5;
-import controlP5.DropdownList;
-import processing.core.PApplet;
-import processing.core.PFont;
-
-// Simple example to show how two sketches can be created in separate windows. 
-// Version 1.2, 18th July, 2009. 
-// Author Jo Wood. 
-
+import processing.core.*;
+import controlP5.*;
 
 public class Sketch1 extends PApplet {
 
@@ -29,12 +20,12 @@ public class Sketch1 extends PApplet {
 	private static HashMap<Integer, String> tagDictionary = new HashMap<Integer, String>();
 	private static HashMap<Integer, String> tagLinks = new HashMap<Integer, String>();
 
-	private ArrayList<Integer> selectedTags = new ArrayList<Integer>();
-	private List<String> relatedTags = new ArrayList<String>();
+	private ArrayList<Integer> selectedTags = new ArrayList<>();
+	private ArrayList<String> relatedTags = new ArrayList<>();
 
 	ControlP5 cp5;
 
-	ArrayList<DropdownList> lists = new ArrayList<DropdownList>();
+	ArrayList<DropdownList> lists = new ArrayList<>();
 
 	PFont font = createFont("arial", 12);
 
@@ -50,9 +41,6 @@ public class Sketch1 extends PApplet {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-
-		System.out.println(tagDictionary.get(1));
-		System.out.println(tagLinks.get(1));
 
 		noStroke();
 		cp5 = new ControlP5(this);
@@ -73,9 +61,14 @@ public class Sketch1 extends PApplet {
 	public void controlEvent(ControlEvent theEvent) {
 
 		if (theEvent.isGroup()) {
-			addDropDownList((int) theEvent.getValue());
+			selectedTags.add((int) theEvent.getValue());
+			addDropDownList(
+					(int) theEvent.getValue(),
+					intersct(
+							relatedTags,
+							new ArrayList<String>(Arrays.asList(tagLinks.get(
+									(int) theEvent.getValue()).split(",")))));
 		} else {
-			System.out.println("fez algo");
 		}
 
 	}
@@ -85,15 +78,26 @@ public class Sketch1 extends PApplet {
 	}
 
 	public void input(String theText) {
+		
 		clearList();
-		relatedTags = Arrays.asList(tagLinks.get(1).split(","));
-		System.out.println(tagDictionary.get(1));
-		addDropDownList(1);
+
+		ArrayList<String> values = new ArrayList<>(tagDictionary.values());
+		
+		try {
+			int tagID = values.indexOf(theText) + 1;
+			selectedTags.add(tagID);
+			relatedTags = new ArrayList<String>(Arrays.asList(tagLinks.get(tagID).split(",")));
+			
+			addDropDownList(tagID, intersct(relatedTags, new ArrayList<>(Arrays.asList(tagLinks.get(tagID).split(",")))));
+		} catch (Exception e) {
+		}
+		
+
+		
 	}
 
-	private void addDropDownList(int tagID) {
+	private void addDropDownList(int tagID, ArrayList<String> newTags) {
 
-		System.out.println("entrou com tagID: " + tagID);
 		int x = 20 + 100 * (lists.size() % 3);
 		int y = 80 + 20 * (floor(lists.size() / 3));
 
@@ -101,27 +105,28 @@ public class Sketch1 extends PApplet {
 
 			DropdownList newD = cp5.addDropdownList(
 					"myList-d" + (lists.size() + 1)).setPosition(x, y);
-			for (String tag : relatedTags){
+
+			for (String tag : newTags) {
 				int id = Integer.valueOf(tag);
 				newD.addItem(tagDictionary.get(id), id);
 			}
 
 			lists.add(newD);
-			selectedTags.add(tagID);
 			try {
 				lists.get(lists.size() - 2).disableCollapse();
 			} catch (Exception e) {
 			}
-
 		}
+		relatedTags = newTags;
 	}
 
 	public void clearList() {
 		for (DropdownList list : lists) {
 			list.remove();
 		}
-		lists = new ArrayList<DropdownList>();
-		relatedTags = new ArrayList<String>();
+		lists = new ArrayList<>();
+		relatedTags = new ArrayList<>();
+		selectedTags = new ArrayList<>();
 	}
 
 	public void readCSVFile(HashMap<Integer, String> table) throws IOException {
@@ -139,5 +144,20 @@ public class Sketch1 extends PApplet {
 				table.put(Integer.valueOf(nextLine[0]), nextLine[1]);
 			}
 		}
+		reader.close();
+	}
+
+	private ArrayList<String> intersct(ArrayList<String> l1, ArrayList<String> l2) {
+		ArrayList<String> newList = new ArrayList<String>();
+
+		for (String s : l2) {
+			if (!selectedTags.contains(Integer.valueOf(s))) {
+				if (l1.contains(s)) {
+					newList.add(s);
+				}
+			}
+		}
+		return newList;
+
 	}
 }
