@@ -20,10 +20,11 @@ public class NewSketch2 implements CompositeSketch {
 
 	private float titleSize, subtitleSize, titleYOrigin, subtitleYOrigin;
 
-	private float legendXOrigin, legendYOrigin;
-	private float legendWidth, legendHeight;
+	private float legendX1, legendY1;
+	private float legendX2, legendY2;
 	private float legendPadding;
 
+	private float valueDivisions;
 	private float valueSize;
 
 	private int maxClusterNumber;
@@ -65,8 +66,8 @@ public class NewSketch2 implements CompositeSketch {
 
 		// Legend
 		legendPadding = myWidth * (float) 0.02;
-		legendXOrigin = myXOrigin + (myWidth * (float) 0.85);
-		legendWidth = myWidth * (float) 0.1;
+		legendX1 = myXOrigin + (myWidth * (float) 0.85);
+		legendX2 = myXOrigin + (myWidth * (float) 0.99);
 
 		/*
 		 * HEIGHT
@@ -93,12 +94,19 @@ public class NewSketch2 implements CompositeSketch {
 		// Label
 		xLabelYOrigin = myYOrigin + (myHeight * (float) 0.99);// The bottom
 
+		// Legend
+		float meanPlotY = ((plotY1 + plotY2) / 2);
+		legendY1 = (plotY1 + meanPlotY) / 2;
+		legendY2 = (plotY2 + meanPlotY) / 2;
+
 		// FIXED NUMBER OF CLUSTER
 		maxClusterNumber = 8;
 
 		/*
 		 * Values of the plot
 		 */
+		// FIXED number of divisions
+		valueDivisions = 7;
 		// Value Size
 		valueSize = myWidth / 40;
 	}
@@ -110,8 +118,8 @@ public class NewSketch2 implements CompositeSketch {
 		pApplet.rect(myXOrigin, myYOrigin, myWidth, myHeight);
 
 		// Show the plot area as a white box
-		pApplet.fill(255);
-		pApplet.rectMode(PApplet.CORNERS);
+		// pApplet.fill(255);
+		// pApplet.rectMode(PApplet.CORNERS);
 		// noStroke();
 		// pApplet.rect(plotX1, plotY1, plotX2, plotY2);
 
@@ -159,26 +167,41 @@ public class NewSketch2 implements CompositeSketch {
 					centroidTmp.getMeanScore(), centroidTmp.getClusterSize());
 		}
 
-		// Update plot
-		xMin = ChartData.getMinX();
-		xMax = ChartData.getMaxX();
-
-		yMin = ChartData.getMinY();
-		yMax = ChartData.getMaxX();
+		updateMaxMinXYPlot();
 
 		// Reenable loops
 		pApplet.loop();
 	}
 
+	private void updateMaxMinXYPlot() {
+		// Update Max and Min plot
+		xMin = ChartData.getMinX();
+		xMax = ChartData.getMaxX();
+
+		yMin = ChartData.getMinY();
+		yMax = ChartData.getMaxY();
+
+		// Normalize the axis
+		xMin = xMin - xMin % 10;
+		yMin = yMin - yMin % 10;
+
+		while ((xMax - xMin) % valueDivisions != 0) {
+			xMax++;
+		}
+		while ((yMax - yMin) % valueDivisions != 0) {
+			yMax++;
+		}
+	}
+
 	private int getClusterSelectedInLegend(int x, int y) {
 		int clusterNum = ChartData.getArrayDataIndex().length;
-		float legendPartitionSize = legendHeight / maxClusterNumber;
+		float legendPartitionSize = legendY2 / maxClusterNumber;
 
 		int clusterIndex = -1;
-		float xInside = x - (legendXOrigin + legendPadding);
+		float xInside = x - (legendX1 + legendPadding);
 		float yInside = y
-				- (legendYOrigin + legendPadding + (legendHeight / 2 - clusterNum
-						/ 2 * legendPartitionSize));
+				- (legendY1 + legendPadding + (legendY2 / 2 - clusterNum / 2
+						* legendPartitionSize));
 
 		if (xInside > 0 && yInside > 0
 				&& yInside <= (clusterNum * legendPartitionSize)) {
@@ -237,14 +260,11 @@ public class NewSketch2 implements CompositeSketch {
 
 		float xSize = plotX2 - plotX1;
 		float fixedYPlace = plotY2 + pApplet.textAscent() + 10;
-
 		float nextXPlace = plotX1;
 
 		DecimalFormat decimalForm = new DecimalFormat("###.#");
 		float xValue = xMin;
 
-		// TODO
-		float xDivisions = 5;
 		float xInterval = (xMax - xMin) / valueDivisions;
 
 		while (xValue <= xMax) {
@@ -252,7 +272,7 @@ public class NewSketch2 implements CompositeSketch {
 			pApplet.line(nextXPlace, plotY1, nextXPlace, plotY2);
 
 			xValue += xInterval;
-			nextXPlace += Math.round(xSize / valueDivisions);
+			nextXPlace += xSize / valueDivisions;
 		}
 	}
 
@@ -265,8 +285,6 @@ public class NewSketch2 implements CompositeSketch {
 		float nextYPlace = plotY1;
 		float fixedXPlace = plotX1 - 10;
 
-		// TODO
-		float yDivisions = 5;
 		float yValue = yMax;
 		float yInterval = (yMax - yMin) / valueDivisions;
 
@@ -286,7 +304,7 @@ public class NewSketch2 implements CompositeSketch {
 			pApplet.line(plotX1, nextYPlace, plotX2, nextYPlace);
 
 			yValue -= yInterval;
-			nextYPlace += Math.round(ySize / valueDivisions);
+			nextYPlace += ySize / valueDivisions;
 		}
 	}
 
@@ -296,16 +314,22 @@ public class NewSketch2 implements CompositeSketch {
 
 		pApplet.ellipseMode(PApplet.CENTER);
 
-		float maxPointSizeEver = 80;
-		float size;
-		for (int i = 0; i < ChartData.getPoints().size(); i++) {
-			point = ChartData.getPoints().get(i);
-			size = PApplet.map(ChartData.getSizeArrayList().get(i),
-					ChartData.getMinSize(), ChartData.getMaxSize(), 1,
-					maxPointSizeEver);
+		float maxPointSizeEver = ((plotX2 - plotX1) + (plotY2 - plotY1) / 2)
+				* (float) 0.15;
+		float minPointSizeEver = ((plotX2 - plotX1) + (plotY2 - plotY1) / 2)
+				* (float) 0.025;
 
-			float x = PApplet.map(point.x, xMin, xMax, plotX1, plotX2);
-			float y = PApplet.map(point.y, yMin, yMax, plotY2, plotY1);
+		float size, x, y;
+		for (int i = 0; i < ChartData.getPoints().size(); i++) {
+
+			point = ChartData.getPoints().get(i);
+
+			size = PApplet.map(ChartData.getSizeArrayList().get(i),
+					ChartData.getMinSize(), ChartData.getMaxSize(),
+					minPointSizeEver, maxPointSizeEver);
+			x = PApplet.map(point.x, xMin, xMax, plotX1, plotX2);
+			y = PApplet.map(point.y, yMin, yMax, plotY2, plotY1);
+
 			pApplet.fill(ChartData.RGBA_COLOURS[i][0],
 					ChartData.RGBA_COLOURS[i][1], ChartData.RGBA_COLOURS[i][2],
 					ChartData.RGBA_COLOURS[i][3]);
@@ -314,39 +338,41 @@ public class NewSketch2 implements CompositeSketch {
 	}
 
 	private void drawLegend() {
-		pApplet.fill(255);
-		pApplet.rectMode(PApplet.CORNER);
-		pApplet.rect(legendXOrigin, legendYOrigin, legendWidth, legendHeight);
 
+		// TODO: Finish this method!
 		pApplet.noStroke();
 
-		float legendSize = myWidth / 60;
+		// Names
 		pApplet.textAlign(PApplet.LEFT);
-		pApplet.textSize(legendSize);
+		pApplet.textSize(valueSize);
 
-		int ellipseSize = (myWidth / 50);
-		int clusterIndex;
 		int clusterNum = ChartData.getArrayDataIndex().length;
-		float legendPartitionSize = legendHeight / maxClusterNumber;
+		float legendPartitionSize = (legendY2 - legendY1) / maxClusterNumber;
 		int[] clusterIndexes = ChartData.getArrayDataIndex();
+		int clusterIndex;
 
-		pApplet.ellipseMode(PApplet.CORNER);
+		// Ellipses
+		pApplet.ellipseMode(PApplet.CENTER);
+		float ellipseSize = (legendX2 - legendX1) / 5;
+		float ellipseY;
+
 		for (int i = 0; i < clusterNum; i++) {
 			clusterIndex = Math.round(clusterIndexes[i]);
 
+			ellipseY = legendY1 + (legendY2 - legendY1) / 2
+					- (clusterNum / (2 * legendPartitionSize))
+					+ legendPartitionSize * i;
+
+			// Ellipse
 			pApplet.fill(ChartData.RGBA_COLOURS[i][0],
 					ChartData.RGBA_COLOURS[i][1], ChartData.RGBA_COLOURS[i][2],
 					ChartData.RGBA_COLOURS[i][3]);
-			pApplet.ellipse(legendXOrigin + legendPadding, legendYOrigin
-					+ legendPadding
-					+ (legendHeight / 2 - clusterNum / 2 * legendPartitionSize)
-					+ legendPartitionSize * i, ellipseSize, ellipseSize);
+			pApplet.ellipse(legendX1, ellipseY, ellipseSize, ellipseSize);
 
+			// Name
 			pApplet.fill(0);
-			pApplet.text("Cluster " + clusterIndex, legendXOrigin + ellipseSize
-					+ (2 * legendPadding), legendYOrigin + legendPadding
-					+ (legendHeight / 2 - clusterNum / 2 * legendPartitionSize)
-					+ legendSize + legendPartitionSize * i);
+			pApplet.text("Cluster " + clusterIndex, legendX1 + ellipseSize
+					+ (2 * legendPadding), ellipseY);
 		}
 	}
 }
