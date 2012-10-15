@@ -12,7 +12,7 @@ import controlP5.Canvas;
 import controlP5.ControlP5;
 import controlP5.Group;
 
-public class Sketch3 {
+public class Sketch3 implements CompositeSketch{
 
 	int questionFontSize;
 
@@ -134,6 +134,11 @@ public class Sketch3 {
 		}
 	}
 
+
+	@Override
+	public void mousePressed() {
+	}
+	
 	class AnswerCanvas extends Canvas {
 
 		private int questionId;

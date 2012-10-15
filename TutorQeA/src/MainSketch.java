@@ -1,5 +1,6 @@
 import java.io.IOException;
 import java.text.ParseException;
+import java.util.ArrayList;
 
 import processing.core.PApplet;
 import util.QeAData;
@@ -8,15 +9,15 @@ public class MainSketch extends PApplet {
 
 	private static final long serialVersionUID = 1L;
 
-	Sketch2 sketch2;
+	NewSketch2 newSketch2;
 	Sketch3 sketch3;
 
 	public void setup() {
 		size(1000, 700);
 		smooth();
 
-		sketch2 = new Sketch2(this, 0, 0, 400, 280);
-		sketch3 = new Sketch3(this, 0, 300, width, 500);
+		newSketch2 = new NewSketch2(this, 500, 0, 500, 400);
+		// sketch3 = new Sketch3(this, 0, 300, width, 500);
 
 		try {
 			QeAData.readPostTagsFile();
@@ -29,29 +30,47 @@ public class MainSketch extends PApplet {
 			e.printStackTrace();
 			System.exit(1);
 		}
-		
-		sketch2.setup();
-		sketch3.setup();
-		
-		// TODO: Delete this!!!!
-		getSketch3().updateQuestions(
-				QeAData.getQuestionIdsByCluster(5));
 
+		newSketch2.setup();
+		// sketch3.setup();
+
+		// TODO: Delete this!!!!
+		// getSketch3().updateQuestions(QeAData.getQuestionIdsByCluster(5));
+
+		ArrayList<Integer> tagList = new ArrayList<Integer>();
+		// tagList.add(41);
+		// tagList.add(111);
+		// tagList.add(264);
+		// tagList.add(294);
+		tagList.add(528);
+		ArrayList<String> tagNameList = new ArrayList<String>();
+		// tagNameList.add("r");
+		// tagNameList.add("regression");
+		// tagNameList.add("logistic-regression");
+		// tagNameList.add("roc");
+		tagNameList.add("hmm");
+		QeAData.setTagList(tagList, tagNameList);
+
+		// Reset the data
+		newSketch2.updateChartData();
+
+		
 	}
 
 	public void draw() {
 		background(255);
-		sketch2.draw();
-		sketch3.draw();
+		newSketch2.draw();
+		// sketch3.draw();
 	}
 
 	@Override
 	public void mousePressed() {
-		sketch2.mousePressed();
+		newSketch2.mousePressed();
+		// sketch3.mousePressed();
 	}
 
-	public Sketch2 getSketch2() {
-		return sketch2;
+	public NewSketch2 getSketch2() {
+		return newSketch2;
 	}
 
 	public Sketch3 getSketch3() {
