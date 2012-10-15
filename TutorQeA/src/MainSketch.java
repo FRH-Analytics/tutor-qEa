@@ -16,8 +16,8 @@ public class MainSketch extends PApplet {
 		size(1000, 700);
 		smooth();
 
-		newSketch2 = new NewSketch2(this, 500, 0, 500, 400);
-		// sketch3 = new Sketch3(this, 0, 300, width, 500);
+		newSketch2 = new NewSketch2(this, 500, 0, 500, 350);
+		sketch3 = new Sketch3(this, 0, 400, width, 500);
 
 		try {
 			QeAData.readPostTagsFile();
@@ -32,41 +32,40 @@ public class MainSketch extends PApplet {
 		}
 
 		newSketch2.setup();
-		// sketch3.setup();
-
-		// TODO: Delete this!!!!
-		// getSketch3().updateQuestions(QeAData.getQuestionIdsByCluster(5));
+		sketch3.setup();
 
 		ArrayList<Integer> tagList = new ArrayList<Integer>();
-		// tagList.add(41);
-		// tagList.add(111);
-		// tagList.add(264);
+//		tagList.add(41);
+//		tagList.add(111);
+//		tagList.add(264);
 		// tagList.add(294);
-		tagList.add(528);
+		 tagList.add(528);
 		ArrayList<String> tagNameList = new ArrayList<String>();
-		// tagNameList.add("r");
-		// tagNameList.add("regression");
-		// tagNameList.add("logistic-regression");
+//		tagNameList.add("r");
+//		tagNameList.add("regression");
+//		tagNameList.add("logistic-regression");
 		// tagNameList.add("roc");
-		tagNameList.add("hmm");
+		 tagNameList.add("hmm");
 		QeAData.setTagList(tagList, tagNameList);
 
 		// Reset the data
 		newSketch2.updateChartData();
 
-		
+		// TODO: Delete this!!!!
+		// getSketch3().updateQuestions(QeAData.getQuestionIdsByCluster(5));
+
 	}
 
 	public void draw() {
 		background(255);
 		newSketch2.draw();
-		// sketch3.draw();
+		sketch3.draw();
 	}
 
 	@Override
 	public void mousePressed() {
 		newSketch2.mousePressed();
-		// sketch3.mousePressed();
+		sketch3.mousePressed();
 	}
 
 	public NewSketch2 getSketch2() {

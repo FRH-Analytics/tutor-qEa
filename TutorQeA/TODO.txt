@@ -1,6 +1,5 @@
 TODO Augusto:
 	* Substituir novo plot no MainSketch
-		* Terminar a legenda
 		* Refazer link com a Sketch 3
 
 	* Adicionar HoverQueries:
