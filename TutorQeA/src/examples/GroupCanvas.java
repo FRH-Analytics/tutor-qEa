@@ -1,13 +1,10 @@
 package examples;
 
-import java.util.ArrayList;
-
 import processing.core.PApplet;
 import controlP5.Accordion;
 import controlP5.Canvas;
 import controlP5.ControlP5;
 import controlP5.Group;
-import controlP5.ListBox;
 
 public class GroupCanvas extends PApplet {
 
@@ -18,31 +15,17 @@ public class GroupCanvas extends PApplet {
 		smooth();
 
 		cp5 = new ControlP5(this);
-
-		Group g1 = cp5.addGroup("myGroup").setLabel("Testing Canvas")
-				.setWidth(50).setBackgroundHeight(210);
-
-		Group g2 = cp5.addGroup("myGroup").setLabel("Testing Canvas")
-				.setWidth(50).setBackgroundHeight(100);
-
-		g1.addCanvas(new TestCanvas());
-		g2.addCanvas(new TestCanvas());
-
-		Accordion acc = new Accordion(cp5, "newAcc").addItem(g1).addItem(g2)
-				.open().setCollapseMode(Accordion.MULTI).setPosition(100, 100);
-
-		ListBox l = cp5.addListBox("190190").setPosition(20, 20).setWidth(100)
-				.setSize(120, 120).setItemHeight(15).setBarHeight(15);
-		ArrayList<Group> l1 = new ArrayList<Group>();
-		l1.add(g1);
-		l1.add(g2);
-		l.addItems(l1);
-		l.setScrollbarVisible(true);
+		ScrollCanvas c = new ScrollCanvas();
+		cp5.addCanvas(c);
 
 	}
 
 	public void draw() {
 		background(255);
+		
+		fill(150, 10, 100);
+		rect(10, 10, 100, 100);
+
 	}
 
 	class TestCanvas extends Canvas {
@@ -67,6 +50,45 @@ public class GroupCanvas extends PApplet {
 			ellipse(40, 40, abs(sin(a + (float) 0.5) * 50), abs(sin(a
 					+ (float) 0.5) * 50));
 			ellipse(60, 140, abs(cos(a) * 80), abs(cos(a) * 80));
+		}
+	}
+
+	class ScrollCanvas extends Canvas {
+
+		int centerX = 0, centerY = 0, offsetX = 0, offsetY = 0;
+		
+		public void setup(PApplet p) {
+			println("starting scroll canvas.");
+
+			centerX = 0;
+			centerY = 0;
+			cursor(PApplet.MOVE);
+			smooth();
+			
+			Group g1 = cp5.addGroup("myGroup").setLabel("Testing Canvas")
+					.setWidth(50).setBackgroundHeight(210);
+
+			Group g2 = cp5.addGroup("myGroup").setLabel("Testing Canvas")
+					.setWidth(50).setBackgroundHeight(100);
+
+			g1.addCanvas(new TestCanvas());
+			g2.addCanvas(new TestCanvas());
+
+			new Accordion(cp5, "newAcc").addItem(g1).addItem(g2).open()
+					.setCollapseMode(Accordion.MULTI).setPosition(100, 100);
+
+		}
+
+		public void draw(PApplet p) {
+			if (mousePressed == true) {
+				centerY = mouseY - offsetY;
+			}
+
+			translate(centerX, centerY);
+			
+			fill(0);
+			rect(10, 10, 100, 100);
+
 		}
 	}
 

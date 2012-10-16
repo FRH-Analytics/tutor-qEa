@@ -1,11 +1,9 @@
 import java.io.IOException;
 import java.text.ParseException;
-import java.util.ArrayList;
-
-import controlP5.ControlEvent;
 
 import processing.core.PApplet;
 import util.QeAData;
+import controlP5.ControlEvent;
 
 public class MainSketch extends PApplet {
 
@@ -59,7 +57,7 @@ public class MainSketch extends PApplet {
 //		QeAData.setTagList(tagList, tagNameList);
 
 		// Reset the data
-		sketch2.updatePlot();
+//		sketch2.updatePlot();
 
 		// update the accordion
 //		getSketch3().updateQuestionsByCluster(5);
@@ -115,5 +113,6 @@ public class MainSketch extends PApplet {
 	
 	public void controlEvent(ControlEvent theEvent){
 		sketch1.controlEvent(theEvent);
+		sketch2.updatePlot();
 	}
 }

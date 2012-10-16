@@ -17,12 +17,18 @@ public class QeAData {
 
 	// TODO: Change these file paths to a file (outside from the git
 	// repository)
-	private static final String POST_TAGS_FILE = "C:/Users/MATHEUS/workspace/tutor-qEa/TutorQeA/data/PostTags.csv";
-	private static final String QUESTIONS_DATA_FILE = "C:/Users/MATHEUS/workspace/tutor-qEa/TutorQeA/data/QuestionData.csv";
-	private static final String QUESTION_ANSWERS_FILE = "C:/Users/MATHEUS/workspace/tutor-qEa/TutorQeA/data/QuestionAnswers.csv";
-	private static final String TAG_LINKS_FILE = "C:/Users/MATHEUS/workspace/tutor-qEa/TutorQeA/data/TagLinks.csv";
-	private static final String TAGS_FILE = "C:/Users/MATHEUS/workspace/tutor-qEa/TutorQeA/data/TagsDictionary.csv";
+//	private static final String POST_TAGS_FILE = "C:/Users/MATHEUS/workspace/tutor-qEa/TutorQeA/data/PostTags.csv";
+//	private static final String QUESTIONS_DATA_FILE = "C:/Users/MATHEUS/workspace/tutor-qEa/TutorQeA/data/QuestionData.csv";
+//	private static final String QUESTION_ANSWERS_FILE = "C:/Users/MATHEUS/workspace/tutor-qEa/TutorQeA/data/QuestionAnswers.csv";
+//	private static final String TAG_LINKS_FILE = "C:/Users/MATHEUS/workspace/tutor-qEa/TutorQeA/data/TagLinks.csv";
+//	private static final String TAGS_FILE = "C:/Users/MATHEUS/workspace/tutor-qEa/TutorQeA/data/TagsDictionary.csv";
 
+	private static final String POST_TAGS_FILE = "/home/augusto/git/tutor-qEa/TutorQeA/data/PostTags.csv";
+	private static final String QUESTIONS_DATA_FILE = "/home/augusto/git/tutor-qEa/TutorQeA/data/QuestionData.csv";
+	private static final String QUESTION_ANSWERS_FILE = "/home/augusto/git/tutor-qEa/TutorQeA/data/QuestionAnswers.csv";
+	private static final String TAG_LINKS_FILE = "/home/augusto/git/tutor-qEa/TutorQeA/data/TagLinks.csv";
+	private static final String TAGS_FILE = "/home/augusto/git/tutor-qEa/TutorQeA/data/TagsDictionary.csv";
+	
 	// ArrayList with the chosen tags, the order expresses the intern
 	// relationship between the tags
 	private static ArrayList<Integer> chosenTags = new ArrayList<Integer>();
@@ -50,6 +56,7 @@ public class QeAData {
 		if (tagList.size() == tagNameList.size() && !tagList.equals(chosenTags)) {
 			// CLEAR the chosenTags, chosenQuestions and centroidIdsToData
 			chosenTags.clear();
+			chosenTagNames.clear();
 			chosenQuestions.clear();
 			centroidIdsToData.clear();
 

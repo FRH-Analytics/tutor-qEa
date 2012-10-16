@@ -127,19 +127,22 @@ public class Sketch2 implements CompositeSketch {
 
 	public void draw() {
 		drawTitle();
-		drawAxisLabels();
 
-		// Use thin, gray lines to draw the grid
-		pApplet.stroke(235);
-		pApplet.strokeWeight((float) 1);
-		drawXValues();
-		drawYValues();
+		if (ChartData.getPoints().size() > 0) {
+			drawAxisLabels();
 
-		// Legend
-		drawLegend();
+			// Use thin, gray lines to draw the grid
+			pApplet.stroke(235);
+			pApplet.strokeWeight((float) 1);
+			drawXValues();
+			drawYValues();
 
-		// Points
-		drawDataPoints();
+			// Legend
+			drawLegend();
+
+			// Points
+			drawDataPoints();
+		}
 	}
 
 	public void mousePressed() {
@@ -147,8 +150,7 @@ public class Sketch2 implements CompositeSketch {
 			int selectedCluster = getClusterSelectedInLegend(pApplet.mouseX,
 					pApplet.mouseY);
 			if (selectedCluster != -1) {
-				pApplet.getSketch3().updateQuestionsByCluster(
-						selectedCluster);
+				pApplet.getSketch3().updateQuestionsByCluster(selectedCluster);
 				// System.out.println("Cluster selected: " + selectedCluster);
 			}
 		}
@@ -171,22 +173,24 @@ public class Sketch2 implements CompositeSketch {
 	}
 
 	private void updateMaxMinXYPlot() {
-		// Update Max and Min plot
-		xMin = ChartData.getMinX();
-		xMax = ChartData.getMaxX();
+		if (ChartData.getPoints().size() > 0) {
+			// Update Max and Min plot
+			xMin = ChartData.getMinX();
+			xMax = ChartData.getMaxX();
 
-		yMin = ChartData.getMinY();
-		yMax = ChartData.getMaxY();
+			yMin = ChartData.getMinY();
+			yMax = ChartData.getMaxY();
 
-		// Normalize the axis
-		xMin = xMin - xMin % 10;
-		yMin = yMin - yMin % 10;
+			// Normalize the axis
+			xMin = xMin - xMin % 10;
+			yMin = yMin - yMin % 10;
 
-		while ((xMax - xMin) % valueDivisions != 0) {
-			xMax++;
-		}
-		while ((yMax - yMin) % valueDivisions != 0) {
-			yMax++;
+			while ((xMax - xMin) % valueDivisions != 0) {
+				xMax++;
+			}
+			while ((yMax - yMin) % valueDivisions != 0) {
+				yMax++;
+			}
 		}
 	}
 
@@ -211,8 +215,11 @@ public class Sketch2 implements CompositeSketch {
 			tagTitle.append(", ");
 		}
 		String title = "Question Clustering - centroid visualization";
-		String subtitle = tagTitle.toString().substring(0,
-				tagTitle.length() - 2);
+		String subtitle = tagTitle.toString();
+
+		if (!tagTitle.toString().equals("Tags: ")) {
+			subtitle = subtitle.substring(0, tagTitle.length() - 2);
+		}
 
 		pApplet.fill(0);
 		pApplet.textAlign(PApplet.LEFT);
@@ -387,7 +394,7 @@ class ChartData {
 	/*
 	 * Synchronized to avoid data corruption!
 	 */
-	public static synchronized void addData(float x, float y, float size) {
+	public static void addData(float x, float y, float size) {
 		points.add(new PVector(x, y));
 		sizes.add(size);
 	}
@@ -395,7 +402,7 @@ class ChartData {
 	/*
 	 * Synchronized to avoid data corruption!
 	 */
-	public static synchronized void removeAllData() {
+	public static void removeAllData() {
 		points.clear();
 		sizes.clear();
 	}

@@ -82,8 +82,6 @@ public class Sketch1 implements CompositeSketch {
 	}
 
 	public void draw() {
-		// background(255);
-		// noFill();
 	}
 
 	@Override
@@ -104,9 +102,8 @@ public class Sketch1 implements CompositeSketch {
 							new ArrayList<String>(Arrays.asList(QeAData
 									.getTagLinks()
 									.get((int) theEvent.getValue()).split(",")))));
-		} else {
-			QeAData.setTagList(selectedTags, selectedTagsNames);
 		}
+		QeAData.setTagList(selectedTags, selectedTagsNames);
 	}
 
 	public void search(int theValue) {
