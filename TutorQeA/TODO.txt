@@ -1,7 +1,4 @@
 TODO Augusto:
-	* Substituir novo plot no MainSketch
-		* Refazer link com a Sketch 3
-
 	* Adicionar HoverQueries:
 		* Sobre as perguntas listadas mostrando: CommentCount e Score
 		* Sobre o xyChart, mostrando os dados de cada cluster

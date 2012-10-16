@@ -141,10 +141,11 @@ CreateQuestionData = function(){
 
 CreateQuestionAnswers = function(){
     print(noquote("Creating the QuestionAnswers table (ordered by: QuestionId and Answer$CreationDate)..."))
-    answers = read.csv("data/Answers.csv")
-    accepted.answers = read.csv("data/Questions.csv")$AcceptedAnswerId
-    comments.post.id = read.csv("data/Comments-Answers.csv")$PostId
+    answers = read.csv("../TutorQeA/data/Answers.csv")
+    accepted.answers = read.csv("../TutorQeA/data/Questions.csv")$AcceptedAnswerId
+    comments.post.id = read.csv("../TutorQeA/data/Comments-Answers.csv")$PostId
     
+    # TODO: There is the CommentCount collumn in the original Answer table. Update this.
     question.answers = answers[,c("ParentId", "Id", "Score", "CreationDate")]
     question.answers$CommentCount = NA
     for(i in 1:nrow(question.answers)){
@@ -155,7 +156,7 @@ CreateQuestionAnswers = function(){
     question.answers = question.answers[order(question.answers$QuestionId, 
                                strptime(question.answers$CreationDate,"%Y-%m-%d %H:%M:%S"), decreasing=F),]
     
-    write.csv(question.answers, file = "data/QuestionAnswers.csv", row.names = F)
+    write.csv(question.answers, file = "../TutorQeA/data/QuestionAnswers.csv", row.names = F)
 }
 
 count.comments = function(id, postsIds){
@@ -163,11 +164,11 @@ count.comments = function(id, postsIds){
 }
 
 CreateTagNames = function(){
-  tags = read.csv("data/Tags.csv")
+  tags = read.csv("../TutorQeA/data/Tags.csv")
   
   tagNames = tags[,c(1,2)]
   
-  write.csv(tagNames, file = "data/TagsDictionary.csv",  row.names = F)
+  write.csv(tagNames, file = "../TutorQeA/data/TagsDictionary.csv",  row.names = F)
 }
 
 ############# MAIN #############

@@ -1,43 +1,44 @@
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Enumeration;
 
 import org.gicentre.utils.colour.ColourTable;
-import org.gicentre.utils.stat.XYChart;
 
 import processing.core.PApplet;
-import processing.core.PFont;
 import processing.core.PVector;
 import util.CentroidData;
+import util.CompositeSketch;
 import util.QeAData;
 
-public class Sketch2 {
+public class Sketch2 implements CompositeSketch {
 
-	XYChart xyChart;
+	private float plotX1, plotY1;
+	private float plotX2, plotY2;
 
-	int xyChartXOrigin;
-	int xyChartYOrigin;
-	int xyChartWidth;
-	int xyChartHeight;
-	int xyChartMaxPointSize;
+	private float xMin, xMax, yMin, yMax;
 
-	int legendXOrigin;
-	int legendYOrigin;
-	int legendWidth;
-	int legendHeight;
-	int legendPadding;
-	int ellipseWidth;
-	int ellipseHeight;
+	private float labelSize, yLabelXOrigin, xLabelYOrigin;
 
-	int defaultFontSize;
-	int defaultFontColor;
+	private float titleSize, subtitleSize, titleYOrigin, subtitleYOrigin;
 
-	int maxClusterNumber;
+	private float legendX1, legendY1;
+	private float legendX2, legendY2;
+	private float legendPadding;
+	private float legendPartitionSize;
 
-	MainSketch pApplet;
-	int myWidth;
-	int myHeight;
-	int myXOrigin;
-	int myYOrigin;
+	private float valueDivisions;
+	private float valueSize;
+
+	private int maxClusterNumber;
+
+	private float maxPointSize;
+	private float minPointSize;
+
+	private MainSketch pApplet;
+	private int myWidth;
+	private int myHeight;
+	private int myXOrigin;
+	private int myYOrigin;
 
 	public Sketch2(MainSketch parent, int xOrigin, int yOrigin, int width,
 			int height) {
@@ -49,79 +50,96 @@ public class Sketch2 {
 		myHeight = height;
 	}
 
-	/**
-	 * Initialises the sketch, loads data into the chart and customises its
-	 * appearance.
-	 */
 	public void setup() {
-		// Font
-		defaultFontSize = 11;
-		defaultFontColor = 120;
-		PFont font = pApplet.createFont("Helvetica", defaultFontSize);
-		pApplet.textFont(font);
+		/*
+		 * WIDTHs (based on myWidth)
+		 * 
+		 * 12% to the y label + y values
+		 * 
+		 * 70% to the plot
+		 * 
+		 * 18% to the legend
+		 */
 
-		// Create CHART and SET attributes
-		xyChart = new XYChart(pApplet);
-		xyChart.setYFormat("####.###");
-		xyChart.setXFormat("####.###");
-		xyChart.setXAxisLabel("Answer Count");
-		xyChart.setYAxisLabel("Question Score");
+		// Y label
+		labelSize = myWidth / 40;
+		yLabelXOrigin = myXOrigin + (myWidth * (float) 0.02); // LEFT
 
-		xyChartXOrigin = myXOrigin + (myWidth / 40);
-		xyChartYOrigin = myYOrigin + 50;
-		xyChartWidth = myWidth - ((myWidth / 6) + 2 * xyChartXOrigin);
-		xyChartHeight = myHeight - xyChartYOrigin;
-		xyChartMaxPointSize = myWidth / 10;
+		// X Corners of the plot
+		plotX1 = myXOrigin + (myWidth * (float) 0.12);
+		plotX2 = myXOrigin + (myWidth * (float) 0.81);
 
-		// Legend size
-		legendXOrigin = xyChartXOrigin + (xyChartWidth) + (myWidth / 20);
-		legendYOrigin = xyChartYOrigin + (xyChartHeight / 4);
-		legendWidth = (myWidth / 8);
-		legendHeight = (myWidth / 3);
+		// Legend
+		legendPadding = myWidth * (float) 0.0075;
+		legendX1 = myXOrigin + (myWidth * (float) 0.82);
+		legendX2 = myXOrigin + (myWidth * (float) 0.99);
 
-		legendPadding = (myWidth / 100);
-		ellipseWidth = (myWidth / 50);
-		ellipseHeight = ellipseWidth;
+		/*
+		 * HEIGHT
+		 * 
+		 * 7.5% -> title
+		 * 
+		 * 5% -> subtitle
+		 * 
+		 * 70% -> plot
+		 * 
+		 * 15% to the x label
+		 */
 
-		// Cluster fields
+		// Title
+		titleSize = Math.min(myWidth / 27, myHeight / 17);
+		subtitleSize = Math.min(myWidth / 35, myHeight / 23);
+		titleYOrigin = myYOrigin + (myHeight * (float) 0.075); // The bottom
+		subtitleYOrigin = myYOrigin + (myHeight * (float) 0.125);
+
+		// Plot
+		plotY1 = myYOrigin + (myHeight * (float) 0.15);
+		plotY2 = myYOrigin + (myHeight * (float) 0.88);
+
+		// Label
+		xLabelYOrigin = myYOrigin + (myHeight * (float) 0.99);// The bottom
+
+		// FIXED NUMBER OF CLUSTER
 		maxClusterNumber = 8;
 
-		// TODO: Delete all this!
-		// Testing....
-		ArrayList<Integer> tagList = new ArrayList<Integer>();
-		// tagList.add(41);
-		// tagList.add(111);
-		// tagList.add(264);
-		// tagList.add(294);
-		tagList.add(528);
-		ArrayList<String> tagNameList = new ArrayList<String>();
-		// tagNameList.add("r");
-		// tagNameList.add("regression");
-		// tagNameList.add("logistic-regression");
-		// tagNameList.add("roc");
-		tagNameList.add("hmm");
-		QeAData.setTagList(tagList, tagNameList);
+		// Legend (starts in the top and goes to the bottom of the plot)
+		legendY1 = plotY1;
+		legendY2 = plotY2;
+		legendPartitionSize = (legendY2 - legendY1) / maxClusterNumber;
 
-		// Reset the data
-		updateChartData();
+		/*
+		 * Values of the plot
+		 */
+		// FIXED number of divisions
+		valueDivisions = 7;
+		// Value Size
+		valueSize = myWidth / 40;
+
+		/*
+		 * Point Size
+		 */
+		maxPointSize = ((plotX2 - plotX1) + (plotY2 - plotY1) / 2)
+				* (float) 0.15;
+		minPointSize = ((plotX2 - plotX1) + (plotY2 - plotY1) / 2)
+				* (float) 0.025;
+
 	}
 
 	public void draw() {
-		pApplet.background(255);
+		drawTitle();
+		drawAxisLabels();
 
-		// Rebuild the chart
-		prepareXYChart();
+		// Use thin, gray lines to draw the grid
+		pApplet.stroke(235);
+		pApplet.strokeWeight((float) 1);
+		drawXValues();
+		drawYValues();
 
-		pApplet.textSize(defaultFontSize);
-		xyChart.draw(xyChartXOrigin, xyChartYOrigin, xyChartWidth,
-				xyChartHeight);
+		// Legend
+		drawLegend();
 
-		// Draw chart legend
-		drawXYChartLegend();
-
-		// TODO: enable the noLoop() before deploy the application. This noLoop
-		// will improve the app performance.
-		// pApplet.noLoop();
+		// Points
+		drawDataPoints();
 	}
 
 	public void mousePressed() {
@@ -129,109 +147,14 @@ public class Sketch2 {
 			int selectedCluster = getClusterSelectedInLegend(pApplet.mouseX,
 					pApplet.mouseY);
 			if (selectedCluster != -1) {
-				pApplet.getSketch3().updateQuestions(
-						QeAData.getQuestionIdsByCluster(selectedCluster));
+				pApplet.getSketch3().updateQuestionsByCluster(
+						selectedCluster);
 				// System.out.println("Cluster selected: " + selectedCluster);
 			}
-
 		}
 	}
 
-	private void prepareXYChart() {
-		if (!ChartData.getPoints().isEmpty()) {
-			xyChart.setData(ChartData.getPoints());
-
-			// Axis formatting and labels.
-			xyChart.showXAxis(true);
-			xyChart.showYAxis(true);
-
-			// Symbol colours
-			xyChart.setPointSize(ChartData.getSizeArray(), xyChartMaxPointSize);
-			// 12 different colors
-			xyChart.setPointColour(ChartData.getArrayDataIndex(),
-					ChartData.getColourTable());
-
-			// Draw a title and a subtitle over the top of the chart.
-			// Subtitle with the tag names
-			StringBuilder tagTitle = new StringBuilder("Tags: ");
-			for (String tag : QeAData.getChosenTagNames()) {
-				tagTitle.append(tag);
-				tagTitle.append(", ");
-			}
-			String title = "Question Clustering - Centroid Visualization";
-			String subtitle = tagTitle.toString().substring(0,
-					tagTitle.length() - 2);
-
-			// Draw a title over the top of the chart.
-			pApplet.fill(defaultFontColor);
-
-			// Cool and adaptable sizes
-			int titleSize = myWidth / 40;
-			int subtitleSize = myWidth / 50;
-			int titlePadding = (myWidth > 600) ? myWidth / 20 : 30;
-
-			pApplet.textSize(titleSize);
-			pApplet.text(title, xyChartXOrigin + titlePadding, xyChartYOrigin
-					- titleSize);
-			pApplet.textSize(subtitleSize);
-			pApplet.text(subtitle, xyChartXOrigin + titlePadding,
-					xyChartYOrigin);
-		}
-	}
-
-	private void drawXYChartLegend() {
-		pApplet.fill(255);
-		pApplet.noStroke();
-		pApplet.rect(legendXOrigin, legendYOrigin, legendWidth, legendHeight);
-
-		int clusterIndex;
-		int clusterNum = ChartData.getArrayDataIndex().length;
-		int legendPartitionSize = legendHeight / maxClusterNumber;
-		pApplet.ellipseMode(PApplet.CORNER);
-
-		for (int i = 0; i < clusterNum; i++) {
-			clusterIndex = Math.round(ChartData.getArrayDataIndex()[i]);
-
-			pApplet.fill(ChartData.RGBA_COLOURS[i][0],
-					ChartData.RGBA_COLOURS[i][1], ChartData.RGBA_COLOURS[i][2],
-					ChartData.RGBA_COLOURS[i][3]);
-			pApplet.ellipse(legendXOrigin + legendPadding, legendYOrigin
-					+ legendPadding
-					+ (legendHeight / 2 - clusterNum / 2 * legendPartitionSize)
-					+ legendPartitionSize * i, ellipseWidth, ellipseHeight);
-
-			int legendSize = myWidth / 60;
-
-			pApplet.textSize(legendSize);
-			pApplet.fill(defaultFontColor);
-			pApplet.text("Cluster " + clusterIndex, legendXOrigin
-					+ ellipseWidth + 2 * legendPadding, legendYOrigin
-					+ legendPadding
-					+ (legendHeight / 2 - clusterNum / 2 * legendPartitionSize)
-					+ legendSize + legendPartitionSize * i);
-		}
-	}
-
-	private int getClusterSelectedInLegend(int x, int y) {
-		int clusterNum = ChartData.getArrayDataIndex().length;
-		int legendPartitionSize = legendHeight / maxClusterNumber;
-
-		int clusterIndex = -1;
-		int xInside = x - (legendXOrigin + legendPadding);
-		int yInside = y
-				- (legendYOrigin + legendPadding + (legendHeight / 2 - clusterNum
-						/ 2 * legendPartitionSize));
-
-		if (xInside > 0 && yInside > 0
-				&& yInside <= (clusterNum * legendPartitionSize)) {
-			clusterIndex = (int) Math.ceil(yInside
-					/ (double) legendPartitionSize);
-		}
-
-		return (clusterIndex);
-	}
-
-	public void updateChartData() {
+	public void updatePlot() {
 		ChartData.removeAllData();
 
 		Enumeration<CentroidData> centroidEnum = QeAData.getCentroidDataList();
@@ -242,14 +165,216 @@ public class Sketch2 {
 			ChartData.addData(centroidTmp.getMeanAnswerCount(),
 					centroidTmp.getMeanScore(), centroidTmp.getClusterSize());
 		}
-		pApplet.loop();
+
+		// Update the size of the Axis
+		updateMaxMinXYPlot();
+	}
+
+	private void updateMaxMinXYPlot() {
+		// Update Max and Min plot
+		xMin = ChartData.getMinX();
+		xMax = ChartData.getMaxX();
+
+		yMin = ChartData.getMinY();
+		yMax = ChartData.getMaxY();
+
+		// Normalize the axis
+		xMin = xMin - xMin % 10;
+		yMin = yMin - yMin % 10;
+
+		while ((xMax - xMin) % valueDivisions != 0) {
+			xMax++;
+		}
+		while ((yMax - yMin) % valueDivisions != 0) {
+			yMax++;
+		}
+	}
+
+	private int getClusterSelectedInLegend(int x, int y) {
+		int clusterNum = ChartData.getArrayDataIndex().length;
+		int clusterIndex = -1;
+
+		if (x > legendX1 && x < legendX2 && y > legendY1 && y < legendY2
+				&& (y - legendY1) <= (clusterNum * legendPartitionSize)) {
+			clusterIndex = (int) Math.ceil((y - legendY1)
+					/ (double) legendPartitionSize);
+		}
+
+		return (clusterIndex);
+	}
+
+	private void drawTitle() {
+
+		StringBuilder tagTitle = new StringBuilder("Tags: ");
+		for (String tag : QeAData.getChosenTagNames()) {
+			tagTitle.append(tag);
+			tagTitle.append(", ");
+		}
+		String title = "Question Clustering - centroid visualization";
+		String subtitle = tagTitle.toString().substring(0,
+				tagTitle.length() - 2);
+
+		pApplet.fill(0);
+		pApplet.textAlign(PApplet.LEFT);
+
+		pApplet.textSize(titleSize);
+		pApplet.text(title, plotX1, titleYOrigin);
+
+		pApplet.textSize(subtitleSize);
+		pApplet.text(subtitle, plotX1, subtitleYOrigin);
+	}
+
+	private void drawAxisLabels() {
+		pApplet.fill(0);
+		pApplet.textSize(labelSize);
+
+		// Space in pixels between lines (depends on the size of the text)
+		pApplet.textLeading(labelSize * (float) 1.25);
+
+		// X Label
+		pApplet.textAlign(PApplet.CENTER, PApplet.BOTTOM);
+		pApplet.text("Answer Count", (plotX1 + plotX2) / 2, xLabelYOrigin);
+
+		// Y Label (with rotation)
+		pApplet.textAlign(PApplet.CENTER, PApplet.CENTER);
+		pApplet.pushMatrix();
+		pApplet.translate(yLabelXOrigin, (plotY1 + plotY2) / 2);
+		pApplet.rotate(-PApplet.PI / 2);
+		pApplet.text("Question Score", 0, 0);
+		pApplet.popMatrix();
+	}
+
+	private void drawXValues() {
+		pApplet.fill(0);
+		pApplet.textSize(valueSize);
+		pApplet.textAlign(PApplet.CENTER);
+
+		float xSize = plotX2 - plotX1;
+		float fixedYPlace = plotY2 + pApplet.textAscent() + 5;
+		float nextXPlace = plotX1;
+
+		DecimalFormat decimalForm = new DecimalFormat("###.#");
+		float xValue = xMin;
+
+		float xInterval = (xMax - xMin) / valueDivisions;
+
+		while (xValue <= xMax) {
+			pApplet.text(decimalForm.format(xValue), nextXPlace, fixedYPlace);
+			pApplet.line(nextXPlace, plotY1, nextXPlace, plotY2);
+
+			xValue += xInterval;
+			nextXPlace += xSize / valueDivisions;
+		}
+	}
+
+	private void drawYValues() {
+		pApplet.fill(0);
+		pApplet.textSize(valueSize);
+		pApplet.textAlign(PApplet.RIGHT);
+
+		float ySize = plotY2 - plotY1;
+		float nextYPlace = plotY1;
+		float fixedXPlace = plotX1 - 10;
+
+		float yValue = yMax;
+		float yInterval = (yMax - yMin) / valueDivisions;
+
+		DecimalFormat decimalForm = new DecimalFormat("###.#");
+
+		while (yValue >= yMin) {
+
+			float textOffset = pApplet.textAscent() / 2; // Center vertically
+			if (yValue == yMin) {
+				textOffset = 0; // Align by the bottom
+			} else if (yValue == yMax) {
+				textOffset = pApplet.textAscent(); // Align by the top
+			}
+
+			pApplet.text(decimalForm.format(yValue), fixedXPlace, nextYPlace
+					+ textOffset);
+			pApplet.line(plotX1, nextYPlace, plotX2, nextYPlace);
+
+			yValue -= yInterval;
+			nextYPlace += ySize / valueDivisions;
+		}
+	}
+
+	private void drawDataPoints() {
+		pApplet.noStroke();
+		PVector point;
+
+		pApplet.ellipseMode(PApplet.CENTER);
+
+		float size, x, y;
+		for (int i = 0; i < ChartData.getPoints().size(); i++) {
+
+			point = ChartData.getPoints().get(i);
+
+			// Exceptional case. The map would return NaN...
+			if (ChartData.getMinSize() == ChartData.getMaxSize()) {
+				size = PApplet.map(ChartData.getSizeArrayList().get(i),
+						ChartData.getMinSize() - 5, ChartData.getMaxSize() + 5,
+						minPointSize, maxPointSize);
+			} else {
+				size = PApplet.map(ChartData.getSizeArrayList().get(i),
+						ChartData.getMinSize(), ChartData.getMaxSize(),
+						minPointSize, maxPointSize);
+			}
+
+			x = PApplet.map(point.x, xMin, xMax, plotX1, plotX2);
+			y = PApplet.map(point.y, yMin, yMax, plotY2, plotY1);
+
+			pApplet.fill(ChartData.RGBA_COLOURS[i][0],
+					ChartData.RGBA_COLOURS[i][1], ChartData.RGBA_COLOURS[i][2],
+					ChartData.RGBA_COLOURS[i][3]);
+			pApplet.ellipse(x, y, size, size);
+		}
+	}
+
+	private void drawLegend() {
+		pApplet.noStroke();
+
+		// Names
+		pApplet.textAlign(PApplet.LEFT);
+		pApplet.textSize(valueSize - 1);
+
+		// Ellipses
+		pApplet.ellipseMode(PApplet.CENTER);
+		float ellipseSize = (legendX2 - legendX1) / 5;
+		float ellipseX, ellipseY;
+		float textX, textY;
+
+		// Helpful variables
+		int clusterNum = ChartData.getArrayDataIndex().length;
+		float legendPartitionSize = (legendY2 - legendY1) / maxClusterNumber;
+		int[] clusterIndexes = ChartData.getArrayDataIndex();
+		int clusterIndex;
+
+		for (int i = 0; i < clusterNum; i++) {
+			clusterIndex = Math.round(clusterIndexes[i]);
+
+			ellipseX = legendX1 + legendPadding + (ellipseSize / 2);
+			ellipseY = legendY1 + legendPartitionSize * i + (ellipseSize / 2);
+
+			// Ellipse
+			pApplet.fill(ChartData.RGBA_COLOURS[i][0],
+					ChartData.RGBA_COLOURS[i][1], ChartData.RGBA_COLOURS[i][2],
+					ChartData.RGBA_COLOURS[i][3]);
+			pApplet.ellipse(ellipseX, ellipseY, ellipseSize, ellipseSize);
+
+			// Name
+			textX = legendX1 + ellipseSize + (2 * legendPadding);
+			textY = ellipseY + (ellipseSize / 4);
+			pApplet.fill(0);
+			pApplet.text("Cluster " + clusterIndex, textX, textY);
+		}
 	}
 }
 
 class ChartData {
 	private static ArrayList<PVector> points = new ArrayList<PVector>();
 	private static ArrayList<Float> sizes = new ArrayList<Float>();
-	private static int alpha = 150;
+	private static int alpha = 160;
 
 	public static final int[][] RGBA_COLOURS = { { 141, 211, 199, alpha },
 			{ 255, 255, 179, alpha }, { 190, 186, 218, alpha },
@@ -259,12 +384,18 @@ class ChartData {
 			{ 188, 128, 189, alpha }, { 204, 235, 197, alpha },
 			{ 255, 237, 111, alpha } };
 
-	public static void addData(float x, float y, float size) {
+	/*
+	 * Synchronized to avoid data corruption!
+	 */
+	public static synchronized void addData(float x, float y, float size) {
 		points.add(new PVector(x, y));
 		sizes.add(size);
 	}
 
-	public static void removeAllData() {
+	/*
+	 * Synchronized to avoid data corruption!
+	 */
+	public static synchronized void removeAllData() {
 		points.clear();
 		sizes.clear();
 	}
@@ -277,7 +408,7 @@ class ChartData {
 		return sizes;
 	}
 
-	public static float[] getSizeArray() {
+	public static float[] getArraySize() {
 		float[] floatArray = new float[sizes.size()];
 
 		for (int i = 0; i < floatArray.length; i++) {
@@ -287,8 +418,8 @@ class ChartData {
 		return floatArray;
 	}
 
-	public static float[] getArrayDataIndex() {
-		float[] colourData = new float[getSizeArrayList().size()];
+	public static int[] getArrayDataIndex() {
+		int[] colourData = new int[getSizeArrayList().size()];
 		for (int i = 0; i < colourData.length; i++) {
 			colourData[i] = i + 1;
 		}
@@ -336,5 +467,21 @@ class ChartData {
 			maxY = (point.y > maxY) ? point.y : maxY;
 		}
 		return maxY;
+	}
+
+	public static float getMaxSize() {
+		float maxSize = Float.MIN_VALUE;
+		for (float s : sizes) {
+			maxSize = (s > maxSize) ? s : maxSize;
+		}
+		return maxSize;
+	}
+
+	public static float getMinSize() {
+		float minSize = Float.MAX_VALUE;
+		for (float s : sizes) {
+			minSize = (s < minSize) ? s : minSize;
+		}
+		return minSize;
 	}
 }

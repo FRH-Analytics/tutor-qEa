@@ -9,17 +9,21 @@ public class MainSketch extends PApplet {
 
 	private static final long serialVersionUID = 1L;
 
-	NewSketch2 newSketch2;
+	Sketch1 sketch1;
+	Sketch2 sketch2;
 	Sketch3 sketch3;
 
 	public void setup() {
 		size(1000, 700);
 		smooth();
 
-		newSketch2 = new NewSketch2(this, 500, 0, 500, 350);
-		sketch3 = new Sketch3(this, 0, 400, width, 500);
+		sketch1 = new Sketch1(this, 0, 50, 500, 300);
+		sketch2 = new Sketch2(this, 500, 50, 500, 300);
+		sketch3 = new Sketch3(this, 0, 350, width, 350);
 
 		try {
+			QeAData.readTagLinksFile();
+			QeAData.readTagDictionaryFile();
 			QeAData.readPostTagsFile();
 			QeAData.readQuestionsDataFile();
 			QeAData.readQuestionAnswersFile();
@@ -31,45 +35,67 @@ public class MainSketch extends PApplet {
 			System.exit(1);
 		}
 
-		newSketch2.setup();
+		sketch1.setup();
+		sketch2.setup();
 		sketch3.setup();
 
+		/*
+		 * TODO: Testing... Delete allll this, then...
+		 */
 		ArrayList<Integer> tagList = new ArrayList<Integer>();
-//		tagList.add(41);
-//		tagList.add(111);
-//		tagList.add(264);
+		// tagList.add(41);
+		// tagList.add(111);
+		// tagList.add(264);
 		// tagList.add(294);
-		 tagList.add(528);
+		tagList.add(528);
 		ArrayList<String> tagNameList = new ArrayList<String>();
-//		tagNameList.add("r");
-//		tagNameList.add("regression");
-//		tagNameList.add("logistic-regression");
+		// tagNameList.add("r");
+		// tagNameList.add("regression");
+		// tagNameList.add("logistic-regression");
 		// tagNameList.add("roc");
-		 tagNameList.add("hmm");
+		tagNameList.add("hmm");
 		QeAData.setTagList(tagList, tagNameList);
 
 		// Reset the data
-		newSketch2.updateChartData();
+		sketch2.updatePlot();
 
-		// TODO: Delete this!!!!
-		// getSketch3().updateQuestions(QeAData.getQuestionIdsByCluster(5));
+		// update the accordion
+		getSketch3().updateQuestionsByCluster(5);
 
 	}
 
 	public void draw() {
 		background(255);
-		newSketch2.draw();
+
+		// Draw Main Title
+		fill(0);
+		textAlign(PApplet.CENTER, PApplet.CENTER);
+		textSize(30);
+		text("Tutor Q&A", width / 2, 25);
+
+		// Draw line between Sketch1 and Sketch2
+		stroke(100);
+		strokeWeight((float) 2);
+		line(width / 2, 50, width / 2, 350);
+
+		sketch1.draw();
+		sketch2.draw();
 		sketch3.draw();
 	}
 
 	@Override
 	public void mousePressed() {
-		newSketch2.mousePressed();
+		sketch1.mousePressed();
+		sketch2.mousePressed();
 		sketch3.mousePressed();
 	}
 
-	public NewSketch2 getSketch2() {
-		return newSketch2;
+	public Sketch1 getSketch1() {
+		return sketch1;
+	}
+
+	public Sketch2 getSketch2() {
+		return sketch2;
 	}
 
 	public Sketch3 getSketch3() {
