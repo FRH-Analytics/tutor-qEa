@@ -38,31 +38,6 @@ public class MainSketch extends PApplet {
 		sketch1.setup();
 		sketch2.setup();
 		sketch3.setup();
-
-		/*
-		 * TODO: Testing... Delete allll this, then...
-		 */
-//		ArrayList<Integer> tagList = new ArrayList<Integer>();
-		// tagList.add(41);
-		// tagList.add(111);
-		// tagList.add(264);
-		// tagList.add(294);
-//		tagList.add(528);
-//		ArrayList<String> tagNameList = new ArrayList<String>();
-		// tagNameList.add("r");
-		// tagNameList.add("regression");
-		// tagNameList.add("logistic-regression");
-		// tagNameList.add("roc");
-//		tagNameList.add("hmm");
-//		QeAData.setTagList(tagList, tagNameList);
-
-		// Reset the data
-//		sketch2.updatePlot();
-
-		// update the accordion
-//		getSketch3().updateQuestionsByCluster(5);
-		
-
 	}
 
 	public void draw() {
@@ -89,6 +64,11 @@ public class MainSketch extends PApplet {
 		sketch1.mousePressed();
 		sketch2.mousePressed();
 		sketch3.mousePressed();
+	}
+	
+	@Override
+	public void mouseMoved() {
+		sketch2.mouseMoved();
 	}
 
 	public Sketch1 getSketch1() {

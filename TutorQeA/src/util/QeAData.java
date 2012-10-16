@@ -17,45 +17,51 @@ public class QeAData {
 
 	// TODO: Change these file paths to a file (outside from the git
 	// repository)
-//	private static final String POST_TAGS_FILE = "C:/Users/MATHEUS/workspace/tutor-qEa/TutorQeA/data/PostTags.csv";
-//	private static final String QUESTIONS_DATA_FILE = "C:/Users/MATHEUS/workspace/tutor-qEa/TutorQeA/data/QuestionData.csv";
-//	private static final String QUESTION_ANSWERS_FILE = "C:/Users/MATHEUS/workspace/tutor-qEa/TutorQeA/data/QuestionAnswers.csv";
-//	private static final String TAG_LINKS_FILE = "C:/Users/MATHEUS/workspace/tutor-qEa/TutorQeA/data/TagLinks.csv";
-//	private static final String TAGS_FILE = "C:/Users/MATHEUS/workspace/tutor-qEa/TutorQeA/data/TagsDictionary.csv";
+	// private static final String POST_TAGS_FILE =
+	// "C:/Users/MATHEUS/workspace/tutor-qEa/TutorQeA/data/PostTags.csv";
+	// private static final String QUESTIONS_DATA_FILE =
+	// "C:/Users/MATHEUS/workspace/tutor-qEa/TutorQeA/data/QuestionData.csv";
+	// private static final String QUESTION_ANSWERS_FILE =
+	// "C:/Users/MATHEUS/workspace/tutor-qEa/TutorQeA/data/QuestionAnswers.csv";
+	// private static final String TAG_LINKS_FILE =
+	// "C:/Users/MATHEUS/workspace/tutor-qEa/TutorQeA/data/TagLinks.csv";
+	// private static final String TAGS_FILE =
+	// "C:/Users/MATHEUS/workspace/tutor-qEa/TutorQeA/data/TagsDictionary.csv";
 
 	private static final String POST_TAGS_FILE = "/home/augusto/git/tutor-qEa/TutorQeA/data/PostTags.csv";
 	private static final String QUESTIONS_DATA_FILE = "/home/augusto/git/tutor-qEa/TutorQeA/data/QuestionData.csv";
 	private static final String QUESTION_ANSWERS_FILE = "/home/augusto/git/tutor-qEa/TutorQeA/data/QuestionAnswers.csv";
 	private static final String TAG_LINKS_FILE = "/home/augusto/git/tutor-qEa/TutorQeA/data/TagLinks.csv";
 	private static final String TAGS_FILE = "/home/augusto/git/tutor-qEa/TutorQeA/data/TagsDictionary.csv";
-	
+
 	// ArrayList with the chosen tags, the order expresses the intern
 	// relationship between the tags
-	private static ArrayList<Integer> chosenTags = new ArrayList<Integer>();
+	private static ArrayList<Integer> chosenTagIds = new ArrayList<Integer>();
 	private static ArrayList<String> chosenTagNames = new ArrayList<String>();
-	// ArrayList with the chosen questions filtered after chosing the tags
+	// ArrayList with the chosen questions filtered after choosing the tags
 	private static ArrayList<Integer> chosenQuestions = new ArrayList<Integer>();
-
-	// Data in Memory
+	// Map with the centroids
+	private static Hashtable<Integer, CentroidData> centroidIdsToData = new Hashtable<Integer, CentroidData>();
+	
+	// Static Data in Memory
 	private static Hashtable<Integer, ArrayList<Integer>> tagToQuestions = new Hashtable<Integer, ArrayList<Integer>>(
 			100);
 	private static Hashtable<Integer, ArrayList<Integer>> questionToTags = new Hashtable<Integer, ArrayList<Integer>>(
 			2000);
-	private static Hashtable<Integer, CentroidData> centroidIdsToData = new Hashtable<Integer, CentroidData>();
-
 	private static Hashtable<Integer, QuestionData> questionIdsToData = new Hashtable<Integer, QuestionData>();
 	private static Hashtable<Integer, ArrayList<AnswerData>> questionIdsToAnswers = new Hashtable<Integer, ArrayList<AnswerData>>();
 
 	private static HashMap<Integer, String> tagLinks = new HashMap<Integer, String>();
-	private static HashMap<Integer, String> tagDictionary = new HashMap<Integer, String>();	
-	
+	private static HashMap<Integer, String> tagDictionary = new HashMap<Integer, String>();
+
 	@SuppressWarnings("unchecked")
 	public static void setTagList(ArrayList<Integer> tagList,
 			ArrayList<String> tagNameList) {
 
-		if (tagList.size() == tagNameList.size() && !tagList.equals(chosenTags)) {
+		if (tagList.size() == tagNameList.size()
+				&& !tagList.equals(chosenTagIds)) {
 			// CLEAR the chosenTags, chosenQuestions and centroidIdsToData
-			chosenTags.clear();
+			chosenTagIds.clear();
 			chosenTagNames.clear();
 			chosenQuestions.clear();
 			centroidIdsToData.clear();
@@ -73,7 +79,7 @@ public class QeAData {
 					System.exit(1);
 				}
 
-				chosenTags.add(tagId);
+				chosenTagIds.add(tagId);
 				chosenTagNames.add(tagName);
 				int qId;
 				// If there is any chosen question
@@ -119,15 +125,15 @@ public class QeAData {
 			}
 		}
 	}
-	
-	public static ArrayList<Integer> getQuestionIdsByCluster(int cluster){
+
+	public static ArrayList<Integer> getQuestionIdsByCluster(int cluster) {
 		ArrayList<Integer> clusterQuestions = new ArrayList<Integer>();
 		for (Integer qId : chosenQuestions) {
-			if (questionIdsToData.get(qId).getCluster() == cluster){
-				clusterQuestions.add(qId);				
+			if (questionIdsToData.get(qId).getCluster() == cluster) {
+				clusterQuestions.add(qId);
 			}
 		}
-		return(clusterQuestions);
+		return (clusterQuestions);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -227,10 +233,11 @@ public class QeAData {
 			}
 
 			questionIdsToAnswers.get(questionId).add(
-					new AnswerData(answerId, score, creationDate, answerCommentsCount, isAccepted));
+					new AnswerData(answerId, score, creationDate,
+							answerCommentsCount, isAccepted));
 		}
 	}
-	
+
 	public static void readTagLinksFile() throws IOException {
 
 		CSVReader reader = new CSVReader(new FileReader(TAG_LINKS_FILE));
@@ -261,7 +268,6 @@ public class QeAData {
 		reader.close();
 	}
 
-
 	public static Hashtable<Integer, ArrayList<Integer>> getTagToQuestions() {
 		return tagToQuestions;
 	}
@@ -283,7 +289,7 @@ public class QeAData {
 	}
 
 	public static ArrayList<Integer> getChosenTags() {
-		return chosenTags;
+		return chosenTagIds;
 	}
 
 	public static ArrayList<String> getChosenTagNames() {
@@ -297,11 +303,11 @@ public class QeAData {
 	public static Hashtable<Integer, ArrayList<AnswerData>> getQuestionIdsToAnswers() {
 		return questionIdsToAnswers;
 	}
-	
+
 	public static HashMap<Integer, String> getTagLinks() {
 		return tagLinks;
 	}
-	
+
 	public static HashMap<Integer, String> getTagDictionary() {
 		return tagDictionary;
 	}

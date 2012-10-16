@@ -55,13 +55,13 @@ public class GroupCanvas extends PApplet {
 
 	class ScrollCanvas extends Canvas {
 
-		int centerX = 0, centerY = 0, offsetX = 0, offsetY = 0;
+		int centerY, offsetY;
 		
 		public void setup(PApplet p) {
 			println("starting scroll canvas.");
 
-			centerX = 0;
 			centerY = 0;
+			offsetY = 0;
 			cursor(PApplet.MOVE);
 			smooth();
 			
@@ -84,9 +84,9 @@ public class GroupCanvas extends PApplet {
 				centerY = mouseY - offsetY;
 			}
 
-			translate(centerX, centerY);
+			translate(0, centerY);
 			
-			fill(0);
+			fill(188);
 			rect(10, 10, 100, 100);
 
 		}

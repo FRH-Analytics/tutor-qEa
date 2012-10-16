@@ -25,11 +25,14 @@ public class Sketch2 implements CompositeSketch {
 	private float legendX2, legendY2;
 	private float legendPadding;
 	private float legendPartitionSize;
+	private float littleClusterSize;
 
 	private float valueDivisions;
 	private float valueSize;
+	private float gridGrayColor;
 
 	private int maxClusterNumber;
+	private int selectedCluster;
 
 	private float maxPointSize;
 	private float minPointSize;
@@ -102,10 +105,14 @@ public class Sketch2 implements CompositeSketch {
 		// FIXED NUMBER OF CLUSTER
 		maxClusterNumber = 8;
 
+		// No Cluster selected
+		selectedCluster = -1;
+
 		// Legend (starts in the top and goes to the bottom of the plot)
 		legendY1 = plotY1;
 		legendY2 = plotY2;
 		legendPartitionSize = (legendY2 - legendY1) / maxClusterNumber;
+		littleClusterSize = (legendX2 - legendX1) / 5;
 
 		/*
 		 * Values of the plot
@@ -114,6 +121,8 @@ public class Sketch2 implements CompositeSketch {
 		valueDivisions = 7;
 		// Value Size
 		valueSize = myWidth / 40;
+
+		gridGrayColor = 235;
 
 		/*
 		 * Point Size
@@ -129,10 +138,11 @@ public class Sketch2 implements CompositeSketch {
 		drawTitle();
 
 		if (ChartData.getPoints().size() > 0) {
+			drawSubtitle();
 			drawAxisLabels();
 
 			// Use thin, gray lines to draw the grid
-			pApplet.stroke(235);
+			pApplet.stroke(gridGrayColor);
 			pApplet.strokeWeight((float) 1);
 			drawXValues();
 			drawYValues();
@@ -142,17 +152,70 @@ public class Sketch2 implements CompositeSketch {
 
 			// Points
 			drawDataPoints();
+
+			// Highlight Cluster (Hover query)
+			if (selectedCluster != -1) {
+				highlightCluster(selectedCluster);
+			}
 		}
 	}
 
 	public void mousePressed() {
-		if (pApplet.mouseButton == PApplet.LEFT) {
-			int selectedCluster = getClusterSelectedInLegend(pApplet.mouseX,
-					pApplet.mouseY);
+		if (pApplet.mouseButton == PApplet.LEFT && mouseOverSketch()) {
 			if (selectedCluster != -1) {
-				pApplet.getSketch3().updateQuestionsByCluster(selectedCluster);
-				// System.out.println("Cluster selected: " + selectedCluster);
+				pApplet.getSketch3().updateQuestionsByCluster(
+						selectedCluster + 1);
 			}
+		}
+	}
+
+	public void mouseMoved() {
+		if (mouseOverSketch()) {
+			selectedCluster = getClusterInLegend(pApplet.mouseX, pApplet.mouseY);
+			if (selectedCluster == -1) {
+				selectedCluster = getClusterInPlot(pApplet.mouseX,
+						pApplet.mouseY);
+			}
+		}
+	}
+
+	private void highlightCluster(int clusterIndex) {
+		if (clusterIndex >= 0 && clusterIndex < maxClusterNumber) {
+			float xInPixels, yInPixels, sizeInPixels, realSize;
+
+			pApplet.fill(ChartData.RGBA_COLOURS[clusterIndex][0],
+					ChartData.RGBA_COLOURS[clusterIndex][1],
+					ChartData.RGBA_COLOURS[clusterIndex][2]);
+			pApplet.stroke(gridGrayColor / (float) 1.5);
+			pApplet.strokeWeight((float) 1.75);
+			pApplet.ellipseMode(PApplet.CENTER);
+
+			// Highlight LittleCluster (LEGEND)
+			xInPixels = getLegendLittleClusterX();
+			yInPixels = getLegendLittleClusterY(clusterIndex);
+			sizeInPixels = littleClusterSize;
+
+			pApplet.ellipse(xInPixels, yInPixels, sizeInPixels, sizeInPixels);
+
+			// Highlight Cluster (PLOT)
+			xInPixels = getPointXInPixels(clusterIndex);
+			yInPixels = getPointYInPixels(clusterIndex);
+			sizeInPixels = getPointSizeInPixels(clusterIndex);
+
+			pApplet.ellipse(xInPixels, yInPixels, sizeInPixels, sizeInPixels);
+
+			// Draw ToolTip
+			realSize = ChartData.getSizeArrayList().get(clusterIndex);
+			pApplet.fill(50, 100);
+			pApplet.strokeWeight((float) 1);
+			pApplet.rectMode(PApplet.CENTER);
+			pApplet.rect(xInPixels + sizeInPixels / 2, yInPixels - sizeInPixels
+					/ 2, 90, 20, 5, 5);
+			pApplet.fill(255);
+			pApplet.textSize(12);
+			pApplet.textAlign(PApplet.CENTER, PApplet.CENTER);
+			pApplet.text(String.valueOf((int) realSize) + " question(s)", xInPixels
+					+ sizeInPixels / 2, yInPixels - sizeInPixels / 2);
 		}
 	}
 
@@ -169,10 +232,6 @@ public class Sketch2 implements CompositeSketch {
 		}
 
 		// Update the size of the Axis
-		updateMaxMinXYPlot();
-	}
-
-	private void updateMaxMinXYPlot() {
 		if (ChartData.getPoints().size() > 0) {
 			// Update Max and Min plot
 			xMin = ChartData.getMinX();
@@ -194,7 +253,40 @@ public class Sketch2 implements CompositeSketch {
 		}
 	}
 
-	private int getClusterSelectedInLegend(int x, int y) {
+	// TODO: Create an AbstractClass with this method and the attributes that
+	// are common to all sketches
+	public boolean mouseOverSketch() {
+		return (pApplet.mouseX > myXOrigin
+				&& pApplet.mouseX < (myXOrigin + myWidth)
+				&& pApplet.mouseY > myYOrigin && pApplet.mouseY < (myYOrigin + myHeight));
+	}
+
+	private int getClusterInPlot(int x, int y) {
+		int clusterIndex = -1;
+
+		float xInPixels, yInPixels, radiusInPixels;
+		double dist, finalDist = Double.MAX_VALUE;
+
+		for (int i = 0; i < ChartData.getPoints().size(); i++) {
+			xInPixels = getPointXInPixels(i);
+			yInPixels = getPointYInPixels(i);
+			radiusInPixels = getPointSizeInPixels(i) / 2;
+
+			// Distance
+			dist = Math.sqrt(Math.pow(x - xInPixels, 2)
+					+ Math.pow(y - yInPixels, 2));
+
+			if (dist <= radiusInPixels) {
+				// Select the smaller cluster that the mouse is over
+				clusterIndex = (dist < finalDist) ? i : clusterIndex;
+				break;
+			}
+		}
+
+		return (clusterIndex);
+	}
+
+	private int getClusterInLegend(int x, int y) {
 		int clusterNum = ChartData.getArrayDataIndex().length;
 		int clusterIndex = -1;
 
@@ -202,19 +294,27 @@ public class Sketch2 implements CompositeSketch {
 				&& (y - legendY1) <= (clusterNum * legendPartitionSize)) {
 			clusterIndex = (int) Math.ceil((y - legendY1)
 					/ (double) legendPartitionSize);
+			clusterIndex--;
 		}
 
 		return (clusterIndex);
 	}
 
 	private void drawTitle() {
+		pApplet.fill(0);
+		pApplet.textAlign(PApplet.LEFT);
+		String title = "Question Clustering - centroid visualization";
+		pApplet.textSize(titleSize);
+		pApplet.text(title, plotX1, titleYOrigin);
+	}
+
+	private void drawSubtitle() {
 
 		StringBuilder tagTitle = new StringBuilder("Tags: ");
 		for (String tag : QeAData.getChosenTagNames()) {
 			tagTitle.append(tag);
 			tagTitle.append(", ");
 		}
-		String title = "Question Clustering - centroid visualization";
 		String subtitle = tagTitle.toString();
 
 		if (!tagTitle.toString().equals("Tags: ")) {
@@ -223,10 +323,6 @@ public class Sketch2 implements CompositeSketch {
 
 		pApplet.fill(0);
 		pApplet.textAlign(PApplet.LEFT);
-
-		pApplet.textSize(titleSize);
-		pApplet.text(title, plotX1, titleYOrigin);
-
 		pApplet.textSize(subtitleSize);
 		pApplet.text(subtitle, plotX1, subtitleYOrigin);
 	}
@@ -308,34 +404,46 @@ public class Sketch2 implements CompositeSketch {
 
 	private void drawDataPoints() {
 		pApplet.noStroke();
-		PVector point;
 
 		pApplet.ellipseMode(PApplet.CENTER);
 
 		float size, x, y;
 		for (int i = 0; i < ChartData.getPoints().size(); i++) {
 
-			point = ChartData.getPoints().get(i);
-
-			// Exceptional case. The map would return NaN...
-			if (ChartData.getMinSize() == ChartData.getMaxSize()) {
-				size = PApplet.map(ChartData.getSizeArrayList().get(i),
-						ChartData.getMinSize() - 5, ChartData.getMaxSize() + 5,
-						minPointSize, maxPointSize);
-			} else {
-				size = PApplet.map(ChartData.getSizeArrayList().get(i),
-						ChartData.getMinSize(), ChartData.getMaxSize(),
-						minPointSize, maxPointSize);
-			}
-
-			x = PApplet.map(point.x, xMin, xMax, plotX1, plotX2);
-			y = PApplet.map(point.y, yMin, yMax, plotY2, plotY1);
+			size = getPointSizeInPixels(i);
+			x = getPointXInPixels(i);
+			y = getPointYInPixels(i);
 
 			pApplet.fill(ChartData.RGBA_COLOURS[i][0],
 					ChartData.RGBA_COLOURS[i][1], ChartData.RGBA_COLOURS[i][2],
 					ChartData.RGBA_COLOURS[i][3]);
 			pApplet.ellipse(x, y, size, size);
 		}
+	}
+
+	private float getPointXInPixels(int index) {
+		return (PApplet.map(ChartData.getPoints().get(index).x, xMin, xMax,
+				plotX1, plotX2));
+	}
+
+	private float getPointYInPixels(int index) {
+		return (PApplet.map(ChartData.getPoints().get(index).y, yMin, yMax,
+				plotY1, plotY2));
+	}
+
+	private float getPointSizeInPixels(int index) {
+		float size = -1;
+		if (ChartData.getMinSize() == ChartData.getMaxSize()) {
+			// Exceptional case. The map would return NaN...
+			size = PApplet.map(ChartData.getSizeArrayList().get(index),
+					ChartData.getMinSize() - 5, ChartData.getMaxSize() + 5,
+					minPointSize, maxPointSize);
+		} else {
+			size = PApplet.map(ChartData.getSizeArrayList().get(index),
+					ChartData.getMinSize(), ChartData.getMaxSize(),
+					minPointSize, maxPointSize);
+		}
+		return size;
 	}
 
 	private void drawLegend() {
@@ -345,36 +453,43 @@ public class Sketch2 implements CompositeSketch {
 		pApplet.textAlign(PApplet.LEFT);
 		pApplet.textSize(valueSize - 1);
 
-		// Ellipses
+		// Little Cluster
 		pApplet.ellipseMode(PApplet.CENTER);
-		float ellipseSize = (legendX2 - legendX1) / 5;
-		float ellipseX, ellipseY;
+		float littleClusterX, littleClusterY;
 		float textX, textY;
 
 		// Helpful variables
 		int clusterNum = ChartData.getArrayDataIndex().length;
-		float legendPartitionSize = (legendY2 - legendY1) / maxClusterNumber;
 		int[] clusterIndexes = ChartData.getArrayDataIndex();
 		int clusterIndex;
 
 		for (int i = 0; i < clusterNum; i++) {
 			clusterIndex = Math.round(clusterIndexes[i]);
 
-			ellipseX = legendX1 + legendPadding + (ellipseSize / 2);
-			ellipseY = legendY1 + legendPartitionSize * i + (ellipseSize / 2);
+			littleClusterX = getLegendLittleClusterX();
+			littleClusterY = getLegendLittleClusterY(i);
 
 			// Ellipse
 			pApplet.fill(ChartData.RGBA_COLOURS[i][0],
 					ChartData.RGBA_COLOURS[i][1], ChartData.RGBA_COLOURS[i][2],
 					ChartData.RGBA_COLOURS[i][3]);
-			pApplet.ellipse(ellipseX, ellipseY, ellipseSize, ellipseSize);
+			pApplet.ellipse(littleClusterX, littleClusterY, littleClusterSize,
+					littleClusterSize);
 
 			// Name
-			textX = legendX1 + ellipseSize + (2 * legendPadding);
-			textY = ellipseY + (ellipseSize / 4);
+			textX = legendX1 + littleClusterSize + (2 * legendPadding);
+			textY = littleClusterY + (littleClusterSize / 4);
 			pApplet.fill(0);
 			pApplet.text("Cluster " + clusterIndex, textX, textY);
 		}
+	}
+
+	private float getLegendLittleClusterX() {
+		return (legendX1 + legendPadding + (littleClusterSize / 2));
+	}
+
+	private float getLegendLittleClusterY(int index) {
+		return (legendY1 + legendPartitionSize * index + (littleClusterSize / 2));
 	}
 }
 
