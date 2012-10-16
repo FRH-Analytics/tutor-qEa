@@ -155,8 +155,10 @@ public class Sketch2 implements CompositeSketch {
 
 			// Highlight Cluster (Hover query)
 			if (selectedCluster != -1) {
-				highlightCluster(selectedCluster);
+				highlightClusterAndTooltip(selectedCluster);
 			}
+		} else {
+			drawNoPlot();
 		}
 	}
 
@@ -179,9 +181,10 @@ public class Sketch2 implements CompositeSketch {
 		}
 	}
 
-	private void highlightCluster(int clusterIndex) {
+	private void highlightClusterAndTooltip(int clusterIndex) {
 		if (clusterIndex >= 0 && clusterIndex < maxClusterNumber) {
 			float xInPixels, yInPixels, sizeInPixels, realSize;
+String tooltip;
 
 			pApplet.fill(ChartData.RGBA_COLOURS[clusterIndex][0],
 					ChartData.RGBA_COLOURS[clusterIndex][1],
@@ -205,17 +208,20 @@ public class Sketch2 implements CompositeSketch {
 			pApplet.ellipse(xInPixels, yInPixels, sizeInPixels, sizeInPixels);
 
 			// Draw ToolTip
+			
 			realSize = ChartData.getSizeArrayList().get(clusterIndex);
+			tooltip = String.valueOf((int) realSize) + " question(s)";
+			
 			pApplet.fill(50, 100);
 			pApplet.strokeWeight((float) 1);
 			pApplet.rectMode(PApplet.CENTER);
 			pApplet.rect(xInPixels + sizeInPixels / 2, yInPixels - sizeInPixels
-					/ 2, 90, 20, 5, 5);
+					/ 2, pApplet.textWidth(tooltip) + 20, 20, 5, 5);
 			pApplet.fill(255);
 			pApplet.textSize(12);
 			pApplet.textAlign(PApplet.CENTER, PApplet.CENTER);
-			pApplet.text(String.valueOf((int) realSize) + " question(s)", xInPixels
-					+ sizeInPixels / 2, yInPixels - sizeInPixels / 2);
+			pApplet.text(tooltip,
+					xInPixels + sizeInPixels / 2, yInPixels - sizeInPixels / 2);
 		}
 	}
 
@@ -300,12 +306,26 @@ public class Sketch2 implements CompositeSketch {
 		return (clusterIndex);
 	}
 
+	private void drawNoPlot() {
+		String noTag = "No tag selected...";
+		pApplet.fill(150, 100);
+		pApplet.strokeWeight((float) 2);
+		pApplet.rectMode(PApplet.CENTER);
+		pApplet.rect(myXOrigin + myWidth / 2, myYOrigin + myHeight / 2,
+				pApplet.textWidth(noTag) + 30, 30, 5, 5);
+		pApplet.fill(0);
+		pApplet.textSize(titleSize - 3);
+		pApplet.textAlign(PApplet.CENTER, PApplet.CENTER);
+		pApplet.text(noTag, myXOrigin + myWidth / 2, myYOrigin + myHeight / 2);
+		pApplet.textAlign(PApplet.CENTER, PApplet.CENTER);
+	}
+
 	private void drawTitle() {
 		pApplet.fill(0);
-		pApplet.textAlign(PApplet.LEFT);
-		String title = "Question Clustering - centroid visualization";
+		pApplet.textAlign(PApplet.CENTER);
+		String title = "Question Clustering by Tag";
 		pApplet.textSize(titleSize);
-		pApplet.text(title, plotX1, titleYOrigin);
+		pApplet.text(title, myXOrigin + myWidth / 2, titleYOrigin);
 	}
 
 	private void drawSubtitle() {
