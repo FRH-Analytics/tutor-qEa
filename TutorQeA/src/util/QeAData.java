@@ -8,6 +8,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.Hashtable;
 
 import au.com.bytecode.opencsv.CSVReader;
@@ -16,9 +17,11 @@ public class QeAData {
 
 	// TODO: Change these file paths to a file (outside from the git
 	// repository)
-	private static final String POST_TAGS_FILE = "/home/augusto/git/tutor-qEa/TutorQeA/data/PostTags.csv";
-	private static final String QUESTIONS_DATA_FILE = "/home/augusto/git/tutor-qEa/TutorQeA/data/QuestionData.csv";
-	private static final String QUESTION_ANSWERS_FILE = "/home/augusto/git/tutor-qEa/TutorQeA/data/QuestionAnswers.csv";
+	private static final String POST_TAGS_FILE = "C:/Users/MATHEUS/workspace/tutor-qEa/TutorQeA/data/PostTags.csv";
+	private static final String QUESTIONS_DATA_FILE = "C:/Users/MATHEUS/workspace/tutor-qEa/TutorQeA/data/QuestionData.csv";
+	private static final String QUESTION_ANSWERS_FILE = "C:/Users/MATHEUS/workspace/tutor-qEa/TutorQeA/data/QuestionAnswers.csv";
+	private static final String TAG_LINKS_FILE = "C:/Users/MATHEUS/workspace/tutor-qEa/TutorQeA/data/TagLinks.csv";
+	private static final String TAGS_FILE = "C:/Users/MATHEUS/workspace/tutor-qEa/TutorQeA/data/TagsDictionary.csv";
 
 	// ArrayList with the chosen tags, the order expresses the intern
 	// relationship between the tags
@@ -37,6 +40,9 @@ public class QeAData {
 	private static Hashtable<Integer, QuestionData> questionIdsToData = new Hashtable<Integer, QuestionData>();
 	private static Hashtable<Integer, ArrayList<AnswerData>> questionIdsToAnswers = new Hashtable<Integer, ArrayList<AnswerData>>();
 
+	private static HashMap<Integer, String> tagLinks = new HashMap<Integer, String>();
+	private static HashMap<Integer, String> tagDictionary = new HashMap<Integer, String>();	
+	
 	@SuppressWarnings("unchecked")
 	public static void setTagList(ArrayList<Integer> tagList,
 			ArrayList<String> tagNameList) {
@@ -193,6 +199,8 @@ public class QeAData {
 		int answerId;
 		int score;
 		Date creationDate;
+		int answerCommentsCount;
+		boolean isAccepted;
 
 		DateFormat format = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
 
@@ -203,6 +211,8 @@ public class QeAData {
 			answerId = Integer.valueOf(nextLine[1]);
 			score = Integer.valueOf(nextLine[2]);
 			creationDate = format.parse(nextLine[3]);
+			answerCommentsCount = Integer.valueOf(nextLine[4]);
+			isAccepted = Boolean.getBoolean(nextLine[5]);
 
 			if (!questionIdsToAnswers.containsKey(questionId)) {
 				questionIdsToAnswers.put(questionId,
@@ -210,9 +220,40 @@ public class QeAData {
 			}
 
 			questionIdsToAnswers.get(questionId).add(
-					new AnswerData(answerId, score, creationDate));
+					new AnswerData(answerId, score, creationDate, answerCommentsCount, isAccepted));
 		}
 	}
+	
+	public static void readTagLinksFile() throws IOException {
+
+		CSVReader reader = new CSVReader(new FileReader(TAG_LINKS_FILE));
+
+		String[] nextLine = reader.readNext();
+		while ((nextLine = reader.readNext()) != null) {
+			int key = Integer.valueOf(nextLine[0]);
+			if (tagLinks.containsKey(key)) {
+				tagLinks.put(Integer.valueOf(nextLine[0]),
+						tagLinks.get(Integer.valueOf(nextLine[0])) + ","
+								+ nextLine[1]);
+			} else {
+				tagLinks.put(Integer.valueOf(nextLine[0]), nextLine[1]);
+			}
+		}
+		reader.close();
+
+	}
+
+	public static void readTagDictionaryFile() throws IOException {
+
+		CSVReader reader = new CSVReader(new FileReader(TAGS_FILE));
+
+		String[] nextLine = reader.readNext();
+		while ((nextLine = reader.readNext()) != null) {
+			tagDictionary.put(Integer.valueOf(nextLine[0]), nextLine[1]);
+		}
+		reader.close();
+	}
+
 
 	public static Hashtable<Integer, ArrayList<Integer>> getTagToQuestions() {
 		return tagToQuestions;
@@ -248,5 +289,13 @@ public class QeAData {
 
 	public static Hashtable<Integer, ArrayList<AnswerData>> getQuestionIdsToAnswers() {
 		return questionIdsToAnswers;
+	}
+	
+	public static HashMap<Integer, String> getTagLinks() {
+		return tagLinks;
+	}
+	
+	public static HashMap<Integer, String> getTagDictionary() {
+		return tagDictionary;
 	}
 }

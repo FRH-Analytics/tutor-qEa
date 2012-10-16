@@ -7,108 +7,144 @@ import java.util.HashMap;
 import au.com.bytecode.opencsv.CSVReader;
 
 import processing.core.*;
+import util.QeAData;
 import controlP5.*;
 
 public class Sketch1 extends PApplet {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = 1L;
 
 	private String csvFilePath = "C:/Users/MATHEUS/workspace/rascunhoTutorQeA/TagsDictionary.csv";
-	private static HashMap<Integer, String> tagDictionary = new HashMap<Integer, String>();
-	private static HashMap<Integer, String> tagLinks = new HashMap<Integer, String>();
-
-	private ArrayList<Integer> selectedTags = new ArrayList<>();
-	private ArrayList<String> relatedTags = new ArrayList<>();
-
-	ControlP5 cp5;
 
 	ArrayList<DropdownList> lists = new ArrayList<>();
+	private ArrayList<Integer> selectedTags = new ArrayList<Integer>();
+	private ArrayList<String> selectedTagsNames = new ArrayList<String>();
+	private ArrayList<String> relatedTags = new ArrayList<String>();
 
-	PFont font = createFont("arial", 12);
-
+	ControlP5 cp5;
 	DropdownList d1;
 
-	public void setup() {
-		size(400, 400);
+	PApplet pApplet = this;
+	int myWidth = 400;
+	int myHeight = 400;
+	int myXOrigin = 0;
+	int myYOrigin = 0;
 
+	int defaultFontSize;
+
+	int defaultFontColor;
+	PFont font;
+
+	// public Sketch1(MainSketch parent, int xOrigin, int yOrigin, int width,
+	// int height) {
+	// pApplet = parent;
+	//
+	// myXOrigin = xOrigin;
+	// myYOrigin = yOrigin;
+	// myWidth = width;
+	// myHeight = height;
+	// }
+
+	public void setup() {
+		
 		try {
-			readCSVFile(tagDictionary);
-			csvFilePath = "C:/Users/MATHEUS/workspace/rascunhoTutorQeA/TagLinks.csv";
-			readCSVFile(tagLinks);
+			QeAData.readTagLinksFile();
+			QeAData.readTagDictionaryFile();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+		
+		pApplet.size(myWidth, myHeight);
 
-		noStroke();
-		cp5 = new ControlP5(this);
+		defaultFontSize = 11;
+		defaultFontColor = 120;
+		font = pApplet.createFont("Helvetica", defaultFontSize);
+		pApplet.textFont(font);
 
-		cp5.addTextfield("input").setPosition(20, 20).setSize(width - 100, 20)
-				.setFont(font).setFocus(true).setColor(color(255));
+		pApplet.noStroke();
 
-		cp5.addButton("search").setValue(0).setPosition(width - 70, 20)
-				.setSize(50, 20);
+		cp5 = new ControlP5(pApplet);
+
+		cp5.addTextfield("input").setPosition(20, 20)
+				.setSize(pApplet.width - 100, 20).setFont(font).setFocus(true)
+				.setColor(pApplet.color(255)).setColorBackground(200).setColorForeground(200);
+
+		cp5.addButton("search").setValue(0).setPosition(pApplet.width - 70, 20)
+				.setSize(50, 20).setColorBackground(0);
 
 	}
 
 	public void draw() {
-		background(0);
-		fill(255);
+		background(255);
+		noFill();
 	}
+
 
 	public void controlEvent(ControlEvent theEvent) {
 
 		if (theEvent.isGroup()) {
 			selectedTags.add((int) theEvent.getValue());
+			selectedTagsNames.add(QeAData.getTagDictionary().get(
+					(int) theEvent.getValue()));
 			addDropDownList(
 					(int) theEvent.getValue(),
 					intersct(
 							relatedTags,
-							new ArrayList<String>(Arrays.asList(tagLinks.get(
-									(int) theEvent.getValue()).split(",")))));
+							new ArrayList<String>(Arrays.asList(QeAData
+									.getTagLinks()
+									.get((int) theEvent.getValue()).split(",")))));
 		} else {
+			QeAData.setTagList(selectedTags, selectedTagsNames);
 		}
 
 	}
 
 	public void search(int theValue) {
+		System.out.println("2");
 		clearList();
 	}
 
 	public void input(String theText) {
 		
+		System.out.println(3);
+		
 		clearList();
-
-		ArrayList<String> values = new ArrayList<>(tagDictionary.values());
+		
+		ArrayList<Integer> keys = new ArrayList<>(QeAData.getTagDictionary().keySet());		
+		ArrayList<String> values = new ArrayList<>(QeAData.getTagDictionary().values());
 		
 		try {
-			int tagID = values.indexOf(theText) + 1;
+			int tagID = keys.get(values.indexOf(theText));
+			System.out.println(QeAData.getTagDictionary().get(tagID));
 			selectedTags.add(tagID);
-			relatedTags = new ArrayList<String>(Arrays.asList(tagLinks.get(tagID).split(",")));
-			
-			addDropDownList(tagID, intersct(relatedTags, new ArrayList<>(Arrays.asList(tagLinks.get(tagID).split(",")))));
+			selectedTagsNames.add(QeAData.getTagDictionary().get(tagID));
+			relatedTags = new ArrayList<String>(Arrays.asList(QeAData
+					.getTagLinks().get(tagID).split(",")));
+
+			addDropDownList(
+					tagID,
+					intersct(
+							relatedTags,
+							new ArrayList<>(Arrays.asList(QeAData.getTagLinks()
+									.get(tagID).split(",")))));
 		} catch (Exception e) {
 		}
-		
 
-		
 	}
 
 	private void addDropDownList(int tagID, ArrayList<String> newTags) {
 
 		int x = 20 + 100 * (lists.size() % 3);
-		int y = 80 + 20 * (floor(lists.size() / 3));
+		int y = 80 + 20 * (PApplet.floor(lists.size() / 3));
 
-		if (tagDictionary.containsKey(tagID)) {
+		if (QeAData.getTagDictionary().containsKey(tagID)) {
 
 			DropdownList newD = cp5.addDropdownList(
-					"myList-d" + (lists.size() + 1)).setPosition(x, y);
+					"myList-d" + (lists.size() + 1)).setPosition(x, y).setColorBackground(0);
 
 			for (String tag : newTags) {
 				int id = Integer.valueOf(tag);
-				newD.addItem(tagDictionary.get(id), id);
+				newD.addItem(QeAData.getTagDictionary().get(id), id);
 			}
 
 			lists.add(newD);
@@ -124,9 +160,10 @@ public class Sketch1 extends PApplet {
 		for (DropdownList list : lists) {
 			list.remove();
 		}
-		lists = new ArrayList<>();
-		relatedTags = new ArrayList<>();
-		selectedTags = new ArrayList<>();
+		lists.clear();
+		relatedTags.clear();
+		selectedTags.clear();
+		selectedTagsNames.clear();
 	}
 
 	public void readCSVFile(HashMap<Integer, String> table) throws IOException {
@@ -147,7 +184,8 @@ public class Sketch1 extends PApplet {
 		reader.close();
 	}
 
-	private ArrayList<String> intersct(ArrayList<String> l1, ArrayList<String> l2) {
+	private ArrayList<String> intersct(ArrayList<String> l1,
+			ArrayList<String> l2) {
 		ArrayList<String> newList = new ArrayList<String>();
 
 		for (String s : l2) {
