@@ -25,6 +25,12 @@ public class Sketch1 implements CompositeSketch {
 	int myXOrigin;
 	int myYOrigin;
 
+	int textFieldX, textFieldY, textFieldWidth, textFieldHeight;
+
+	int buttonX, buttonY, buttonWidth, buttonHeight;
+
+	int ddlX, ddlY, ddlWidth, ddlHeight;
+
 	int defaultFontSize;
 	int defaultFontColor;
 	PFont font;
@@ -37,6 +43,21 @@ public class Sketch1 implements CompositeSketch {
 		myYOrigin = yOrigin;
 		myWidth = width;
 		myHeight = height;
+
+		textFieldX = myXOrigin + 20;
+		textFieldY = myYOrigin + 20;
+		textFieldWidth = myWidth - 100;
+		textFieldHeight = 20;
+
+		buttonX = myXOrigin + myWidth - 70;
+		buttonY = myYOrigin + 20;
+		buttonWidth = 50;
+		buttonHeight = 20;
+
+		ddlX = 20;
+		ddlY = textFieldY + textFieldHeight + 40;
+		ddlWidth = 100;
+		ddlHeight = 20;
 	}
 
 	public void setup() {
@@ -50,14 +71,13 @@ public class Sketch1 implements CompositeSketch {
 
 		cp5 = new ControlP5(pApplet);
 
-		cp5.addTextfield("input").setPosition(myXOrigin + 20, myYOrigin + 20)
-				.setSize(myWidth - 100, 20).setFont(font).setFocus(true)
-				.setColor(pApplet.color(255)).setColorBackground(200)
-				.setColorForeground(200);
+		cp5.addTextfield("input").setPosition(textFieldX, textFieldY)
+				.setSize(textFieldWidth, textFieldHeight).setFont(font)
+				.setFocus(true).setColor(pApplet.color(255))
+				.setColorBackground(200).setColorForeground(200);
 
-		cp5.addButton("search").setValue(0)
-				.setPosition(myXOrigin + myWidth - 70, myYOrigin + 20)
-				.setSize(50, 20).setColorBackground(0);
+		cp5.addButton("search").setValue(0).setPosition(buttonX, buttonY)
+				.setSize(buttonWidth, buttonHeight).setColorBackground(0);
 
 	}
 
@@ -68,7 +88,6 @@ public class Sketch1 implements CompositeSketch {
 
 	@Override
 	public void mousePressed() {
-		// TODO Auto-generated method stub
 
 	}
 
@@ -91,13 +110,10 @@ public class Sketch1 implements CompositeSketch {
 	}
 
 	public void search(int theValue) {
-		System.out.println("2");
 		clearList();
 	}
 
 	public void input(String theText) {
-		System.out.println(3);
-
 		clearList();
 
 		ArrayList<Integer> keys = new ArrayList<Integer>(QeAData
@@ -126,27 +142,36 @@ public class Sketch1 implements CompositeSketch {
 
 	private void addDropDownList(int tagID, ArrayList<String> newTags) {
 
-		int x = 20 + 100 * (lists.size() % 3);
-		int y = 80 + 20 * (PApplet.floor(lists.size() / 3));
+		int x = ddlX + ddlWidth * (lists.size() % 3);
+		int y = ddlY + ddlHeight * (PApplet.floor(lists.size() / 3));
 
-		if (QeAData.getTagDictionary().containsKey(tagID)) {
+		if (newTags.size() > 0) {
 
-			DropdownList newD = cp5
-					.addDropdownList("myList-d" + (lists.size() + 1))
-					.setPosition(x, y).setColorBackground(0);
+			if (QeAData.getTagDictionary().containsKey(tagID)) {
 
-			for (String tag : newTags) {
-				int id = Integer.valueOf(tag);
-				newD.addItem(QeAData.getTagDictionary().get(id), id);
+				DropdownList newD = cp5
+						.addDropdownList("myList-d" + (lists.size() + 1))
+						.setPosition(x, y).setColorBackground(0);
+
+				for (String tag : newTags) {
+					int id = Integer.valueOf(tag);
+					newD.addItem(QeAData.getTagDictionary().get(id), id);
+				}
+
+				lists.add(newD);
+				try {
+					lists.get(lists.size() - 2).disableCollapse();
+				} catch (Exception e) {
+				}
+
+				relatedTags = newTags;
 			}
-
-			lists.add(newD);
+		} else {
 			try {
-				lists.get(lists.size() - 2).disableCollapse();
+				lists.get(lists.size() - 1).disableCollapse();
 			} catch (Exception e) {
 			}
 		}
-		relatedTags = newTags;
 	}
 
 	public void clearList() {

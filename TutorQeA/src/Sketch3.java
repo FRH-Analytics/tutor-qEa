@@ -202,16 +202,20 @@ public class Sketch3 implements CompositeSketch {
 
 				// DRAW answer balls
 				int maxScore = 0;
+				int maxCommentsCount = 0;
 				for (AnswerData ans : QeAData.getQuestionIdsToAnswers().get(
 						questionId)) {
 					maxScore = (ans.getScore() > maxScore) ? ans.getScore()
 							: maxScore;
+					maxCommentsCount = (ans.getCommentsCount() > maxCommentsCount) ? ans.getCommentsCount()
+							: maxCommentsCount;
 				}
 
 				p.ellipseMode(PApplet.RADIUS);
 
 				float ballPadding = 10;
 				float ballRadius;
+				float ballBrightness;
 				float maxBallRadius = PApplet.map(maxScore, 0, maxScore,
 						canvasHeight / 15, canvasHeight / 3);
 
@@ -220,7 +224,14 @@ public class Sketch3 implements CompositeSketch {
 
 				for (AnswerData ans : QeAData.getQuestionIdsToAnswers().get(
 						questionId)) {
-					p.fill(pApplet.color(50, 200, 150, 150));
+					
+					ballBrightness = PApplet.map(ans.getCommentsCount(), 0, maxCommentsCount, 100, 250);
+					
+					if(!ans.isAccepted()){
+						p.fill(pApplet.color(50, 200, 150, ballBrightness));
+					}else{
+						p.fill(pApplet.color(0, 200, 0, 150));
+					}
 
 					ballRadius = PApplet.map(ans.getScore(), 0, maxScore,
 							canvasHeight / 15, canvasHeight / 3);

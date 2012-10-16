@@ -2,6 +2,8 @@ import java.io.IOException;
 import java.text.ParseException;
 import java.util.ArrayList;
 
+import controlP5.ControlEvent;
+
 import processing.core.PApplet;
 import util.QeAData;
 
@@ -42,25 +44,26 @@ public class MainSketch extends PApplet {
 		/*
 		 * TODO: Testing... Delete allll this, then...
 		 */
-		ArrayList<Integer> tagList = new ArrayList<Integer>();
+//		ArrayList<Integer> tagList = new ArrayList<Integer>();
 		// tagList.add(41);
 		// tagList.add(111);
 		// tagList.add(264);
 		// tagList.add(294);
-		tagList.add(528);
-		ArrayList<String> tagNameList = new ArrayList<String>();
+//		tagList.add(528);
+//		ArrayList<String> tagNameList = new ArrayList<String>();
 		// tagNameList.add("r");
 		// tagNameList.add("regression");
 		// tagNameList.add("logistic-regression");
 		// tagNameList.add("roc");
-		tagNameList.add("hmm");
-		QeAData.setTagList(tagList, tagNameList);
+//		tagNameList.add("hmm");
+//		QeAData.setTagList(tagList, tagNameList);
 
 		// Reset the data
 		sketch2.updatePlot();
 
 		// update the accordion
-		getSketch3().updateQuestionsByCluster(5);
+//		getSketch3().updateQuestionsByCluster(5);
+		
 
 	}
 
@@ -100,5 +103,17 @@ public class MainSketch extends PApplet {
 
 	public Sketch3 getSketch3() {
 		return sketch3;
+	}
+	
+	public void search(int value){
+		sketch1.search(value);
+	}
+	
+	public void input(String value){
+		sketch1.input(value);
+	}
+	
+	public void controlEvent(ControlEvent theEvent){
+		sketch1.controlEvent(theEvent);
 	}
 }
