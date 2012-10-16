@@ -1,6 +1,6 @@
 package util;
 
-public class QuestionData {
+public class QuestionData implements Comparable<QuestionData>{
 
 	private int id;
 	private String title;
@@ -69,5 +69,10 @@ public class QuestionData {
 			return false;
 		return true;
 	}
+	
+	@Override
+	public int compareTo(QuestionData other) {
+	 	return other.getScore() - this.getScore();
+	 }
 
 }

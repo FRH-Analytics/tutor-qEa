@@ -5,6 +5,7 @@ import processing.core.PApplet;
 import processing.core.PFont;
 import util.CompositeSketch;
 import util.QeAData;
+import controlP5.CColor;
 import controlP5.ControlEvent;
 import controlP5.ControlP5;
 import controlP5.DropdownList;
@@ -45,24 +46,24 @@ public class Sketch1 implements CompositeSketch {
 		myHeight = height;
 
 		textFieldX = myXOrigin + 20;
-		textFieldY = myYOrigin + 20;
+		textFieldY = myYOrigin;
 		textFieldWidth = myWidth - 100;
 		textFieldHeight = 20;
 
-		buttonX = myXOrigin + myWidth - 70;
-		buttonY = myYOrigin + 20;
-		buttonWidth = 50;
-		buttonHeight = 20;
+		// buttonX = myXOrigin + myWidth - 70;
+		// buttonY = myYOrigin + 20;
+		// buttonWidth = 50;
+		// buttonHeight = 20;
 
 		ddlX = 20;
-		ddlY = textFieldY + textFieldHeight + 40;
-		ddlWidth = 100;
-		ddlHeight = 20;
+		ddlY = textFieldY + textFieldHeight + 60;
+		ddlWidth = 150;
+		ddlHeight = 30;
 	}
 
 	public void setup() {
 
-		defaultFontSize = 11;
+		defaultFontSize = 12;
 		defaultFontColor = 120;
 		font = pApplet.createFont("Helvetica", defaultFontSize);
 		pApplet.textFont(font);
@@ -73,11 +74,16 @@ public class Sketch1 implements CompositeSketch {
 
 		cp5.addTextfield("input").setPosition(textFieldX, textFieldY)
 				.setSize(textFieldWidth, textFieldHeight).setFont(font)
-				.setFocus(true).setColor(pApplet.color(255))
-				.setColorBackground(200).setColorForeground(200);
+				.setFocus(true).setColor(pApplet.color(0))
+				.setColorBackground(pApplet.color(255, 255, 255));
 
-		cp5.addButton("search").setValue(0).setPosition(buttonX, buttonY)
-				.setSize(buttonWidth, buttonHeight).setColorBackground(0);
+		cp5.addTextlabel("label1").setText("Initial Tag: ").setPosition(20, 70)
+				.setColor(0).setFont(font);
+
+		cp5.addTextlabel("label3").setText("Tags of interest: ").setPosition(20, 90)
+				.setColor(0).setFont(font);
+		// cp5.addButton("search").setValue(0).setPosition(buttonX, buttonY)
+		// .setSize(buttonWidth, buttonHeight).setColorBackground(0);
 
 	}
 
@@ -106,12 +112,15 @@ public class Sketch1 implements CompositeSketch {
 		QeAData.setTagList(selectedTags, selectedTagsNames);
 	}
 
-	public void search(int theValue) {
-		clearList();
-	}
+	// public void search(int theValue) {
+	// clearList();
+	// }
 
 	public void input(String theText) {
-		clearList();
+		theText = theText.toLowerCase();
+		if (lists.size() != 0) {
+			clearList();
+		}
 
 		ArrayList<Integer> keys = new ArrayList<Integer>(QeAData
 				.getTagDictionary().keySet());
@@ -120,7 +129,6 @@ public class Sketch1 implements CompositeSketch {
 
 		try {
 			int tagID = keys.get(values.indexOf(theText));
-			System.out.println(QeAData.getTagDictionary().get(tagID));
 			selectedTags.add(tagID);
 			selectedTagsNames.add(QeAData.getTagDictionary().get(tagID));
 			relatedTags = new ArrayList<String>(Arrays.asList(QeAData
@@ -132,6 +140,8 @@ public class Sketch1 implements CompositeSketch {
 							relatedTags,
 							new ArrayList<String>(Arrays.asList(QeAData
 									.getTagLinks().get(tagID).split(",")))));
+			cp5.addTextlabel("label2").setText(theText).setPosition(80, 70)
+			.setColor(0).setFont(font);
 		} catch (Exception e) {
 		}
 
@@ -146,13 +156,20 @@ public class Sketch1 implements CompositeSketch {
 
 			if (QeAData.getTagDictionary().containsKey(tagID)) {
 
+				PFont font2 = pApplet.createFont("Helvetica", 15);
 				DropdownList newD = cp5
-						.addDropdownList("myList-d" + (lists.size() + 1))
-						.setPosition(x, y).setColorBackground(0);
+						.addDropdownList("Select Tag " + (lists.size() + 2))
+						.setPosition(x, y).setBarHeight(20)
+						.setWidth(ddlWidth - 10);
+				newD.getCaptionLabel().toUpperCase(false).setLetterSpacing(3)
+						.setFont(font2).setColor(0);
+				newD.setColorBackground(pApplet.color(200)).setColorActive(
+						pApplet.color(255, 128));
 
 				for (String tag : newTags) {
 					int id = Integer.valueOf(tag);
-					newD.addItem(QeAData.getTagDictionary().get(id), id);
+					newD.addItem(QeAData.getTagDictionary().get(id), id)
+							.setColorLabel(0);
 				}
 
 				lists.add(newD);
@@ -169,6 +186,7 @@ public class Sketch1 implements CompositeSketch {
 			} catch (Exception e) {
 			}
 		}
+		pApplet.textFont(font);
 	}
 
 	public void clearList() {

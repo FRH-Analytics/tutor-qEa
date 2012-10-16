@@ -17,22 +17,22 @@ public class QeAData {
 
 	// TODO: Change these file paths to a file (outside from the git
 	// repository)
-	// private static final String POST_TAGS_FILE =
-	// "C:/Users/MATHEUS/workspace/tutor-qEa/TutorQeA/data/PostTags.csv";
-	// private static final String QUESTIONS_DATA_FILE =
-	// "C:/Users/MATHEUS/workspace/tutor-qEa/TutorQeA/data/QuestionData.csv";
-	// private static final String QUESTION_ANSWERS_FILE =
-	// "C:/Users/MATHEUS/workspace/tutor-qEa/TutorQeA/data/QuestionAnswers.csv";
-	// private static final String TAG_LINKS_FILE =
-	// "C:/Users/MATHEUS/workspace/tutor-qEa/TutorQeA/data/TagLinks.csv";
-	// private static final String TAGS_FILE =
-	// "C:/Users/MATHEUS/workspace/tutor-qEa/TutorQeA/data/TagsDictionary.csv";
+	 private static final String POST_TAGS_FILE =
+	 "C:/Users/MATHEUS/workspace/tutor-qEa/TutorQeA/data/PostTags.csv";
+	 private static final String QUESTIONS_DATA_FILE =
+	 "C:/Users/MATHEUS/workspace/tutor-qEa/TutorQeA/data/QuestionData.csv";
+	 private static final String QUESTION_ANSWERS_FILE =
+	 "C:/Users/MATHEUS/workspace/tutor-qEa/TutorQeA/data/QuestionAnswers.csv";
+	 private static final String TAG_LINKS_FILE =
+	 "C:/Users/MATHEUS/workspace/tutor-qEa/TutorQeA/data/TagLinks.csv";
+	 private static final String TAGS_FILE =
+	 "C:/Users/MATHEUS/workspace/tutor-qEa/TutorQeA/data/TagsDictionary.csv";
 
-	private static final String POST_TAGS_FILE = "/home/augusto/git/tutor-qEa/TutorQeA/data/PostTags.csv";
-	private static final String QUESTIONS_DATA_FILE = "/home/augusto/git/tutor-qEa/TutorQeA/data/QuestionData.csv";
-	private static final String QUESTION_ANSWERS_FILE = "/home/augusto/git/tutor-qEa/TutorQeA/data/QuestionAnswers.csv";
-	private static final String TAG_LINKS_FILE = "/home/augusto/git/tutor-qEa/TutorQeA/data/TagLinks.csv";
-	private static final String TAGS_FILE = "/home/augusto/git/tutor-qEa/TutorQeA/data/TagsDictionary.csv";
+//	private static final String POST_TAGS_FILE = "/home/augusto/git/tutor-qEa/TutorQeA/data/PostTags.csv";
+//	private static final String QUESTIONS_DATA_FILE = "/home/augusto/git/tutor-qEa/TutorQeA/data/QuestionData.csv";
+//	private static final String QUESTION_ANSWERS_FILE = "/home/augusto/git/tutor-qEa/TutorQeA/data/QuestionAnswers.csv";
+//	private static final String TAG_LINKS_FILE = "/home/augusto/git/tutor-qEa/TutorQeA/data/TagLinks.csv";
+//	private static final String TAGS_FILE = "/home/augusto/git/tutor-qEa/TutorQeA/data/TagsDictionary.csv";
 
 	// ArrayList with the chosen tags, the order expresses the intern
 	// relationship between the tags
@@ -225,7 +225,7 @@ public class QeAData {
 			score = Integer.valueOf(nextLine[2]);
 			creationDate = format.parse(nextLine[3]);
 			answerCommentsCount = Integer.valueOf(nextLine[4]);
-			isAccepted = Boolean.getBoolean(nextLine[5]);
+			isAccepted = Boolean.parseBoolean(nextLine[5].toLowerCase());
 
 			if (!questionIdsToAnswers.containsKey(questionId)) {
 				questionIdsToAnswers.put(questionId,

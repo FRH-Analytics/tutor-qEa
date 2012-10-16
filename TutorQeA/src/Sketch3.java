@@ -206,8 +206,8 @@ public class Sketch3 implements CompositeSketch {
 						questionId)) {
 					maxScore = (ans.getScore() > maxScore) ? ans.getScore()
 							: maxScore;
-					maxCommentsCount = (ans.getCommentsCount() > maxCommentsCount) ? ans.getCommentsCount()
-							: maxCommentsCount;
+					maxCommentsCount = (ans.getCommentsCount() > maxCommentsCount) ? ans
+							.getCommentsCount() : maxCommentsCount;
 				}
 
 				p.ellipseMode(PApplet.RADIUS);
@@ -223,14 +223,12 @@ public class Sketch3 implements CompositeSketch {
 
 				for (AnswerData ans : QeAData.getQuestionIdsToAnswers().get(
 						questionId)) {
-					
-					ballBrightness = PApplet.map(ans.getCommentsCount(), 0, maxCommentsCount, 100, 250);
-					
-					if(!ans.isAccepted()){
-						p.fill(pApplet.color(50, 200, 150, ballBrightness));
-					}else{
-						p.fill(pApplet.color(0, 200, 0, 150));
-					}
+
+					ballBrightness = map(ans.getCommentsCount(), 0,
+							maxCommentsCount, 120, 240);
+
+					p.colorMode(PApplet.HSB);
+					p.fill(pApplet.color(0, 240, 360 - ballBrightness));
 
 					ballRadius = PApplet.map(ans.getScore(), 0, maxScore,
 							canvasHeight / 15, canvasHeight / 3);
@@ -241,10 +239,63 @@ public class Sketch3 implements CompositeSketch {
 					pApplet.ellipse(ballXCenter, ballYCenter - ballRadius,
 							ballRadius, ballRadius);
 
+					if (ans.isAccepted()) {
+						pApplet.colorMode(PApplet.RGB);
+						star(5, ballXCenter, ballYCenter - ballRadius,
+								ballRadius, (float) 0.50);
+					}
+
 					// Ball shift
 					ballXCenter += ballRadius + ballPadding;
 				}
+				p.colorMode(PApplet.RGB);
+			}
+		}
+
+		private void star(int n, float cx, float cy, float r, float proportion) {
+			star(n, cx, cy, (float) (2.0 * r), (float) (2.0 * r), (float) 0.0,
+					proportion);
+		}
+
+		private void star(int n, float cx, float cy, float w, float h,
+				float startAngle, float proportion) {
+			if (n > 2) {
+				pApplet.fill(255, 255, 0);
+				float angle = PApplet.TWO_PI / (2 * n); // twice as many sides
+				float dw; // draw width
+				float dh; // draw height
+
+				w = (float) (w / 2.0);
+				h = (float) (h / 2.0);
+
+				pApplet.beginShape();
+				for (int i = 0; i < 2 * n; i++) {
+					dw = w;
+					dh = h;
+					if (i % 2 == 1) // for odd vertices, use short radius
+					{
+						dw = w * proportion;
+						dh = h * proportion;
+					}
+					pApplet.vertex(
+							cx + dw * PApplet.cos(startAngle + angle * i), cy
+									+ dh * PApplet.sin(startAngle + angle * i));
+				}
+				pApplet.endShape(PApplet.CLOSE);
 			}
 		}
 	}
+	
+	private int map(int value,int iMin,int iMax,int oMin,int oMax){
+		
+		int result;
+		if(iMax-iMin!=0){
+			result = (((oMax-oMin)/(iMax-iMin))*(value-iMin))+oMin;
+		}else{
+			result = oMin;
+		}
+		return result;
+				
+	}
+
 }

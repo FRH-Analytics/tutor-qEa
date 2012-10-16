@@ -83,9 +83,9 @@ public class MainSketch extends PApplet {
 		return sketch3;
 	}
 	
-	public void search(int value){
-		sketch1.search(value);
-	}
+//	public void search(int value){
+//		sketch1.search(value);
+//	}
 	
 	public void input(String value){
 		sketch1.input(value);
