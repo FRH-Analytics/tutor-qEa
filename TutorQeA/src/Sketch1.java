@@ -5,7 +5,6 @@ import processing.core.PApplet;
 import processing.core.PFont;
 import util.CompositeSketch;
 import util.QeAData;
-import controlP5.CColor;
 import controlP5.ControlEvent;
 import controlP5.ControlP5;
 import controlP5.DropdownList;
