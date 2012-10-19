@@ -65,16 +65,34 @@ public class Sketch3 implements CompositeSketch {
 	public void draw() {
 		// Draw title
 		drawTitle();
+		
+		if (sortedQuestions.size() == 0){
+			drawNoCluster();
+		}
 	}
 
 	@Override
 	public void mousePressed() {
 	}
 
+	private void drawNoCluster() {
+		String noTag = "No cluster selected...";
+		pApplet.fill(150, 100);
+		pApplet.strokeWeight((float) 2);
+		pApplet.rectMode(PApplet.CENTER);
+		pApplet.rect(myXOrigin + myWidth / 2, myYOrigin + myHeight / 2,
+				pApplet.textWidth(noTag) + 30, 30, 5, 5);
+		pApplet.fill(0);
+		pApplet.textSize(myHeight / 25);
+		pApplet.textAlign(PApplet.CENTER, PApplet.CENTER);
+		pApplet.text(noTag, myXOrigin + myWidth / 2, myYOrigin + myHeight / 2);
+		pApplet.textAlign(PApplet.LEFT);
+	}
+	
 	private void drawTitle() {
 		pApplet.fill(0);
 		pApplet.textAlign(PApplet.CENTER, PApplet.CENTER);
-		pApplet.textSize(myHeight / 25);
+		pApplet.textSize(myHeight / 20);
 		pApplet.text(getTitle(), myXOrigin + (myWidth / 2), myYOrigin
 				+ titlePadding);
 		pApplet.textAlign(PApplet.LEFT);

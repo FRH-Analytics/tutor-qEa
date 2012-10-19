@@ -1,5 +1,25 @@
-TODO Augusto:
-	* Adicionar HoverQueries:
-		* Sobre as perguntas listadas mostrando: CommentCount e Score
-		* Sobre o xyChart, mostrando os dados de cada cluster
-	* Permitir clique nos clusters
+TODO (falei com Nazareno e resultou no seguinte):
+
+No geral: Fazer mudanças no Layout, focando em colocar tamanhos maiores pra o que é mais 
+importante e pequeno pra o que não é.
+
+Sketch 1 (matheus):
+	* Fazer uma lista de tags fixa (na esquerda, para resolver o problema do espaço)
+	* Uma lista das tags selecionadas (na direita)
+	* Colocar o nome de todas das tags escolhidas único e "grande" 
+	(ele falou da primeira que foi escolhida e tinha o menor tamanho...) 
+	 
+Sketch 2 (augusto):
+	* Tirar título do grafico e aumentar os labels
+	
+Sketch 3 (augusto):
+	* Modificar o layout das perguntas 
+	(inspirar-se no site: Votos | PERGUNTA GRANDE | Círculos das respostas )
+	(não vou usar a CP5)
+	* Aumentar o tamanho do nome das perguntas 
+	* Tirar o canal do comentario da pergunta (ele disse que é insignificante... De fato é, 
+	está poluído com muitos canais)
+	* Fazer timeline com as perguntas
+	Tornar todas as bolas das respostas comparáveis entre si (estabelecer um limite máximo de score)
+	
+OBS.: as divisões das tarefas fui eu quem coloquei aqui.
