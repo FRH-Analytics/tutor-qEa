@@ -2,15 +2,12 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Enumeration;
 
-import org.gicentre.utils.colour.ColourTable;
-
 import processing.core.PApplet;
 import processing.core.PVector;
 import util.CentroidData;
-import util.CompositeSketch;
 import util.QeAData;
 
-public class Sketch2 implements CompositeSketch {
+public class Sketch2 extends OurSketch {
 
 	private float plotX1, plotY1;
 	private float plotX2, plotY2;
@@ -37,20 +34,9 @@ public class Sketch2 implements CompositeSketch {
 	private float maxPointSize;
 	private float minPointSize;
 
-	private MainSketch pApplet;
-	private int myWidth;
-	private int myHeight;
-	private int myXOrigin;
-	private int myYOrigin;
-
 	public Sketch2(MainSketch parent, int xOrigin, int yOrigin, int width,
 			int height) {
-		pApplet = parent;
-
-		myXOrigin = xOrigin;
-		myYOrigin = yOrigin;
-		myWidth = width;
-		myHeight = height;
+		super(parent, xOrigin, yOrigin, width, height);
 	}
 
 	public void setup() {
@@ -65,7 +51,7 @@ public class Sketch2 implements CompositeSketch {
 		 */
 
 		// Y label
-		labelSize = myWidth / 40;
+		labelSize = myWidth / 35;
 		yLabelXOrigin = myXOrigin + (myWidth * (float) 0.02); // LEFT
 
 		// X Corners of the plot
@@ -90,14 +76,14 @@ public class Sketch2 implements CompositeSketch {
 		 */
 
 		// Title
-		titleSize = Math.min(myWidth / 27, myHeight / 17);
+		titleSize = Math.min(myWidth / 28, myHeight / 19);
 		subtitleSize = Math.min(myWidth / 35, myHeight / 23);
-		titleYOrigin = myYOrigin + (myHeight * (float) 0.075); // The bottom
-		subtitleYOrigin = myYOrigin + (myHeight * (float) 0.125);
+		titleYOrigin = myYOrigin + (myHeight * (float) 0.055); // The bottom
+		subtitleYOrigin = myYOrigin + (myHeight * (float) 0.1);
 
 		// Plot
-		plotY1 = myYOrigin + (myHeight * (float) 0.15);
-		plotY2 = myYOrigin + (myHeight * (float) 0.88);
+		plotY1 = myYOrigin + (myHeight * (float) 0.12);
+		plotY2 = myYOrigin + (myHeight * (float) 0.85);
 
 		// Label
 		xLabelYOrigin = myYOrigin + (myHeight * (float) 0.99);// The bottom
@@ -184,7 +170,7 @@ public class Sketch2 implements CompositeSketch {
 	private void highlightClusterAndTooltip(int clusterIndex) {
 		if (clusterIndex >= 0 && clusterIndex < maxClusterNumber) {
 			float xInPixels, yInPixels, sizeInPixels, realSize;
-String tooltip;
+			String tooltip;
 
 			pApplet.fill(ChartData.RGBA_COLOURS[clusterIndex][0],
 					ChartData.RGBA_COLOURS[clusterIndex][1],
@@ -208,10 +194,10 @@ String tooltip;
 			pApplet.ellipse(xInPixels, yInPixels, sizeInPixels, sizeInPixels);
 
 			// Draw ToolTip
-			
+
 			realSize = ChartData.getSizeArrayList().get(clusterIndex);
 			tooltip = String.valueOf((int) realSize) + " question(s)";
-			
+
 			pApplet.fill(50, 100);
 			pApplet.strokeWeight((float) 1);
 			pApplet.rectMode(PApplet.CENTER);
@@ -220,8 +206,8 @@ String tooltip;
 			pApplet.fill(255);
 			pApplet.textSize(12);
 			pApplet.textAlign(PApplet.CENTER, PApplet.CENTER);
-			pApplet.text(tooltip,
-					xInPixels + sizeInPixels / 2, yInPixels - sizeInPixels / 2);
+			pApplet.text(tooltip, xInPixels + sizeInPixels / 2, yInPixels
+					- sizeInPixels / 2);
 		}
 	}
 
@@ -261,11 +247,11 @@ String tooltip;
 
 	// TODO: Create an AbstractClass with this method and the attributes that
 	// are common to all sketches
-	public boolean mouseOverSketch() {
-		return (pApplet.mouseX > myXOrigin
-				&& pApplet.mouseX < (myXOrigin + myWidth)
-				&& pApplet.mouseY > myYOrigin && pApplet.mouseY < (myYOrigin + myHeight));
-	}
+//	public boolean mouseOverSketch() {
+//		return (pApplet.mouseX > myXOrigin
+//				&& pApplet.mouseX < (myXOrigin + myWidth)
+//				&& pApplet.mouseY > myYOrigin && pApplet.mouseY < (myYOrigin + myHeight));
+//	}
 
 	private int getClusterInPlot(int x, int y) {
 		int clusterIndex = -1;
@@ -323,7 +309,7 @@ String tooltip;
 	private void drawTitle() {
 		pApplet.fill(0);
 		pApplet.textAlign(PApplet.CENTER);
-		String title = "Question Clustering by Tag";
+		String title = "Question Clusters";
 		pApplet.textSize(titleSize);
 		pApplet.text(title, myXOrigin + myWidth / 2, titleYOrigin);
 	}
@@ -566,16 +552,6 @@ class ChartData {
 			colourData[i] = i + 1;
 		}
 		return colourData;
-	}
-
-	public static ColourTable getColourTable() {
-		ColourTable c = new ColourTable();
-		// Based on ColourTable.SET3_12
-		for (int i = 0; i < RGBA_COLOURS.length; i++) {
-			c.addDiscreteColourRule(i + 1, RGBA_COLOURS[i][0],
-					RGBA_COLOURS[i][1], RGBA_COLOURS[i][2], RGBA_COLOURS[i][3]);
-		}
-		return (c);
 	}
 
 	// MAX and MIN values

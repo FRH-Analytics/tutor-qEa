@@ -3,13 +3,12 @@ import java.util.Arrays;
 
 import processing.core.PApplet;
 import processing.core.PFont;
-import util.CompositeSketch;
 import util.QeAData;
 import controlP5.ControlEvent;
 import controlP5.ControlP5;
 import controlP5.DropdownList;
 
-public class Sketch1 implements CompositeSketch {
+public class Sketch1 extends OurSketch {
 
 	ArrayList<DropdownList> lists = new ArrayList<DropdownList>();
 	private ArrayList<Integer> selectedTags = new ArrayList<Integer>();
@@ -18,12 +17,6 @@ public class Sketch1 implements CompositeSketch {
 
 	ControlP5 cp5;
 	DropdownList d1;
-
-	PApplet pApplet;
-	int myWidth;
-	int myHeight;
-	int myXOrigin;
-	int myYOrigin;
 
 	int textFieldX, textFieldY, textFieldWidth, textFieldHeight;
 
@@ -37,12 +30,7 @@ public class Sketch1 implements CompositeSketch {
 
 	public Sketch1(MainSketch parent, int xOrigin, int yOrigin, int width,
 			int height) {
-		pApplet = parent;
-
-		myXOrigin = xOrigin;
-		myYOrigin = yOrigin;
-		myWidth = width;
-		myHeight = height;
+		super(parent, xOrigin, yOrigin, width, height);
 
 		textFieldX = myXOrigin + 20;
 		textFieldY = myYOrigin;
@@ -89,11 +77,13 @@ public class Sketch1 implements CompositeSketch {
 	public void draw() {
 	}
 
+
 	@Override
 	public void mousePressed() {
-
+		// TODO Auto-generated method stub
+		
 	}
-
+	
 	public void controlEvent(ControlEvent theEvent) {
 
 		if (theEvent.isGroup()) {

@@ -4,7 +4,6 @@ import java.util.TreeSet;
 import processing.core.PApplet;
 import processing.core.PFont;
 import util.AnswerData;
-import util.CompositeSketch;
 import util.QeAData;
 import util.QuestionData;
 import controlP5.Accordion;
@@ -12,7 +11,7 @@ import controlP5.Canvas;
 import controlP5.ControlP5;
 import controlP5.Group;
 
-public class Sketch3 implements CompositeSketch {
+public class Sketch3 extends OurSketch {
 
 	private int answerRectHeight;
 	private int questionRectHeight;
@@ -25,22 +24,11 @@ public class Sketch3 implements CompositeSketch {
 	private ControlP5 cp5;
 	private Accordion accordion;
 
-	private PApplet pApplet;
-	private int myWidth;
-	private int myHeight;
-	private int myXOrigin;
-	private int myYOrigin;
-
 	private int clusterId;
 
-	public Sketch3(PApplet parent, int xOrigin, int yOrigin, int width,
+	public Sketch3(MainSketch parent, int xOrigin, int yOrigin, int width,
 			int height) {
-		pApplet = parent;
-
-		myXOrigin = xOrigin;
-		myYOrigin = yOrigin;
-		myWidth = width;
-		myHeight = height;
+		super(parent, xOrigin, yOrigin, width, height);
 	}
 
 	public void setup() {
@@ -65,8 +53,8 @@ public class Sketch3 implements CompositeSketch {
 	public void draw() {
 		// Draw title
 		drawTitle();
-		
-		if (sortedQuestions.size() == 0){
+
+		if (sortedQuestions.size() == 0) {
 			drawNoCluster();
 		}
 	}
@@ -88,7 +76,7 @@ public class Sketch3 implements CompositeSketch {
 		pApplet.text(noTag, myXOrigin + myWidth / 2, myYOrigin + myHeight / 2);
 		pApplet.textAlign(PApplet.LEFT);
 	}
-	
+
 	private void drawTitle() {
 		pApplet.fill(0);
 		pApplet.textAlign(PApplet.CENTER, PApplet.CENTER);
@@ -303,17 +291,17 @@ public class Sketch3 implements CompositeSketch {
 			}
 		}
 	}
-	
-	private int map(int value,int iMin,int iMax,int oMin,int oMax){
-		
+
+	private int map(int value, int iMin, int iMax, int oMin, int oMax) {
+
 		int result;
-		if(iMax-iMin!=0){
-			result = (((oMax-oMin)/(iMax-iMin))*(value-iMin))+oMin;
-		}else{
+		if (iMax - iMin != 0) {
+			result = (((oMax - oMin) / (iMax - iMin)) * (value - iMin)) + oMin;
+		} else {
 			result = oMin;
 		}
 		return result;
-				
+
 	}
 
 }
