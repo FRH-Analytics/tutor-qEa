@@ -8,7 +8,7 @@ import controlP5.ControlEvent;
 import controlP5.ControlP5;
 import controlP5.DropdownList;
 
-public class Sketch1 extends OurSketch {
+public class Sketch1 extends ComposableSketch {
 
 	ArrayList<DropdownList> lists = new ArrayList<DropdownList>();
 	private ArrayList<Integer> selectedTags = new ArrayList<Integer>();

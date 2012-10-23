@@ -6,10 +6,11 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Hashtable;
+import java.util.TreeMap;
 
 import au.com.bytecode.opencsv.CSVReader;
 
@@ -41,7 +42,7 @@ public class QeAData {
 	// ArrayList with the chosen questions filtered after choosing the tags
 	private static ArrayList<Integer> chosenQuestions = new ArrayList<Integer>();
 	// Map with the centroids
-	private static Hashtable<Integer, CentroidData> centroidIdsToData = new Hashtable<Integer, CentroidData>();
+	private static TreeMap<Integer, CentroidData> centroidIdsToData = new TreeMap<Integer, CentroidData>();
 
 	// Static Data in Memory
 	private static Hashtable<Integer, ArrayList<Integer>> tagToQuestions = new Hashtable<Integer, ArrayList<Integer>>(
@@ -280,12 +281,12 @@ public class QeAData {
 		return questionIdsToData;
 	}
 
-	public static Hashtable<Integer, CentroidData> getCentroidIdsToData() {
+	public static TreeMap<Integer, CentroidData> getCentroidIdsToData() {
 		return centroidIdsToData;
 	}
 
-	public static Enumeration<CentroidData> getCentroidDataList() {
-		return centroidIdsToData.elements();
+	public static Collection<CentroidData> getCentroidDataList() {
+		return centroidIdsToData.values();
 	}
 
 	public static ArrayList<Integer> getChosenTags() {

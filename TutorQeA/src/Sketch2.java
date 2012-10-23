@@ -1,13 +1,13 @@
 import java.text.DecimalFormat;
 import java.util.ArrayList;
-import java.util.Enumeration;
+import java.util.Collection;
 
 import processing.core.PApplet;
 import processing.core.PVector;
 import util.CentroidData;
 import util.QeAData;
 
-public class Sketch2 extends OurSketch {
+public class Sketch2 extends ComposableSketch {
 
 	private float plotX1, plotY1;
 	private float plotX2, plotY2;
@@ -214,13 +214,10 @@ public class Sketch2 extends OurSketch {
 	public void updatePlot() {
 		ChartData.removeAllData();
 
-		Enumeration<CentroidData> centroidEnum = QeAData.getCentroidDataList();
-		CentroidData centroidTmp;
-		while (centroidEnum.hasMoreElements()) {
-			centroidTmp = centroidEnum.nextElement();
-
-			ChartData.addData(centroidTmp.getMeanAnswerCount(),
-					centroidTmp.getMeanScore(), centroidTmp.getClusterSize());
+		Collection<CentroidData> centroids = QeAData.getCentroidDataList();
+		for (CentroidData centroidData : centroids) {
+			ChartData.addData(centroidData.getMeanAnswerCount(),
+					centroidData.getMeanScore(), centroidData.getClusterSize());
 		}
 
 		// Update the size of the Axis
@@ -244,14 +241,6 @@ public class Sketch2 extends OurSketch {
 			}
 		}
 	}
-
-	// TODO: Create an AbstractClass with this method and the attributes that
-	// are common to all sketches
-//	public boolean mouseOverSketch() {
-//		return (pApplet.mouseX > myXOrigin
-//				&& pApplet.mouseX < (myXOrigin + myWidth)
-//				&& pApplet.mouseY > myYOrigin && pApplet.mouseY < (myYOrigin + myHeight));
-//	}
 
 	private int getClusterInPlot(int x, int y) {
 		int clusterIndex = -1;

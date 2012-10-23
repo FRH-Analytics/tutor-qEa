@@ -1,4 +1,4 @@
-public abstract class OurSketch {
+public abstract class ComposableSketch {
 
 	protected MainSketch pApplet;
 	protected int myWidth;
@@ -6,7 +6,7 @@ public abstract class OurSketch {
 	protected int myXOrigin;
 	protected int myYOrigin;
 
-	public OurSketch(MainSketch parent, int xOrigin, int yOrigin, int width,
+	public ComposableSketch(MainSketch parent, int xOrigin, int yOrigin, int width,
 			int height) {
 		pApplet = parent;
 
