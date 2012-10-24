@@ -145,7 +145,7 @@ public class Sketch1 extends ComposableSketch {
 
 			if (QeAData.getTagDictionary().containsKey(tagID)) {
 
-				PFont font2 = pApplet.createFont("Helvetica", 15);
+				PFont font2 = pApplet.createFont("Helvetica", defaultFontSize);
 				DropdownList newD = cp5
 						.addDropdownList("Select Tag " + (lists.size() + 2))
 						.setPosition(x, y).setBarHeight(20)

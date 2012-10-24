@@ -23,7 +23,9 @@ public class QeAData {
 	// private static final String QUESTIONS_DATA_FILE =
 	// "C:/Users/MATHEUS/workspace/tutor-qEa/TutorQeA/data/QuestionData.csv";
 	// private static final String QUESTION_ANSWERS_FILE =
-	// "C:/Users/MATHEUS/workspace/tutor-qEa/TutorQeA/data/QuestionAnswers.csv";
+	// "C:/Users/MATHEUS/workspace/tutor-qEa/TutorQeA/data/QuestionAnswers1.csv";
+	// private static final String QUESTION_ANSWERS_FILE_2 =
+	// "C:/Users/MATHEUS/workspace/tutor-qEa/TutorQeA/data/QuestionAnswers2.csv";
 	// private static final String TAG_LINKS_FILE =
 	// "C:/Users/MATHEUS/workspace/tutor-qEa/TutorQeA/data/TagLinks.csv";
 	// private static final String TAGS_FILE =
@@ -31,7 +33,8 @@ public class QeAData {
 
 	private static final String POST_TAGS_FILE = "/home/augusto/git/tutor-qEa/TutorQeA/data/PostTags.csv";
 	private static final String QUESTIONS_DATA_FILE = "/home/augusto/git/tutor-qEa/TutorQeA/data/QuestionData.csv";
-	private static final String QUESTION_ANSWERS_FILE = "/home/augusto/git/tutor-qEa/TutorQeA/data/QuestionAnswers.csv";
+	private static final String QUESTION_ANSWERS_FILE = "/home/augusto/git/tutor-qEa/TutorQeA/data/QuestionAnswers1.csv";
+	private static final String QUESTION_ANSWERS_FILE_2 = "/home/augusto/git/tutor-qEa/TutorQeA/data/QuestionAnswers2.csv";
 	private static final String TAG_LINKS_FILE = "/home/augusto/git/tutor-qEa/TutorQeA/data/TagLinks.csv";
 	private static final String TAGS_FILE = "/home/augusto/git/tutor-qEa/TutorQeA/data/TagsDictionary.csv";
 
@@ -205,8 +208,6 @@ public class QeAData {
 
 	public static void readQuestionAnswersFile() throws IOException,
 			ParseException {
-		CSVReader csvReader = new CSVReader(new FileReader(
-				QUESTION_ANSWERS_FILE));
 
 		// Unique features used... At this moment...
 		int questionId;
@@ -218,6 +219,12 @@ public class QeAData {
 
 		DateFormat format = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
 
+		/*
+		 *  FILE 1
+		 */
+		CSVReader csvReader = new CSVReader(new FileReader(
+				QUESTION_ANSWERS_FILE));
+		
 		// Reads the file header
 		String[] nextLine = csvReader.readNext();
 		while ((nextLine = csvReader.readNext()) != null) {
@@ -237,6 +244,33 @@ public class QeAData {
 					new AnswerData(answerId, score, creationDate,
 							answerCommentsCount, isAccepted));
 		}
+		
+		/*
+		 *  FILE 2
+		 */
+		csvReader = new CSVReader(new FileReader(
+				QUESTION_ANSWERS_FILE_2));
+		
+		// Reads the file header
+		nextLine = csvReader.readNext();
+		while ((nextLine = csvReader.readNext()) != null) {
+			questionId = Integer.valueOf(nextLine[0]);
+			answerId = Integer.valueOf(nextLine[1]);
+			score = Integer.valueOf(nextLine[2]);
+			creationDate = format.parse(nextLine[3]);
+			answerCommentsCount = Integer.valueOf(nextLine[4]);
+			isAccepted = Boolean.parseBoolean(nextLine[5].toLowerCase());
+
+			if (!questionIdsToAnswers.containsKey(questionId)) {
+				questionIdsToAnswers.put(questionId,
+						new ArrayList<AnswerData>());
+			}
+
+			questionIdsToAnswers.get(questionId).add(
+					new AnswerData(answerId, score, creationDate,
+							answerCommentsCount, isAccepted));
+		}
+
 	}
 
 	public static void readTagLinksFile() throws IOException {

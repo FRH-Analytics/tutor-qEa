@@ -43,28 +43,29 @@ CreateFakeQuestionFeatures = function(questionsFile, questionFeaturesFile){
 
 # Remove useless attributes from the Questions and Answers table
 RemoveUnusedCollumns = function(){
-    questions = read.csv("../TutorQeA/data/Questions.csv")
-    answers = read.csv("../TutorQeA/data/Answers.csv")
+    questions = read.csv("../TutorQeA/raw_data/Questions.csv")
+    answers = read.csv("../TutorQeA/raw_data/Answers.csv")
     
+    print(noquote("Removing unused collumns from Questions and Answers..."))
     questions = questions[,c("Id", "AcceptedAnswerId", "CreationDate", "Score", "ViewCount", 
                              "Body", "OwnerUserId", "OwnerDisplayName", "LastActivityDate", 
                              "Title", "Tags", "AnswerCount", "CommentCount", "FavoriteCount", 
                              "CommunityOwnedDate")]
     answers = answers[,c("Id", "ParentId", "CreationDate", "Score", "Body", "OwnerUserId", 
-                         "OwnerDisplayName", "CommunityOwnedDate")]
+                         "OwnerDisplayName", "CommentCount", "CommunityOwnedDate")]
     
-    write.csv(questions, file = "../TutorQeA/data/Questions.csv", row.names = F)      
-    write.csv(answers, file = "../TutorQeA/data/Answers.csv", row.names = F)
+    write.csv(questions, file = "../TutorQeA/raw_data/Questions.csv", row.names = F)      
+    write.csv(answers, file = "../TutorQeA/raw_data/Answers.csv", row.names = F)
 }
 
 CheckForeignKeysBetweenTables = function(){
-    qIds = read.csv("../TutorQeA/data/Questions.csv")$Id
+    qIds = read.csv("../TutorQeA/raw_data/Questions.csv")$Id
     
     # Answers.ParentId %in% Questions.Id
     print(noquote("Checking: Answers.ParentId %in% Questions.Id"))
-    answers = read.csv("../TutorQeA/data/Answers.csv")
+    answers = read.csv("../TutorQeA/raw_data/Answers.csv")
     answers = answers[answers$ParentId %in% qIds,] # 0 rows deleted...
-    write.csv(answers, file = "../TutorQeA/data/Answers.csv", row.names = F)
+    write.csv(answers, file = "../TutorQeA/raw_data/Answers.csv", row.names = F)
     rm(answers)
     
     # PostTags.PostId %in% Questions.Id
@@ -76,17 +77,17 @@ CheckForeignKeysBetweenTables = function(){
     
     # Comment-Questions.PostId %in% Questions.Id
     print(noquote("Checking: Comment-Questions.PostId %in% Questions.Id"))
-    commentQ = read.csv("../TutorQeA/data/Comments-Questions.csv")
+    commentQ = read.csv("../TutorQeA/raw_data/Comments-Questions.csv")
     commentQ = commentQ[commentQ$PostId %in% qIds,] # 0 rows deleted...
-    write.csv(commentQ, file = "../TutorQeA/data/Comments-Questions.csv", row.names = F)
+    write.csv(commentQ, file = "../TutorQeA/raw_data/Comments-Questions.csv", row.names = F)
     rm(commentQ)
     
     # Comment-Answers.PostId %in% Answers.Id
     print(noquote("Checking: Comment-Answers.PostId %in% Answers.Id"))
-    commentA = read.csv("../TutorQeA/data/Comments-Answers.csv")
-    aIds = read.csv("../TutorQeA/data/Answers.csv")$Id
+    commentA = read.csv("../TutorQeA/raw_data/Comments-Answers.csv")
+    aIds = read.csv("../TutorQeA/raw_data/Answers.csv")$Id
     commentA = commentA[commentA$PostId %in% aIds,] # 0 rows deleted...
-    write.csv(commentA, file = "../TutorQeA/data/Comments-Answers.csv", row.names = F)
+    write.csv(commentA, file = "../TutorQeA/raw_data/Comments-Answers.csv", row.names = F)
     rm(commentA, aIds)
     
 }
@@ -120,12 +121,12 @@ CreateTagLinks = function(){
     }
 }
     
-    write.csv(tagLinks, file = "../TutorQeA/data/TagLinks2.csv", row.names = F)
+    write.csv(tagLinks, file = "../TutorQeA/data/TagLinks.csv", row.names = F)
 }
 
 CreateQuestionData = function(){
     print(noquote("Creating the QuestionData table (keeping only the needed collumns from Questions)..."))
-    questions = read.csv("../TutorQeA/data/Questions.csv")
+    questions = read.csv("../TutorQeA/raw_data/Questions.csv")
     
     print(noquote("Selecting the question collumns..."))
     questions.data = questions[,c("Id", "Title", "Score", "AnswerCount", "CommentCount")]
@@ -133,7 +134,7 @@ CreateQuestionData = function(){
     questions.data[is.na(questions.data$CommentCount),]$CommentCount = 0
     
     print(noquote("Adding the Cluster collumn from QuestionFeatures..."))
-    questions.features = read.csv("../TutorQeA/data/QuestionFeatures.csv")
+    questions.features = read.csv("../TutorQeA/raw_data/QuestionFeatures.csv")
     questions.data = merge(questions.data, questions.features[,c("Id", "Cluster")], by = "Id")
     
     write.csv(questions.data, file = "../TutorQeA/data/QuestionData.csv", row.names = F)
@@ -141,34 +142,31 @@ CreateQuestionData = function(){
 
 CreateQuestionAnswers = function(){
     print(noquote("Creating the QuestionAnswers table (ordered by: QuestionId and Answer$CreationDate)..."))
-    answers = read.csv("../TutorQeA/data/Answers.csv")
-    accepted.answers = read.csv("../TutorQeA/data/Questions.csv")$AcceptedAnswerId
-    comments.post.id = read.csv("../TutorQeA/data/Comments-Answers.csv")$PostId
+    answers = read.csv("../TutorQeA/raw_data/Answers.csv")
+    accepted.answers = read.csv("../TutorQeA/raw_data/Questions.csv")$AcceptedAnswerId
+    comments.post.id = read.csv("../TutorQeA/raw_data/Comments-Answers.csv")$PostId
     
-    # TODO: There is the CommentCount collumn in the original Answer table. Update this.
-    question.answers = answers[,c("ParentId", "Id", "Score", "CreationDate")]
-    question.answers$CommentCount = NA
-    for(i in 1:nrow(question.answers)){
-      question.answers[i,]$CommentCount = count.comments(question.answers[i,]$Id,comments.post.id)
-    }
+    question.answers = answers[,c("ParentId", "Id", "Score", "CreationDate", "CommentCount")]
+    question.answers[is.na(question.answers$CommentCount),]$CommentCount = 0
     question.answers$isAcceptedAnswer = question.answers$Id %in% accepted.answers
     colnames(question.answers) = c("QuestionId", "AnswerId", "Score", "CreationDate","AnswerCommentCount","IsAcceptedAnswer")
+    
     question.answers = question.answers[order(question.answers$QuestionId, 
-                               strptime(question.answers$CreationDate,"%Y-%m-%d %H:%M:%S"), decreasing=F),]
+                                              strptime(question.answers$CreationDate,"%Y-%m-%d %H:%M:%S"), decreasing=F),]
     
     write.csv(question.answers, file = "../TutorQeA/data/QuestionAnswers.csv", row.names = F)
 }
 
 count.comments = function(id, postsIds){
-  return(length(which(postsIds == id)))
+    return(length(which(postsIds == id)))
 }
 
 CreateTagNames = function(){
-  tags = read.csv("../TutorQeA/data/Tags.csv")
-  
-  tagNames = tags[,c(1,2)]
-  
-  write.csv(tagNames, file = "../TutorQeA/data/TagsDictionary.csv",  row.names = F)
+    tags = read.csv("../TutorQeA/raw_data/Tags.csv")
+    
+    tagNames = tags[,c(1,2)]
+    
+    write.csv(tagNames, file = "../TutorQeA/data/TagsDictionary.csv",  row.names = F)
 }
 
 ############# MAIN #############
@@ -181,10 +179,10 @@ if (Sys.info()["sysname"] == "Linux"){
     registerDoMC()
 }
 
-# RemoveUnusedCollumns()
-# CheckForeignKeysBetweenTables()
-# CreateTagLinks()
-# CreateFakeQuestionFeatures("../TutorQeA/data/Questions.csv", "../TutorQeA/data/QuestionFeatures.csv")
-# CreateQuestionData()
+RemoveUnusedCollumns()
+CheckForeignKeysBetweenTables()
+CreateTagLinks()
+CreateFakeQuestionFeatures("../TutorQeA/raw_data/Questions.csv", "../TutorQeA/raw_data/QuestionFeatures.csv")
+CreateQuestionData()
 CreateQuestionAnswers()
 CreateTagNames()
