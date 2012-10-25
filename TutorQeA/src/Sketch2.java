@@ -1,6 +1,7 @@
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.TreeMap;
 
 import processing.core.PApplet;
 import processing.core.PVector;
@@ -16,7 +17,7 @@ public class Sketch2 extends ComposableSketch {
 
 	private float labelSize, yLabelXOrigin, xLabelYOrigin;
 
-	private float titleSize, subtitleSize, titleYOrigin, subtitleYOrigin;
+	private float subtitleSize, titleYOrigin, subtitleYOrigin;
 
 	private float legendX1, legendY1;
 	private float legendX2, legendY2;
@@ -29,7 +30,7 @@ public class Sketch2 extends ComposableSketch {
 	private float gridGrayColor;
 
 	private int maxClusterNumber;
-	private int selectedCluster;
+	private int selectedClusterId;
 
 	private float maxPointSize;
 	private float minPointSize;
@@ -76,7 +77,6 @@ public class Sketch2 extends ComposableSketch {
 		 */
 
 		// Title
-		titleSize = Math.min(myWidth / 28, myHeight / 19);
 		subtitleSize = Math.min(myWidth / 35, myHeight / 23);
 		titleYOrigin = myYOrigin + (myHeight * (float) 0.055); // The bottom
 		subtitleYOrigin = myYOrigin + (myHeight * (float) 0.1);
@@ -92,7 +92,7 @@ public class Sketch2 extends ComposableSketch {
 		maxClusterNumber = 8;
 
 		// No Cluster selected
-		selectedCluster = -1;
+		selectedClusterId = -1;
 
 		// Legend (starts in the top and goes to the bottom of the plot)
 		legendY1 = plotY1;
@@ -123,7 +123,7 @@ public class Sketch2 extends ComposableSketch {
 	public void draw() {
 		drawTitle();
 
-		if (ChartData.getPoints().size() > 0) {
+		if (ChartData.getSize() > 0) {
 			drawSubtitle();
 			drawAxisLabels();
 
@@ -140,8 +140,8 @@ public class Sketch2 extends ComposableSketch {
 			drawDataPoints();
 
 			// Highlight Cluster (Hover query)
-			if (selectedCluster != -1) {
-				highlightClusterAndTooltip(selectedCluster);
+			if (selectedClusterId != -1) {
+				highlightClusterAndTooltip();
 			}
 		} else {
 			drawNoPlot();
@@ -150,31 +150,35 @@ public class Sketch2 extends ComposableSketch {
 
 	public void mousePressed() {
 		if (pApplet.mouseButton == PApplet.LEFT && mouseOverSketch()) {
-			if (selectedCluster != -1) {
-				pApplet.getSketch3().updateQuestionsByCluster(
-						selectedCluster + 1);
+			if (selectedClusterId != -1) {
+				pApplet.getSketch3()
+						.updateQuestionsByCluster(selectedClusterId);
 			}
 		}
 	}
 
 	public void mouseMoved() {
 		if (mouseOverSketch()) {
-			selectedCluster = getClusterInLegend(pApplet.mouseX, pApplet.mouseY);
-			if (selectedCluster == -1) {
-				selectedCluster = getClusterInPlot(pApplet.mouseX,
+			selectedClusterId = getClusterInLegend(pApplet.mouseX,
+					pApplet.mouseY);
+			if (selectedClusterId == -1) {
+				selectedClusterId = getClusterInPlot(pApplet.mouseX,
 						pApplet.mouseY);
 			}
 		}
 	}
 
-	private void highlightClusterAndTooltip(int clusterIndex) {
-		if (clusterIndex >= 0 && clusterIndex < maxClusterNumber) {
-			float xInPixels, yInPixels, sizeInPixels, realSize;
-			String tooltip;
+	private void highlightClusterAndTooltip() {
+		if (selectedClusterId != -1) {
 
-			pApplet.fill(ChartData.RGBA_COLOURS[clusterIndex][0],
-					ChartData.RGBA_COLOURS[clusterIndex][1],
-					ChartData.RGBA_COLOURS[clusterIndex][2]);
+			float xInPixels, yInPixels, sizeInPixels;
+			String tooltip;
+			int clusterIndex = ChartData.getIndexById(selectedClusterId);
+			ChartItem clusterItem = ChartData.getItemById(selectedClusterId);
+
+			pApplet.fill(clusterItem.getColor(ChartItem.RED),
+					clusterItem.getColor(ChartItem.GREEN),
+					clusterItem.getColor(ChartItem.BLUE));
 			pApplet.stroke(gridGrayColor / (float) 1.5);
 			pApplet.strokeWeight((float) 1.75);
 			pApplet.ellipseMode(PApplet.CENTER);
@@ -187,16 +191,15 @@ public class Sketch2 extends ComposableSketch {
 			pApplet.ellipse(xInPixels, yInPixels, sizeInPixels, sizeInPixels);
 
 			// Highlight Cluster (PLOT)
-			xInPixels = getPointXInPixels(clusterIndex);
-			yInPixels = getPointYInPixels(clusterIndex);
-			sizeInPixels = getPointSizeInPixels(clusterIndex);
+			xInPixels = getPointXInPixels(clusterItem.getPoint().x);
+			yInPixels = getPointYInPixels(clusterItem.getPoint().y);
+			sizeInPixels = getPointSizeInPixels(clusterItem.getSize());
 
 			pApplet.ellipse(xInPixels, yInPixels, sizeInPixels, sizeInPixels);
 
 			// Draw ToolTip
-
-			realSize = ChartData.getSizeArrayList().get(clusterIndex);
-			tooltip = String.valueOf((int) realSize) + " question(s)";
+			tooltip = String.valueOf((int) clusterItem.getSize())
+					+ " question(s)";
 
 			pApplet.fill(50, 100);
 			pApplet.strokeWeight((float) 1);
@@ -217,17 +220,18 @@ public class Sketch2 extends ComposableSketch {
 		Collection<CentroidData> centroids = QeAData.getCentroidDataList();
 		for (CentroidData centroidData : centroids) {
 			ChartData.addData(centroidData.getMeanAnswerCount(),
-					centroidData.getMeanScore(), centroidData.getClusterSize());
+					centroidData.getMeanScore(), centroidData.getClusterSize(),
+					centroidData.getClusterId());
 		}
 
 		// Update the size of the Axis
-		if (ChartData.getPoints().size() > 0) {
+		if (ChartData.getSize() > 0) {
 			// Update Max and Min plot
-			xMin = ChartData.getMinX();
-			xMax = ChartData.getMaxX();
+			xMin = ChartData.minX;
+			xMax = ChartData.maxX;
 
-			yMin = ChartData.getMinY();
-			yMax = ChartData.getMaxY();
+			yMin = ChartData.minY;
+			yMax = ChartData.maxY;
 
 			// Normalize the axis
 			xMin = xMin - xMin % 10;
@@ -239,19 +243,23 @@ public class Sketch2 extends ComposableSketch {
 			while ((yMax - yMin) % valueDivisions != 0) {
 				yMax++;
 			}
+		}else{
+			// Removes also the questions and cluster of the Sketch 3
+			pApplet.getSketch3().removeQuestionsAndCluster();
 		}
 	}
 
 	private int getClusterInPlot(int x, int y) {
-		int clusterIndex = -1;
 
+		int clusterId = -1;
 		float xInPixels, yInPixels, radiusInPixels;
 		double dist, finalDist = Double.MAX_VALUE;
-
-		for (int i = 0; i < ChartData.getPoints().size(); i++) {
-			xInPixels = getPointXInPixels(i);
-			yInPixels = getPointYInPixels(i);
-			radiusInPixels = getPointSizeInPixels(i) / 2;
+		ChartItem clusterItem;
+		for (Integer id : ChartData.getAllIds()) {
+			clusterItem = ChartData.getItemById(id);
+			xInPixels = getPointXInPixels(clusterItem.getPoint().x);
+			yInPixels = getPointYInPixels(clusterItem.getPoint().y);
+			radiusInPixels = getPointSizeInPixels(clusterItem.getSize()) / 2;
 
 			// Distance
 			dist = Math.sqrt(Math.pow(x - xInPixels, 2)
@@ -259,37 +267,39 @@ public class Sketch2 extends ComposableSketch {
 
 			if (dist <= radiusInPixels) {
 				// Select the smaller cluster that the mouse is over
-				clusterIndex = (dist < finalDist) ? i : clusterIndex;
+				clusterId = (dist < finalDist) ? id : clusterId;
 				break;
 			}
 		}
 
-		return (clusterIndex);
+		return (clusterId);
 	}
 
 	private int getClusterInLegend(int x, int y) {
-		int clusterNum = ChartData.getArrayDataIndex().length;
-		int clusterIndex = -1;
+		int clusterId = -1, clusterIndex;
 
-		if (x > legendX1 && x < legendX2 && y > legendY1 && y < legendY2
-				&& (y - legendY1) <= (clusterNum * legendPartitionSize)) {
-			clusterIndex = (int) Math.ceil((y - legendY1)
-					/ (double) legendPartitionSize);
-			clusterIndex--;
+		if (x > legendX1
+				&& x < legendX2
+				&& y > legendY1
+				&& y < legendY2
+				&& (y - legendY1) <= (ChartData.getSize() * legendPartitionSize)) {
+			clusterIndex = ((int) Math.ceil((y - legendY1)
+					/ (double) legendPartitionSize)) - 1;
+			clusterId = ChartData.getIdByIndex(clusterIndex);
 		}
 
-		return (clusterIndex);
+		return (clusterId);
 	}
 
 	private void drawNoPlot() {
-		String noTag = "No tag selected...";
+		String noTag = "No question...";
 		pApplet.fill(150, 100);
 		pApplet.strokeWeight((float) 2);
 		pApplet.rectMode(PApplet.CENTER);
 		pApplet.rect(myXOrigin + myWidth / 2, myYOrigin + myHeight / 2,
 				pApplet.textWidth(noTag) + 30, 30, 5, 5);
 		pApplet.fill(0);
-		pApplet.textSize(titleSize - 3);
+		pApplet.textSize(myHeight / 22);
 		pApplet.textAlign(PApplet.CENTER, PApplet.CENTER);
 		pApplet.text(noTag, myXOrigin + myWidth / 2, myYOrigin + myHeight / 2);
 		pApplet.textAlign(PApplet.CENTER, PApplet.CENTER);
@@ -299,7 +309,7 @@ public class Sketch2 extends ComposableSketch {
 		pApplet.fill(0);
 		pApplet.textAlign(PApplet.CENTER);
 		String title = "Question Clusters";
-		pApplet.textSize(titleSize);
+		pApplet.textSize(myHeight / 18);
 		pApplet.text(title, myXOrigin + myWidth / 2, titleYOrigin);
 	}
 
@@ -403,42 +413,43 @@ public class Sketch2 extends ComposableSketch {
 		pApplet.ellipseMode(PApplet.CENTER);
 
 		float size, x, y;
-		for (int i = 0; i < ChartData.getPoints().size(); i++) {
+		ChartItem clusterItem;
+		ArrayList<Integer> clusterIds = ChartData.getAllIds();
 
-			size = getPointSizeInPixels(i);
-			x = getPointXInPixels(i);
-			y = getPointYInPixels(i);
+		for (int i = 0; i < ChartData.getSize(); i++) {
 
-			pApplet.fill(ChartData.RGBA_COLOURS[i][0],
-					ChartData.RGBA_COLOURS[i][1], ChartData.RGBA_COLOURS[i][2],
-					ChartData.RGBA_COLOURS[i][3]);
+			clusterItem = ChartData.getItemById(clusterIds.get(i));
+			size = getPointSizeInPixels(clusterItem.getSize());
+			x = getPointXInPixels(clusterItem.getPoint().x);
+			y = getPointYInPixels(clusterItem.getPoint().y);
+
+			pApplet.fill(clusterItem.getColor(ChartItem.RED),
+					clusterItem.getColor(ChartItem.GREEN),
+					clusterItem.getColor(ChartItem.BLUE),
+					clusterItem.getColor(ChartItem.ALPHA));
 			pApplet.ellipse(x, y, size, size);
 		}
 	}
 
-	private float getPointXInPixels(int index) {
-		return (PApplet.map(ChartData.getPoints().get(index).x, xMin, xMax,
-				plotX1, plotX2));
+	private float getPointXInPixels(float x) {
+		return (PApplet.map(x, xMin, xMax, plotX1, plotX2));
 	}
 
-	private float getPointYInPixels(int index) {
-		return (PApplet.map(ChartData.getPoints().get(index).y, yMin, yMax,
-				plotY1, plotY2));
+	private float getPointYInPixels(float y) {
+		return (PApplet.map(y, yMin, yMax, plotY1, plotY2));
 	}
 
-	private float getPointSizeInPixels(int index) {
-		float size = -1;
-		if (ChartData.getMinSize() == ChartData.getMaxSize()) {
+	private float getPointSizeInPixels(float size) {
+		float finalSize;
+		if (ChartData.minSize == ChartData.maxSize) {
 			// Exceptional case. The map would return NaN...
-			size = PApplet.map(ChartData.getSizeArrayList().get(index),
-					ChartData.getMinSize() - 5, ChartData.getMaxSize() + 5,
-					minPointSize, maxPointSize);
+			finalSize = PApplet.map(size, ChartData.minSize - 5,
+					ChartData.maxSize + 5, minPointSize, maxPointSize);
 		} else {
-			size = PApplet.map(ChartData.getSizeArrayList().get(index),
-					ChartData.getMinSize(), ChartData.getMaxSize(),
+			finalSize = PApplet.map(size, ChartData.minSize, ChartData.maxSize,
 					minPointSize, maxPointSize);
 		}
-		return size;
+		return finalSize;
 	}
 
 	private void drawLegend() {
@@ -454,20 +465,19 @@ public class Sketch2 extends ComposableSketch {
 		float textX, textY;
 
 		// Helpful variables
-		int clusterNum = ChartData.getArrayDataIndex().length;
-		int[] clusterIndexes = ChartData.getArrayDataIndex();
-		int clusterIndex;
+		ArrayList<Integer> clusterIds = ChartData.getAllIds();
+		ChartItem clusterItem;
 
-		for (int i = 0; i < clusterNum; i++) {
-			clusterIndex = Math.round(clusterIndexes[i]);
-
+		for (int i = 0; i < ChartData.getSize(); i++) {
 			littleClusterX = getLegendLittleClusterX();
 			littleClusterY = getLegendLittleClusterY(i);
 
 			// Ellipse
-			pApplet.fill(ChartData.RGBA_COLOURS[i][0],
-					ChartData.RGBA_COLOURS[i][1], ChartData.RGBA_COLOURS[i][2],
-					ChartData.RGBA_COLOURS[i][3]);
+			clusterItem = ChartData.getItemById(clusterIds.get(i));
+			pApplet.fill(clusterItem.getColor(ChartItem.RED),
+					clusterItem.getColor(ChartItem.GREEN),
+					clusterItem.getColor(ChartItem.BLUE),
+					clusterItem.getColor(ChartItem.ALPHA));
 			pApplet.ellipse(littleClusterX, littleClusterY, littleClusterSize,
 					littleClusterSize);
 
@@ -475,7 +485,7 @@ public class Sketch2 extends ComposableSketch {
 			textX = legendX1 + littleClusterSize + (2 * legendPadding);
 			textY = littleClusterY + (littleClusterSize / 4);
 			pApplet.fill(0);
-			pApplet.text("Cluster " + clusterIndex, textX, textY);
+			pApplet.text("Cluster " + clusterIds.get(i), textX, textY);
 		}
 	}
 
@@ -489,11 +499,80 @@ public class Sketch2 extends ComposableSketch {
 }
 
 class ChartData {
-	private static ArrayList<PVector> points = new ArrayList<PVector>();
-	private static ArrayList<Float> sizes = new ArrayList<Float>();
-	private static int alpha = 160;
+	private static TreeMap<Integer, ChartItem> data = new TreeMap<Integer, ChartItem>();
+	public static float minX = Float.MAX_VALUE, minY = Float.MAX_VALUE,
+			minSize = Float.MAX_VALUE, maxX = Float.MIN_VALUE,
+			maxY = Float.MIN_VALUE, maxSize = Float.MIN_VALUE;
 
-	public static final int[][] RGBA_COLOURS = { { 141, 211, 199, alpha },
+	public static void addData(float x, float y, float size, int id) {
+		data.put(id, new ChartItem(new PVector(x, y), size, id));
+
+		// Update MAX and MIN values
+		minX = (x < minX) ? x : minX;
+		minY = (y < minY) ? y : minY;
+		minSize = (size < minSize) ? size : minSize;
+		maxX = (x > maxX) ? x : maxX;
+		maxY = (y > maxY) ? y : maxY;
+		maxSize = (size > maxSize) ? size : maxSize;
+	}
+
+	public static void removeAllData() {
+		data.clear();
+		minX = Float.MAX_VALUE;
+		minY = Float.MAX_VALUE;
+		minSize = Float.MAX_VALUE;
+		maxX = Float.MIN_VALUE;
+		maxY = Float.MIN_VALUE;
+		maxSize = Float.MIN_VALUE;
+	}
+
+	public static int getSize() {
+		return data.size();
+	}
+
+	public static ChartItem getItemById(int id) {
+		return data.get(new Integer(id));
+	}
+
+	public static int getIndexById(int id) {
+		int index = -1;
+		for (Integer itemId : data.keySet()) {
+			index++;
+			if (itemId == id)
+				break;
+		}
+		return index;
+	}
+
+	public static int getIdByIndex(int index) {
+		int id = -1;
+		if (index >= 0 && index < ChartData.getSize()) {
+			for (Integer itemId : data.keySet()) {
+				if (index == 0) {
+					id = itemId;
+					break;
+				}
+				index--;
+			}
+		}
+		return id;
+	}
+
+	public static ArrayList<Integer> getAllIds() {
+		ArrayList<Integer> ids = new ArrayList<Integer>();
+		for (Integer itemId : data.keySet()) {
+			ids.add(itemId);
+		}
+		return ids;
+	}
+
+}
+
+class ChartItem implements Comparable<ChartItem> {
+	public static final int RED = 0, GREEN = 1, BLUE = 2, ALPHA = 3;
+
+	private static final int alpha = 160;
+	private static final int[][] RGBA_COLOURS = { { 141, 211, 199, alpha },
 			{ 255, 255, 179, alpha }, { 190, 186, 218, alpha },
 			{ 251, 128, 114, alpha }, { 128, 177, 211, alpha },
 			{ 253, 180, 98, alpha }, { 179, 222, 105, alpha },
@@ -501,94 +580,55 @@ class ChartData {
 			{ 188, 128, 189, alpha }, { 204, 235, 197, alpha },
 			{ 255, 237, 111, alpha } };
 
-	/*
-	 * Synchronized to avoid data corruption!
-	 */
-	public static void addData(float x, float y, float size) {
-		points.add(new PVector(x, y));
-		sizes.add(size);
+	private PVector point;
+	private float size;
+	private int id;
+
+	public ChartItem(PVector point, float size, int id) {
+		this.point = point;
+		this.size = size;
+		this.id = id;
 	}
 
-	/*
-	 * Synchronized to avoid data corruption!
-	 */
-	public static void removeAllData() {
-		points.clear();
-		sizes.clear();
+	public PVector getPoint() {
+		return point;
 	}
 
-	public static ArrayList<PVector> getPoints() {
-		return points;
+	public float getSize() {
+		return size;
 	}
 
-	public static ArrayList<Float> getSizeArrayList() {
-		return sizes;
+	public int getId() {
+		return id;
 	}
 
-	public static float[] getArraySize() {
-		float[] floatArray = new float[sizes.size()];
-
-		for (int i = 0; i < floatArray.length; i++) {
-			Float f = sizes.get(i);
-			floatArray[i] = (f != null ? f : Float.NaN);
-		}
-		return floatArray;
+	public int getColor(int component) {
+		return (RGBA_COLOURS[id - 1][component]);
 	}
 
-	public static int[] getArrayDataIndex() {
-		int[] colourData = new int[getSizeArrayList().size()];
-		for (int i = 0; i < colourData.length; i++) {
-			colourData[i] = i + 1;
-		}
-		return colourData;
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		ChartItem other = (ChartItem) obj;
+		if (id != other.id)
+			return false;
+		if (point == null) {
+			if (other.point != null)
+				return false;
+		} else if (!point.equals(other.point))
+			return false;
+		if (size != other.size)
+			return false;
+		return true;
 	}
 
-	// MAX and MIN values
-	public static float getMinX() {
-		float minX = Float.MAX_VALUE;
-		for (PVector point : points) {
-			minX = (point.x < minX) ? point.x : minX;
-		}
-		return minX;
-	}
-
-	public static float getMinY() {
-		float minY = Float.MAX_VALUE;
-		for (PVector point : points) {
-			minY = (point.y < minY) ? point.y : minY;
-		}
-		return minY;
-	}
-
-	public static float getMaxX() {
-		float maxX = Float.MIN_VALUE;
-		for (PVector point : points) {
-			maxX = (point.x > maxX) ? point.x : maxX;
-		}
-		return maxX;
-	}
-
-	public static float getMaxY() {
-		float maxY = 0;
-		for (PVector point : points) {
-			maxY = (point.y > maxY) ? point.y : maxY;
-		}
-		return maxY;
-	}
-
-	public static float getMaxSize() {
-		float maxSize = Float.MIN_VALUE;
-		for (float s : sizes) {
-			maxSize = (s > maxSize) ? s : maxSize;
-		}
-		return maxSize;
-	}
-
-	public static float getMinSize() {
-		float minSize = Float.MAX_VALUE;
-		for (float s : sizes) {
-			minSize = (s < minSize) ? s : minSize;
-		}
-		return minSize;
+	@Override
+	public int compareTo(ChartItem o) {
+		return this.getId() - o.getId();
 	}
 }

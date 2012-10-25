@@ -16,27 +16,12 @@ import au.com.bytecode.opencsv.CSVReader;
 
 public class QeAData {
 
-	// TODO: Change these file paths to a file (outside from the git
-	// repository)
-	// private static final String POST_TAGS_FILE =
-	// "C:/Users/MATHEUS/workspace/tutor-qEa/TutorQeA/data/PostTags.csv";
-	// private static final String QUESTIONS_DATA_FILE =
-	// "C:/Users/MATHEUS/workspace/tutor-qEa/TutorQeA/data/QuestionData.csv";
-	// private static final String QUESTION_ANSWERS_FILE =
-	// "C:/Users/MATHEUS/workspace/tutor-qEa/TutorQeA/data/QuestionAnswers1.csv";
-	// private static final String QUESTION_ANSWERS_FILE_2 =
-	// "C:/Users/MATHEUS/workspace/tutor-qEa/TutorQeA/data/QuestionAnswers2.csv";
-	// private static final String TAG_LINKS_FILE =
-	// "C:/Users/MATHEUS/workspace/tutor-qEa/TutorQeA/data/TagLinks.csv";
-	// private static final String TAGS_FILE =
-	// "C:/Users/MATHEUS/workspace/tutor-qEa/TutorQeA/data/TagsDictionary.csv";
-
-	private static final String POST_TAGS_FILE = "/home/augusto/git/tutor-qEa/TutorQeA/data/PostTags.csv";
-	private static final String QUESTIONS_DATA_FILE = "/home/augusto/git/tutor-qEa/TutorQeA/data/QuestionData.csv";
-	private static final String QUESTION_ANSWERS_FILE = "/home/augusto/git/tutor-qEa/TutorQeA/data/QuestionAnswers1.csv";
-	private static final String QUESTION_ANSWERS_FILE_2 = "/home/augusto/git/tutor-qEa/TutorQeA/data/QuestionAnswers2.csv";
-	private static final String TAG_LINKS_FILE = "/home/augusto/git/tutor-qEa/TutorQeA/data/TagLinks.csv";
-	private static final String TAGS_FILE = "/home/augusto/git/tutor-qEa/TutorQeA/data/TagsDictionary.csv";
+	private static final String POST_TAGS_FILE = "../data/PostTags.csv";
+	private static final String QUESTIONS_DATA_FILE = "../data/QuestionData.csv";
+	private static final String QUESTION_ANSWERS_FILE = "../data/QuestionAnswers1.csv";
+	private static final String QUESTION_ANSWERS_FILE_2 = "../data/QuestionAnswers2.csv";
+	private static final String TAG_LINKS_FILE = "../data/TagLinks.csv";
+	private static final String TAGS_FILE = "../data/TagsDictionary.csv";
 
 	// ArrayList with the chosen tags, the order expresses the intern
 	// relationship between the tags
@@ -64,7 +49,7 @@ public class QeAData {
 
 		if (tagList.size() == tagNameList.size()
 				&& !tagList.equals(chosenTagIds)) {
-			// CLEAR the chosenTags, chosenQuestions and centroidIdsToData
+			// CLEAR everything
 			chosenTagIds.clear();
 			chosenTagNames.clear();
 			chosenQuestions.clear();
@@ -108,7 +93,8 @@ public class QeAData {
 						break;
 					}
 				} else {
-					chosenQuestions = tagToQuestions.get(tagId);
+					chosenQuestions = (ArrayList<Integer>) tagToQuestions.get(
+							tagId).clone();
 				}
 			}
 
@@ -220,11 +206,11 @@ public class QeAData {
 		DateFormat format = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
 
 		/*
-		 *  FILE 1
+		 * FILE 1
 		 */
 		CSVReader csvReader = new CSVReader(new FileReader(
 				QUESTION_ANSWERS_FILE));
-		
+
 		// Reads the file header
 		String[] nextLine = csvReader.readNext();
 		while ((nextLine = csvReader.readNext()) != null) {
@@ -244,13 +230,12 @@ public class QeAData {
 					new AnswerData(answerId, score, creationDate,
 							answerCommentsCount, isAccepted));
 		}
-		
+
 		/*
-		 *  FILE 2
+		 * FILE 2
 		 */
-		csvReader = new CSVReader(new FileReader(
-				QUESTION_ANSWERS_FILE_2));
-		
+		csvReader = new CSVReader(new FileReader(QUESTION_ANSWERS_FILE_2));
+
 		// Reads the file header
 		nextLine = csvReader.readNext();
 		while ((nextLine = csvReader.readNext()) != null) {

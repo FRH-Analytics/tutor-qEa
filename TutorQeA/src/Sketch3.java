@@ -13,12 +13,10 @@ public class Sketch3 extends ComposableSketch {
 	private int questionRectPadding;
 
 	private float titlePadding;
+	private float maxAnswerScoreOfAll;
 
 	private ArrayList<QuestionData> sortedQuestions;
-
 	private int clusterId;
-
-	private float maxAnswerScoreEver;
 
 	public Sketch3(MainSketch parent, int xOrigin, int yOrigin, int width,
 			int height) {
@@ -58,10 +56,11 @@ public class Sketch3 extends ComposableSketch {
 
 	public void updateQuestionsByCluster(int clusterId) {
 
+		// Remove everything...
+		removeQuestionsAndCluster();
+
 		// Set the cluster id to the title
 		this.clusterId = clusterId;
-
-		sortedQuestions.clear();
 
 		// Sort the new question id based on the question data
 		for (Integer id : QeAData.getQuestionIdsByCluster(clusterId)) {
@@ -71,8 +70,13 @@ public class Sketch3 extends ComposableSketch {
 
 	}
 
+	public void removeQuestionsAndCluster() {
+		sortedQuestions.clear();
+		clusterId = -1;
+	}
+
 	private void drawNoCluster() {
-		String noTag = "No cluster selected...";
+		String noTag = "No cluster...";
 		pApplet.fill(150, 100);
 		pApplet.strokeWeight((float) 2);
 		pApplet.rectMode(PApplet.CENTER);
@@ -133,7 +137,7 @@ public class Sketch3 extends ComposableSketch {
 		pApplet.stroke(150, 100);
 		pApplet.strokeWeight((float) 1.5);
 
-		maxAnswerScoreEver = getMaxAnswerScore();
+		maxAnswerScoreOfAll = getMaxAnswerScore();
 
 		for (QuestionData qData : sortedQuestions) {
 
@@ -190,9 +194,11 @@ public class Sketch3 extends ComposableSketch {
 	private void drawQuestionTitle(QuestionData qData, float x1, float y1,
 			float x2, float y2) {
 
-		pApplet.fill(ChartData.RGBA_COLOURS[qData.getCluster() - 1][0],
-				ChartData.RGBA_COLOURS[qData.getCluster() - 1][1],
-				ChartData.RGBA_COLOURS[qData.getCluster() - 1][2]);
+		ChartItem clusterItem = ChartData.getItemById(qData.getCluster());
+
+		pApplet.fill(clusterItem.getColor(ChartItem.RED),
+				clusterItem.getColor(ChartItem.GREEN),
+				clusterItem.getColor(ChartItem.BLUE));
 		pApplet.rect(x1, y1, x2, y2, qCornerRadius, qCornerRadius);
 
 		pApplet.fill(0);
@@ -235,15 +241,19 @@ public class Sketch3 extends ComposableSketch {
 					pApplet.fill(59, 217, 127);
 				} else {
 					// The cluster color
-					pApplet.fill(
-							ChartData.RGBA_COLOURS[qData.getCluster() - 1][0],
-							ChartData.RGBA_COLOURS[qData.getCluster() - 1][1],
-							ChartData.RGBA_COLOURS[qData.getCluster() - 1][2]);
+					ChartItem clusterItem = ChartData.getItemById(qData
+							.getCluster());
+
+					pApplet.fill(clusterItem.getColor(ChartItem.RED),
+							clusterItem.getColor(ChartItem.GREEN),
+							clusterItem.getColor(ChartItem.BLUE));
+
 				}
 
 				// Ellipse Radius mapped from the maxAnswerScoreEver!!!
-				ballRadius = PApplet.map(ans.getScore(), 0, maxAnswerScoreEver,
-						(y2 - y1) / 15, (y2 - y1) / (float) 2.75);
+				ballRadius = PApplet.map(ans.getScore(), 0,
+						maxAnswerScoreOfAll, (y2 - y1) / 15, (y2 - y1)
+								/ (float) 2.75);
 
 				// Ball shift
 				ballXCenter += ballRadius;
