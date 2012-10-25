@@ -243,11 +243,9 @@ public class Sketch3 extends ComposableSketch {
 					// The cluster color
 					ChartItem clusterItem = ChartData.getItemById(qData
 							.getCluster());
-
 					pApplet.fill(clusterItem.getColor(ChartItem.RED),
 							clusterItem.getColor(ChartItem.GREEN),
 							clusterItem.getColor(ChartItem.BLUE));
-
 				}
 
 				// Ellipse Radius mapped from the maxAnswerScoreEver!!!

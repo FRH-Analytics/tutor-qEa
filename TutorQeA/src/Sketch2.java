@@ -215,8 +215,13 @@ public class Sketch2 extends ComposableSketch {
 	}
 
 	public void updatePlot() {
+		// Removes the questions and cluster of the Sketch 3
+		pApplet.getSketch3().removeQuestionsAndCluster();
+		
+		// Removes the plot data
 		ChartData.removeAllData();
 
+		// Update the plot data
 		Collection<CentroidData> centroids = QeAData.getCentroidDataList();
 		for (CentroidData centroidData : centroids) {
 			ChartData.addData(centroidData.getMeanAnswerCount(),
@@ -243,9 +248,6 @@ public class Sketch2 extends ComposableSketch {
 			while ((yMax - yMin) % valueDivisions != 0) {
 				yMax++;
 			}
-		}else{
-			// Removes also the questions and cluster of the Sketch 3
-			pApplet.getSketch3().removeQuestionsAndCluster();
 		}
 	}
 
