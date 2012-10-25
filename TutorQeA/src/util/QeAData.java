@@ -18,8 +18,8 @@ public class QeAData {
 
 	private static final String POST_TAGS_FILE = "../data/PostTags.csv";
 	private static final String QUESTIONS_DATA_FILE = "../data/QuestionData.csv";
-	private static final String QUESTION_ANSWERS_FILE = "../data/QuestionAnswers1.csv";
-	private static final String QUESTION_ANSWERS_FILE_2 = "../data/QuestionAnswers2.csv";
+	private static final String QUESTION_ANSWERS_FILE = "../data/QuestionAnswers.csv";
+//	private static final String QUESTION_ANSWERS_FILE_2 = "../data/QuestionAnswers2.csv";
 	private static final String TAG_LINKS_FILE = "../data/TagLinks.csv";
 	private static final String TAGS_FILE = "../data/TagsDictionary.csv";
 
@@ -230,32 +230,6 @@ public class QeAData {
 					new AnswerData(answerId, score, creationDate,
 							answerCommentsCount, isAccepted));
 		}
-
-		/*
-		 * FILE 2
-		 */
-		csvReader = new CSVReader(new FileReader(QUESTION_ANSWERS_FILE_2));
-
-		// Reads the file header
-		nextLine = csvReader.readNext();
-		while ((nextLine = csvReader.readNext()) != null) {
-			questionId = Integer.valueOf(nextLine[0]);
-			answerId = Integer.valueOf(nextLine[1]);
-			score = Integer.valueOf(nextLine[2]);
-			creationDate = format.parse(nextLine[3]);
-			answerCommentsCount = Integer.valueOf(nextLine[4]);
-			isAccepted = Boolean.parseBoolean(nextLine[5].toLowerCase());
-
-			if (!questionIdsToAnswers.containsKey(questionId)) {
-				questionIdsToAnswers.put(questionId,
-						new ArrayList<AnswerData>());
-			}
-
-			questionIdsToAnswers.get(questionId).add(
-					new AnswerData(answerId, score, creationDate,
-							answerCommentsCount, isAccepted));
-		}
-
 	}
 
 	public static void readTagLinksFile() throws IOException {

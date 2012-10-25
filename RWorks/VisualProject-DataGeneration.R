@@ -59,8 +59,7 @@ CreateQuestionAnswers = function(inputDir, outputDir){
     question.answers = question.answers[order(question.answers$QuestionId, 
                                               strptime(question.answers$CreationDate,"%Y-%m-%d %H:%M:%S"), decreasing=F),]
     
-    write.csv(question.answers[1:9999,], file = paste(outputDir,"/QuestionAnswers1.csv", sep = ""), row.names = F)
-    write.csv(question.answers[10000:nrow(question.answers),], file = paste(outputDir,"/QuestionAnswers2.csv", sep = ""), row.names = F)
+    write.csv(question.answers, file = paste(outputDir,"/QuestionAnswers.csv", sep = ""), row.names = F)
 }
 
 CreateTagNames = function(inputDir, outputDir){
