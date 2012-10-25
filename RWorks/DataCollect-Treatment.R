@@ -40,19 +40,34 @@ RemoveUnusedCollumns = function(dir){
 }
 
 CheckForeignKeysBetweenTables = function(dir){
+
+    answers = read.csv(paste(dir, "/Answers.csv", sep = ""))
+    
+    # Questions.AcceptedAnswerId %in% Answers.Id (only the questions with an accepted answer id)
+    print(noquote("Checking: Questions.AcceptedAnswerId %in% Answers.Id"))
+    questions = read.csv(paste(dir, "/Questions.csv", sep = ""))
+    quest.without.acc = questions[is.na(questions$AcceptedAnswerId),]
+    quest.with.acc = questions[!is.na(questions$AcceptedAnswerId),]
+    quest.with.acc = quest.with.acc[quest.with.acc$AcceptedAnswerId %in% answers$Id,] # 1 row deleted
+    questions = rbind(quest.without.acc, quest.with.acc)
+    questions = questions[order(a$Id, decreasing=F),]
+    write.csv(questions, file = paste(dir, "/Questions.csv", sep = ""), row.names = F)
+    
     qIds = read.csv(paste(dir, "/Questions.csv", sep = ""))$Id
+    rm(questions, quest.with.acc, quest.without.acc)    
     
     # Answers.ParentId %in% Questions.Id
     print(noquote("Checking: Answers.ParentId %in% Questions.Id"))
-    answers = read.csv(paste(dir, "/Answers.csv", sep = ""))
     answers = answers[answers$ParentId %in% qIds,] # 0 rows deleted...
     write.csv(answers, file = paste(dir, "/Answers.csv", sep = ""), row.names = F)
     rm(answers)
     
     # PostTags.PostId %in% Questions.Id
-    print(noquote("Checking: PostTags.PostId %in% Questions.Id"))
+    print(noquote("Checking: PostTags.PostId %in% Questions.Id AND PostTags.TagId %in% Tags.Id"))
     postTags = read.csv(paste(dir,"/PostTags.csv", sep = ""))
+    tags = read.csv(paste(dir,"/Tags.csv", sep = ""))
     postTags = postTags[postTags$PostId %in% qIds,] # 19 rows deleted!
+    postTags = postTags[postTags$TagId %in% tags$Id,] # 0 rows deleted!
     write.csv(postTags, file = paste(dir,"/PostTags.csv", sep = ""), row.names = F)
     rm(postTags)
     
