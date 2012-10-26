@@ -1,5 +1,5 @@
 CopyAllTables = function(inputDir, outputDir){
-    print(noquote("Copying from inputDir to outputDir..."))
+    print(noquote("Copying: From inputDir to outputDir..."))
     questions = read.csv(paste(inputDir,"/Questions.csv", sep = ""))
     answers = read.csv(paste(inputDir,"/Answers.csv", sep = ""))
     write.csv(questions, file = paste(outputDir,"/Questions.csv", sep = ""), row.names = F)      
@@ -15,76 +15,125 @@ CopyAllTables = function(inputDir, outputDir){
     write.csv(postTags, file = paste(outputDir,"/PostTags.csv", sep = ""), row.names = F)
     write.csv(questionComments, file = paste(outputDir,"/Comments-Questions.csv", sep = ""), row.names = F)
     write.csv(answerComments, file = paste(outputDir,"/Comments-Answers.csv", sep = ""), row.names = F)
+    
+    print(noquote("Copying: DONE!"))
+    print(noquote(""))
 }
 
-# Remove useless attributes from the Questions and Answers table
-RemoveUnusedCollumns = function(dir){
+RemoveUnusedAttributes = function(dir){
+    print(noquote("Removing collumns: Questions..."))
     questions = read.csv(paste(dir,"/Questions.csv", sep = ""))
-    answers = read.csv(paste(dir,"/Answers.csv", sep = ""))
-    
-    print(noquote("Removing unused collumns from Questions and Answers..."))
     questions = questions[,c("Id", "AcceptedAnswerId", "CreationDate", "Score", "ViewCount", 
-                             "Body", "OwnerUserId", "OwnerDisplayName", "LastActivityDate", 
+                             "Body", "LastActivityDate", 
                              "Title", "Tags", "AnswerCount", "CommentCount", "FavoriteCount", 
-                             "CommunityOwnedDate")]
-    answers = answers[,c("Id", "ParentId", "CreationDate", "Score", "Body", "OwnerUserId", 
-                         "OwnerDisplayName", "CommentCount", "CommunityOwnedDate")]
+                             "CommunityOwnedDate")] # Duvida: tira ou nao?
+    write.csv(questions, file = paste(dir,"/Questions.csv", sep = ""), row.names = F)
+    rm(questions)
     
-    write.csv(questions, file = paste(dir,"/Questions.csv", sep = ""), row.names = F)      
+    print(noquote("Removing collumns: Answers..."))
+    answers = read.csv(paste(dir,"/Answers.csv", sep = ""))
+    answers = answers[,c("Id", "ParentId", "CreationDate", "Score", "Body", 
+                         "CommentCount", "CommunityOwnedDate")] 
     write.csv(answers, file = paste(dir,"/Answers.csv", sep = ""), row.names = F)
-    rm(questions, answers)
-    
+    rm(answers)
+
+    print(noquote("Removing collumns: Tags..."))
     tags = read.csv(paste(dir, "/Tags.csv", sep = ""))
     tags = tags[,c("Id", "TagName", "Count")]
     write.csv(tags, paste(dir, "/Tags.csv", sep = ""), row.names = F)
+    rm(tags)
+    
+    print(noquote("Removing collumns: Comments-Questions..."))
+    question.comments = read.csv(paste(dir, "/Comments-Questions.csv", sep = ""))
+    question.comments = question.comments[,c("Id", "PostId", "Score", "Text", "CreationDate")]
+    write.csv(question.comments, paste(dir, "/Comments-Questions.csv", sep = ""), row.names = F)
+    rm(question.comments)
+    
+    print(noquote("Removing collumns: Comments-Answers..."))
+    question.answers = read.csv(paste(dir, "/Comments-Answers.csv", sep = ""))
+    question.answers = question.answers[,c("Id", "PostId", "Score", "Text", "CreationDate")]
+    write.csv(question.answers, paste(dir, "/Comments-Answers.csv", sep = ""), row.names = F)
+    rm(question.answers)
+    
+    print(noquote("Removing collumns: DONE!"))
+    print(noquote(""))
+}
+
+RemoveAttributesDuringStatsticalAnalysis = function(dir){
+    print(noquote("Removing Att: ..."))
+    print(noquote("Removing Att: DONE!"))
+    print(noquote(""))
 }
 
 CheckForeignKeysBetweenTables = function(dir){
-
+    before = 0
+    after = 0
+    printRowsCountDiff = function(before, after, tableName){
+        diff = abs(before - after)
+        print(noquote(paste(">> ", tableName, ": ", diff, " removed row(s)", sep = "")))
+    }
+    
     answers = read.csv(paste(dir, "/Answers.csv", sep = ""))
     
     # Questions.AcceptedAnswerId %in% Answers.Id (only the questions with an accepted answer id)
     print(noquote("Checking: Questions.AcceptedAnswerId %in% Answers.Id"))
     questions = read.csv(paste(dir, "/Questions.csv", sep = ""))
+    before = nrow(questions)
     quest.without.acc = questions[is.na(questions$AcceptedAnswerId),]
     quest.with.acc = questions[!is.na(questions$AcceptedAnswerId),]
-    quest.with.acc = quest.with.acc[quest.with.acc$AcceptedAnswerId %in% answers$Id,] # 1 row deleted
+    quest.with.acc = quest.with.acc[quest.with.acc$AcceptedAnswerId %in% answers$Id,]
     questions = rbind(quest.without.acc, quest.with.acc)
-    questions = questions[order(a$Id, decreasing=F),]
+    questions = questions[order(questions$Id, decreasing=F),]
     write.csv(questions, file = paste(dir, "/Questions.csv", sep = ""), row.names = F)
-    
-    qIds = read.csv(paste(dir, "/Questions.csv", sep = ""))$Id
+    after = nrow(questions)
+    printRowsCountDiff(before, after, "Questions")
+    qIds = questions$Id
     rm(questions, quest.with.acc, quest.without.acc)    
     
     # Answers.ParentId %in% Questions.Id
     print(noquote("Checking: Answers.ParentId %in% Questions.Id"))
-    answers = answers[answers$ParentId %in% qIds,] # 0 rows deleted...
+    before = nrow(answers)
+    answers = answers[answers$ParentId %in% qIds,]
     write.csv(answers, file = paste(dir, "/Answers.csv", sep = ""), row.names = F)
+    after = nrow(answers)
+    printRowsCountDiff(before, after, "Answers")
     rm(answers)
     
     # PostTags.PostId %in% Questions.Id
     print(noquote("Checking: PostTags.PostId %in% Questions.Id AND PostTags.TagId %in% Tags.Id"))
     postTags = read.csv(paste(dir,"/PostTags.csv", sep = ""))
     tags = read.csv(paste(dir,"/Tags.csv", sep = ""))
-    postTags = postTags[postTags$PostId %in% qIds,] # 19 rows deleted!
-    postTags = postTags[postTags$TagId %in% tags$Id,] # 0 rows deleted!
+    before = nrow(postTags)
+    postTags = postTags[postTags$PostId %in% qIds,]
+    postTags = postTags[postTags$TagId %in% tags$Id,]
     write.csv(postTags, file = paste(dir,"/PostTags.csv", sep = ""), row.names = F)
+    after = nrow(postTags)
+    printRowsCountDiff(before, after, "PostTags")
     rm(postTags)
     
     # Comment-Questions.PostId %in% Questions.Id
     print(noquote("Checking: Comment-Questions.PostId %in% Questions.Id"))
     commentQ = read.csv(paste(dir,"/Comments-Questions.csv", sep = ""))
-    commentQ = commentQ[commentQ$PostId %in% qIds,] # 0 rows deleted...
+    before = nrow(commentQ)
+    commentQ = commentQ[commentQ$PostId %in% qIds,]
     write.csv(commentQ, file = paste(dir,"/Comments-Questions.csv", sep = ""), row.names = F)
+    after = nrow(commentQ)
+    printRowsCountDiff(before, after, "Questions-Comments")
     rm(commentQ)
     
     # Comment-Answers.PostId %in% Answers.Id
     print(noquote("Checking: Comment-Answers.PostId %in% Answers.Id"))
     commentA = read.csv(paste(dir,"/Comments-Answers.csv", sep = ""))
     aIds = read.csv(paste(dir,"/Answers.csv", sep = ""))$Id
-    commentA = commentA[commentA$PostId %in% aIds,] # 0 rows deleted...
+    before = nrow(commentA)
+    commentA = commentA[commentA$PostId %in% aIds,] 
     write.csv(commentA, file = paste(dir,"/Comments-Answers.csv", sep = ""), row.names = F)
+    after = nrow(commentA)
+    printRowsCountDiff(before, after, "Answers-Comments")
     rm(commentA, aIds)
+    
+    print(noquote("Checking: DONE!"))
+    print(noquote(""))
 }
 
 ReplaceNAValues = function(dir){
@@ -92,8 +141,6 @@ ReplaceNAValues = function(dir){
     questions = read.csv(paste(dir, "/Questions.csv", sep = ""))
     # Set -1 in AcceptedAnswerId with NA values (that means, there is no accepted answer)
     questions[is.na(questions$AcceptedAnswerId),"AcceptedAnswerId"] = -1
-    # Set -1 in OwnerUserId with NA values (that means, there is no owner)
-    questions[is.na(questions$OwnerUserId),"OwnerUserId"] = -1
     # Set 0 in AnswerCount, CommentCount or FavoriteCount (that means, there is no answer, 
     # comment or favorite vote)
     questions[is.na(questions$AnswerCount),"AnswerCount"] = 0
@@ -104,8 +151,6 @@ ReplaceNAValues = function(dir){
     
     print(noquote("Replacing: Answer NA's..."))
     answers = read.csv(paste(dir, "/Answers.csv", sep = ""))
-    # Set -1 in OwnerUserId with NA values (that means, there is no owner)
-    answers[is.na(answers$OwnerUserId),"OwnerUserId"] = -1    
     # Set 0 in CommentCount (that means, there is no comment)
     answers[is.na(answers$CommentCount),"CommentCount"] = 0
     write.csv(answers, file = paste(dir, "/Answers.csv", sep = ""), row.names = F)
@@ -115,8 +160,6 @@ ReplaceNAValues = function(dir){
     commentsQ = read.csv(paste(dir, "/Comments-Questions.csv", sep = ""))
     # Set 0 in Score (that means, there is no vote, as the majority)
     commentsQ[is.na(commentsQ$Score),"Score"] = 0
-    # Set -1 in UserId with NA values (that means, there is no owner)
-    commentsQ[is.na(commentsQ$UserId),"UserId"] = -1    
     write.csv(commentsQ, file = paste(dir, "/Comments-Questions.csv", sep = ""), row.names = F)
     rm(commentsQ)
     
@@ -124,25 +167,32 @@ ReplaceNAValues = function(dir){
     commentsA = read.csv(paste(dir, "/Comments-Answers.csv", sep = ""))
     # Set 0 in Score (that means, there is no vote, as the majority)
     commentsA[is.na(commentsA$Score),"Score"] = 0
-    # Set -1 in UserId with NA values (that means, there is no owner)
-    commentsA[is.na(commentsA$UserId),"UserId"] = -1  
     write.csv(commentsA, file = paste(dir, "/Comments-Answers.csv", sep = ""), row.names = F)
     rm(commentsA)
+    
+    print(noquote("Replacing: DONE!"))
+    print(noquote(""))
 }
 
 ################ MAIN ################
-print(noquote(""))
-print(noquote(">> Data Collect - Treatment"))
-
 # Machine dependent file paths
 raw.dir = "../AllData/raw/"
 preProcessed.dir = "../AllData/preprocessed/"
+
+# Data Collection Function Calls
+print(noquote(""))
+print(noquote(">>>> Data Collection <<<<"))
 
 print(noquote("Removing old pre-processed directory..."))
 unlink(preProcessed.dir, recursive=T)
 dir.create(preProcessed.dir, showWarnings=F)
 
 CopyAllTables(inputDir=raw.dir, outputDir=preProcessed.dir)
-RemoveUnusedCollumns(preProcessed.dir)
+RemoveUnusedAttributes(preProcessed.dir)
+
+# Data Treatment Function Calls
+print(noquote(">>>> Data Treatment <<<<"))
+
+RemoveAttributesDuringStatsticalAnalysis(preProcessed.dir)
 CheckForeignKeysBetweenTables(preProcessed.dir)
 ReplaceNAValues(preProcessed.dir)
