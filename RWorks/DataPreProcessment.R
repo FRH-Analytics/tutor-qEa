@@ -59,12 +59,6 @@ RemoveUnusedAttributes = function(dir){
     print(noquote(""))
 }
 
-RemoveAttributesDuringStatsticalAnalysis = function(dir){
-    print(noquote("Removing Att: ..."))
-    print(noquote("Removing Att: DONE!"))
-    print(noquote(""))
-}
-
 CheckForeignKeysBetweenTables = function(dir){
     before = 0
     after = 0
@@ -176,23 +170,23 @@ ReplaceNAValues = function(dir){
 
 ################ MAIN ################
 # Machine dependent file paths
-raw.dir = "../AllData/raw/"
-preProcessed.dir = "../AllData/preprocessed/"
-
-# Data Collection Function Calls
-print(noquote(""))
-print(noquote(">>>> Data Collection <<<<"))
-
-print(noquote("Removing old pre-processed directory..."))
-unlink(preProcessed.dir, recursive=T)
-dir.create(preProcessed.dir, showWarnings=F)
-
-CopyAllTables(inputDir=raw.dir, outputDir=preProcessed.dir)
-RemoveUnusedAttributes(preProcessed.dir)
-
-# Data Treatment Function Calls
-print(noquote(">>>> Data Treatment <<<<"))
-
-RemoveAttributesDuringStatsticalAnalysis(preProcessed.dir)
-CheckForeignKeysBetweenTables(preProcessed.dir)
-ReplaceNAValues(preProcessed.dir)
+MainPreProcessment = function(raw.dir = "../AllData/raw/", 
+                              preProcessed.dir = "../AllData/preprocessed/"){
+    
+    # Data Collection Function Calls
+    print(noquote(""))
+    print(noquote(">>>> Data Collection <<<<"))
+    
+    print(noquote("Removing old pre-processed directory..."))
+    unlink(preProcessed.dir, recursive=T)
+    dir.create(preProcessed.dir, showWarnings=F)
+    
+    CopyAllTables(inputDir=raw.dir, outputDir=preProcessed.dir)
+    RemoveUnusedAttributes(preProcessed.dir)
+    
+    # Data Treatment Function Calls
+    print(noquote(">>>> Data Treatment <<<<"))
+    
+    CheckForeignKeysBetweenTables(preProcessed.dir)
+    ReplaceNAValues(preProcessed.dir)
+}
