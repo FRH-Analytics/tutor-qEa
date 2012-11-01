@@ -1,3 +1,7 @@
+#################################################
+## Data Pre-Processment - before Data Analysis ##
+#################################################
+
 CopyAllTables = function(inputDir, outputDir){
     print(noquote("Copying: From inputDir to outputDir..."))
     questions = read.csv(paste(inputDir,"/Questions.csv", sep = ""))
@@ -73,8 +77,8 @@ CheckForeignKeysBetweenTables = function(dir){
     print(noquote("Checking: Questions.AcceptedAnswerId %in% Answers.Id"))
     questions = read.csv(paste(dir, "/Questions.csv", sep = ""))
     before = nrow(questions)
-    quest.without.acc = questions[is.na(questions$AcceptedAnswerId),]
-    quest.with.acc = questions[!is.na(questions$AcceptedAnswerId),]
+    quest.without.acc = questions[is.na(questions$AcceptedAnswerId) | questions$AcceptedAnswerId == -1,]
+    quest.with.acc = questions[!is.na(questions$AcceptedAnswerId) & questions$AcceptedAnswerId != -1,]
     quest.with.acc = quest.with.acc[quest.with.acc$AcceptedAnswerId %in% answers$Id,]
     questions = rbind(quest.without.acc, quest.with.acc)
     questions = questions[order(questions$Id, decreasing=F),]
@@ -168,6 +172,35 @@ ReplaceNAValues = function(dir){
     print(noquote(""))
 }
 
+###############################################
+## Data PreProcessment - after Data Analysis ##
+###############################################
+RemoveNoiseAndOutliers = function(dir){
+    print(noquote("Removing Noise And Outliers..."))
+    
+    before = 0
+    after = 0
+    printRowsCountDiff = function(before, after, tableName){
+        diff = abs(before - after)
+        print(noquote(paste(">> ", tableName, ": ", diff, " removed row(s)", sep = "")))
+    }
+    
+    print(noquote("Removing Noise and Outliers: Questions with CommunityOwnedWiki not empty..."))
+    
+    questions = read.csv(paste(dir, "Questions.csv", sep = ""), header = T)
+    before = nrow(questions)
+    questions = questions[questions$CommunityOwnedDate == "", ]
+    write.csv(questions, file = paste(dir, "/Questions.csv", sep = ""), row.names = F)
+    after = nrow(questions)
+    printRowsCountDiff(before, after, "Questions")
+    
+    print(noquote("Removing Noise and Outliers: DONE!"))
+    print(noquote(""))
+    
+    # The Foreign keys should be checked again!
+    CheckForeignKeysBetweenTables(dir)
+}
+
 ################ MAIN ################
 # Machine dependent file paths
 MainPreProcessment = function(raw.dir = "../AllData/raw/", 
@@ -184,7 +217,7 @@ MainPreProcessment = function(raw.dir = "../AllData/raw/",
     CopyAllTables(inputDir=raw.dir, outputDir=preProcessed.dir)
     RemoveUnusedAttributes(preProcessed.dir)
     
-    # Data Treatment Function Calls
+    # Data Treatment 
     print(noquote(">>>> Data Treatment <<<<"))
     
     CheckForeignKeysBetweenTables(preProcessed.dir)

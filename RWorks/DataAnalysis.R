@@ -1,22 +1,22 @@
 ########## FUNCTIONS ##########
-require(ggplot2)
-require(gridExtra)
+# require(ggplot2)
+# require(gridExtra)
+# 
+# plot.pdf.group = function(df, var, groupVar = "", color = "gray"){
+#     if (groupVar != ""){
+#         ggplot(df, aes_string(x = var, col = groupVar, fill = groupVar)) + 
+#             geom_density() + facet_grid(paste("~", groupVar, sep = "")) + 
+#             theme(legend.position="none")
+#     }else{
+#         ggplot(df, aes_string(x = var)) + geom_histogram(binwidth = 1, fill = color, colour = color)
+#     }
+# }
 
-plot.pdf.group = function(df, var, groupVar = "", color = "gray"){
-    if (groupVar != ""){
-        ggplot(df, aes_string(x = var, col = groupVar, fill = groupVar)) + 
-            geom_density() + facet_grid(paste("~", groupVar, sep = "")) + 
-            theme(legend.position="none")
-    }else{
-        ggplot(df, aes_string(x = var)) + geom_histogram(binwidth = 1, fill = color, colour = color)
-    }
-}
-
-plot.pdf = function(df, var){
+Plot.PMF = function(df, var){
     plot(prop.table(table(df[,var])), ylab = "Probabilidade", main = var)
 }
 
-plot.boxplot = function(df, var, groupVar = "", horizontal = F){
+Plot.Boxplot = function(df, var, groupVar = "", horizontal = F){
     if (groupVar != ""){
         boxplot(formula = as.formula(paste(var, "~", groupVar)), data = df, outline=T, 
                 horizontal=horizontal, main = var)
@@ -26,24 +26,20 @@ plot.boxplot = function(df, var, groupVar = "", horizontal = F){
     }
 }
 
-plot.sampĺeSize = function(df, var){
-    plot(c(1, 11), type="n", axes=F, xlab="", ylab="")
-    text(1.5, 9, labels = "Sample Size", cex = 2.5)
-    text(1.5, 4, labels = paste(length(df[,var])), cex = 4)    
-}
-
-plot.questions = function(questions, outputDir){
-    png(paste(outputDir, "Questions-PDFs.png", sep =""), width = 800, height = 1000)    
+PMFAnalysis.Questions = function(inputDir, outputDir, dataName = "Questions"){
+    questions = read.csv(paste(dir, "Questions.csv", sep = ""), header = T)
+    
+    png(paste(outputDir, dataName, "-PMFs.png", sep =""), width = 800, height = 1000)    
     par(mfrow = c(3,2))
-    plot.pdf(questions, var = "Score")
-    plot.pdf(questions, var = "ViewCount")
-    plot.pdf(questions, var = "AnswerCount")
-    plot.pdf(questions, var = "CommentCount")
-    plot.pdf(questions, var = "FavoriteCount")
+    Plot.PMF(questions, var = "Score")
+    Plot.PMF(questions, var = "ViewCount")
+    Plot.PMF(questions, var = "AnswerCount")
+    Plot.PMF(questions, var = "CommentCount")
+    Plot.PMF(questions, var = "FavoriteCount")
     dev.off()
     
     # PLot boxplots (grouped)
-    png(paste(outputDir, "Questions-Boxplots.png", sep = ""), width = 600, height = 800)
+    png(paste(outputDir, dataName, "-Boxplots.png", sep = ""), width = 600, height = 800)
     par(mfrow = c(5, 1))
     plot.boxplot(questions, var = "Score", horizontal = T)
     plot.boxplot(questions, var = "ViewCount", horizontal = T)
@@ -53,47 +49,47 @@ plot.questions = function(questions, outputDir){
     dev.off()
 }
 
-plot.questions2 = function(questions, outputDir){
+OutlierAnalysis.Questions = function(inputDir, outputDir, dataName){
+    questions = read.csv(paste(dir, "Questions.csv", sep = ""), header = T)
     questions$IsCommunity = NULL
     questions[questions$CommunityOwnedDate != "", "IsCommunity"] = "IsCommunity"
     questions[questions$CommunityOwnedDate == "", "IsCommunity"] = "IsNotCommunity"
     
-    png(paste(outputDir, "Questions_IsCommunity-Boxplots.png", sep = ""), width = 600, height = 1200)
+    png(paste(outputDir, dataName, "-Boxplots.png", sep = ""), width = 600, height = 1200)
     par(mfrow = c(5, 1))
-    plot.boxplot(questions, var = "Score", groupVar = "IsCommunity", horizontal = T)
-    plot.boxplot(questions, var = "ViewCount", groupVar = "IsCommunity", horizontal = T)
-    plot.boxplot(questions, var = "AnswerCount", groupVar = "IsCommunity", horizontal = T)
-    plot.boxplot(questions, var = "CommentCount", groupVar = "IsCommunity", horizontal = T)
-    plot.boxplot(questions, var = "FavoriteCount", groupVar = "IsCommunity", horizontal = T)
+    Plot.Boxplot(questions, var = "Score", groupVar = "IsCommunity", horizontal = T)
+    Plot.Boxplot(questions, var = "ViewCount", groupVar = "IsCommunity", horizontal = T)
+    Plot.Boxplot(questions, var = "AnswerCount", groupVar = "IsCommunity", horizontal = T)
+    Plot.Boxplot(questions, var = "CommentCount", groupVar = "IsCommunity", horizontal = T)
+    Plot.Boxplot(questions, var = "FavoriteCount", groupVar = "IsCommunity", horizontal = T)
     dev.off()
-    
-    # NOT USED: we cant see the differences...
-    #     png(paste(outputDir, "Questions_IsCommunity-PDFs.png", sep = ""), width = 800, height = 1600)
-    #     p1 = plot.pdf.group(questions, var = "Score", groupVar = "IsCommunity")
-    #     p2 = plot.pdf.group(questions, var = "ViewCount", groupVar = "IsCommunity")
-    #     p3 = plot.pdf.group(questions, var = "AnswerCount", groupVar = "IsCommunity")
-    #     p4 = plot.pdf.group(questions, var = "CommentCount", groupVar = "IsCommunity")
-    #     p5 = plot.pdf.group(questions, var = "FavoriteCount", groupVar = "IsCommunity")
-    #     grid.arrange(p1, p2, p3, p4, p5, ncol = 1)
-    #     dev.off()
+}
+
+CorrelationAnalysis = function(dir){
     
 }
 
 ########## MAIN ########## 
-dir = "../AllData/preprocessed/"
-theme_set(theme_bw())
-
-questions = read.csv(paste(dir, "Questions.csv", sep = ""), header = T)
-plot.questions(questions, outputDir = "output/")
-plot.questions2(questions, outputDir = "output/")
-
-# # Data Analysis
-# RemoveSomeAttributes = function(dir){
-#     print(noquote("Removing Att: ..."))
-#     print(noquote("Removing Att: DONE!"))
-#     print(noquote(""))
-#     
-#     # The Foreign keys should be checked again!
-#     # source("DataPreProcessment.R")
-#     # CheckForeignKeysBetweenTables(dir)
-# }
+MainDataAnalysis = function(dir = "../AllData/preprocessed/"){
+    
+    # 1) Runs the initial PreProcessment - Cleaning Data
+    source("DataPreProcessment.R")
+    MainPreProcessment()
+    
+    # 2) Plot the Probabilities Mass Functions
+    PMFAnalysis.Questions(inputDir = dir, outputDir = "output/", dataName = "Questions")
+    
+    # 3) Plot the Outlier Analysis Charts
+    OutlierAnalysis.Questions(inputDir = dir, outputDir = "output/", dataName = "Questions_IsCommunity")
+    # TODO (Matheus): Add the other plots here...
+    
+    # 4) Runs the final PreProcessment - Removing the Noise and Outliers
+    RemoveNoiseAndOutliers(dir)
+    
+    # 5) Plot the Final Probabilities Mass Functions
+    PMFAnalysis.Questions(questions, outputDir = "output/", dataName = "Questions-Final")
+    # TODO (Matheus): Add the new plots here...
+    
+    # 6) Correlation Analysis
+    # ...
+}
