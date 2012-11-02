@@ -30,7 +30,7 @@ RemoveUnusedAttributes = function(dir){
     questions = questions[,c("Id", "AcceptedAnswerId", "CreationDate", "Score", "ViewCount", 
                              "Body", "LastActivityDate", 
                              "Title", "Tags", "AnswerCount", "CommentCount", "FavoriteCount", 
-                             "CommunityOwnedDate")] # Duvida: tira ou nao?
+                             "CommunityOwnedDate")] 
     write.csv(questions, file = paste(dir,"/Questions.csv", sep = ""), row.names = F)
     rm(questions)
     

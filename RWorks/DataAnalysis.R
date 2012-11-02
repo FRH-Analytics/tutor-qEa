@@ -41,11 +41,11 @@ PMFAnalysis.Questions = function(inputDir, outputDir, dataName = "Questions"){
     # PLot boxplots (grouped)
     png(paste(outputDir, dataName, "-Boxplots.png", sep = ""), width = 600, height = 800)
     par(mfrow = c(5, 1))
-    plot.boxplot(questions, var = "Score", horizontal = T)
-    plot.boxplot(questions, var = "ViewCount", horizontal = T)
-    plot.boxplot(questions, var = "AnswerCount", horizontal = T)
-    plot.boxplot(questions, var = "CommentCount", horizontal = T)
-    plot.boxplot(questions, var = "FavoriteCount", horizontal = T)
+    Plot.Boxplot(questions, var = "Score", horizontal = T)
+    Plot.Boxplot(questions, var = "ViewCount", horizontal = T)
+    Plot.Boxplot(questions, var = "AnswerCount", horizontal = T)
+    Plot.Boxplot(questions, var = "CommentCount", horizontal = T)
+    Plot.Boxplot(questions, var = "FavoriteCount", horizontal = T)
     dev.off()
 }
 
@@ -78,6 +78,7 @@ MainDataAnalysis = function(dir = "../AllData/preprocessed/"){
     
     # 2) Plot the Probabilities Mass Functions
     PMFAnalysis.Questions(inputDir = dir, outputDir = "output/", dataName = "Questions")
+    # TODO (Matheus): Add the other plots here...
     
     # 3) Plot the Outlier Analysis Charts
     OutlierAnalysis.Questions(inputDir = dir, outputDir = "output/", dataName = "Questions_IsCommunity")

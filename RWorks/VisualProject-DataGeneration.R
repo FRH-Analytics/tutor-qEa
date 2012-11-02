@@ -87,8 +87,8 @@ if (Sys.info()["sysname"] == "Linux"){
 }
 
 # Data Collect - Treatment
-source("DataPreProcessment.R")
-MainPreProcessment()
+source("DataAnalysis.R")
+MainDataAnalysis()
 
 # Visual Analytics Project - Data Generation
 print(noquote(""))
