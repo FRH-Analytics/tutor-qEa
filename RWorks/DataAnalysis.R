@@ -1,17 +1,3 @@
-########## FUNCTIONS ##########
-# require(ggplot2)
-# require(gridExtra)
-# 
-# plot.pdf.group = function(df, var, groupVar = "", color = "gray"){
-#     if (groupVar != ""){
-#         ggplot(df, aes_string(x = var, col = groupVar, fill = groupVar)) + 
-#             geom_density() + facet_grid(paste("~", groupVar, sep = "")) + 
-#             theme(legend.position="none")
-#     }else{
-#         ggplot(df, aes_string(x = var)) + geom_histogram(binwidth = 1, fill = color, colour = color)
-#     }
-# }
-
 Plot.PMF = function(df, var){
     plot(prop.table(table(df[,var])), ylab = "Probabilidade", main = var)
 }
@@ -29,7 +15,7 @@ Plot.Boxplot = function(df, var, groupVar = "", horizontal = F){
 PMFAnalysis.Questions = function(inputDir, outputDir, dataName = "Questions"){
     questions = read.csv(paste(dir, "Questions.csv", sep = ""), header = T)
     
-    png(paste(outputDir, dataName, "-PMFs.png", sep =""), width = 800, height = 1000)    
+    png(paste(outputDir, "PMF-", dataName, ".png", sep =""), width = 800, height = 1000)    
     par(mfrow = c(3,2))
     Plot.PMF(questions, var = "Score")
     Plot.PMF(questions, var = "ViewCount")
@@ -39,7 +25,7 @@ PMFAnalysis.Questions = function(inputDir, outputDir, dataName = "Questions"){
     dev.off()
     
     # PLot boxplots (grouped)
-    png(paste(outputDir, dataName, "-Boxplots.png", sep = ""), width = 600, height = 800)
+    png(paste(outputDir, "Boxplot-", dataName, ".png", sep = ""), width = 600, height = 800)
     par(mfrow = c(5, 1))
     Plot.Boxplot(questions, var = "Score", horizontal = T)
     Plot.Boxplot(questions, var = "ViewCount", horizontal = T)
@@ -55,7 +41,7 @@ OutlierAnalysis.Questions = function(inputDir, outputDir, dataName){
     questions[questions$CommunityOwnedDate != "", "IsCommunity"] = "IsCommunity"
     questions[questions$CommunityOwnedDate == "", "IsCommunity"] = "IsNotCommunity"
     
-    png(paste(outputDir, dataName, "-Boxplots.png", sep = ""), width = 600, height = 1200)
+    png(paste(outputDir, "Boxplot-", dataName, ".png", sep = ""), width = 600, height = 1200)
     par(mfrow = c(5, 1))
     Plot.Boxplot(questions, var = "Score", groupVar = "IsCommunity", horizontal = T)
     Plot.Boxplot(questions, var = "ViewCount", groupVar = "IsCommunity", horizontal = T)
@@ -65,8 +51,36 @@ OutlierAnalysis.Questions = function(inputDir, outputDir, dataName){
     dev.off()
 }
 
-CorrelationAnalysis = function(dir){
+CorrelationAnalysis = function(inputDir, outputDir){
+
+    # panel.smooth function is built in.
+    # panel.cor puts correlation in upper panels, size proportional to correlation
+    panel.cor <- function(x, y, digits=2, prefix="", cex.cor, ...)
+    {
+        usr <- par("usr"); on.exit(par(usr))
+        par(usr = c(0, 1, 0, 1))
+        correlation = cor(x, y, method="pearson")
+        txt <- paste(prefix, format(correlation, digits=2), sep="")
+        text(0.5, 0.5, txt, cex = max(5 * abs(correlation), 1.5))
+    }
     
+    questions = read.csv(paste(inputDir, "Questions.csv", sep = ""), header = T)
+
+    png(paste(outputDir, "Correlation-Questions.png", sep = ""), width = 800, height = 850)
+    pairs(questions[,c("Score", "ViewCount", "CommentCount", "AnswerCount", "FavoriteCount")],
+          lower.panel=panel.smooth, upper.panel=panel.cor, pch=20, main="Questions")
+    dev.off()
+
+    rm(questions)
+    
+    answers = read.csv(paste(inputDir, "Answers.csv", sep = ""), header = T)
+    
+    png(paste(outputDir, "Correlation-Answers.png", sep = ""), width = 800, height = 850)
+    pairs(answers[,c("Score", "CommentCount")],
+          lower.panel=panel.smooth, upper.panel=panel.cor, pch=20, main="Answers")
+    dev.off()
+    
+    rm(answers)
 }
 
 ########## MAIN ########## 
@@ -92,5 +106,5 @@ MainDataAnalysis = function(dir = "../AllData/preprocessed/"){
     # TODO (Matheus): Add the new plots here...
     
     # 6) Correlation Analysis
-    # ...
+    CorrelationAnalysis(dir, outputDir = "output/")
 }
