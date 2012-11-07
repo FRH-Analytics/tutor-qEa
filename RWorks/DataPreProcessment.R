@@ -5,10 +5,12 @@
 CopyAllTables = function(inputDir, outputDir){
     print(noquote("Copying: From inputDir to outputDir..."))
     questions = read.csv(paste(inputDir,"/Questions.csv", sep = ""))
+    write.csv(questions, file = paste(outputDir,"/Questions.csv", sep = ""), row.names = F)
+    rm(questions)
+    
     answers = read.csv(paste(inputDir,"/Answers.csv", sep = ""))
-    write.csv(questions, file = paste(outputDir,"/Questions.csv", sep = ""), row.names = F)      
     write.csv(answers, file = paste(outputDir,"/Answers.csv", sep = ""), row.names = F)
-    rm(questions, answers)
+    rm(answers)
     
     tags = read.csv(paste(inputDir,"/Tags.csv", sep = ""))
     postTags = read.csv(paste(inputDir,"/PostTags.csv", sep = ""))
@@ -21,6 +23,67 @@ CopyAllTables = function(inputDir, outputDir){
     write.csv(answerComments, file = paste(outputDir,"/Comments-Answers.csv", sep = ""), row.names = F)
     
     print(noquote("Copying: DONE!"))
+    print(noquote(""))
+}
+
+RemoveClosedQuestions = function(dir){
+    before = 0
+    after = 0
+    printRowsCountDiff = function(before, after, tableName){
+        diff = abs(before - after)
+        print(noquote(paste(">> ", tableName, ": ", diff, " removed row(s)", sep = "")))
+    }
+    
+    print(noquote("Removing: Questions.Closed != \"\""))
+    questions = read.csv(paste(dir, "/Questions.csv", sep = ""))
+    closedIds = questions[questions$ClosedDate != "",]$Id
+    questions = questions[!questions$Id %in% closedIds,]
+    write.csv(questions, file = paste(dir, "/Questions.csv", sep = ""), row.names = F)
+    printRowsCountDiff(length(closedIds), 0, "Questions")
+    rm(questions)
+    
+    # Answers.ParentId %in% Questions.Id
+    print(noquote("Removing: Answers.ParentId %in% Questions.Closed"))
+    answers = read.csv(paste(dir, "/Answers.csv", sep = ""))
+    before = nrow(answers)
+    answers = answers[!answers$ParentId %in% closedIds,]
+    write.csv(answers, file = paste(dir, "/Answers.csv", sep = ""), row.names = F)
+    after = nrow(answers)
+    printRowsCountDiff(before, after, "Answers")
+    rm(answers)
+    
+    # PostTags.PostId %in% Questions.Id
+    print(noquote("Removing: PostTags.PostId %in% Questions.Closed"))
+    postTags = read.csv(paste(dir,"/PostTags.csv", sep = ""))
+    before = nrow(postTags)
+    postTags = postTags[!postTags$PostId %in% closedIds,]
+    write.csv(postTags, file = paste(dir,"/PostTags.csv", sep = ""), row.names = F)
+    after = nrow(postTags)
+    printRowsCountDiff(before, after, "PostTags")
+    rm(postTags)
+    
+    # Comment-Questions.PostId %in% Questions.Id
+    print(noquote("Removing: Comment-Questions.PostId %in% Questions.Closed"))
+    commentQ = read.csv(paste(dir,"/Comments-Questions.csv", sep = ""))
+    before = nrow(commentQ)
+    commentQ = commentQ[!commentQ$PostId %in% closedIds,]
+    write.csv(commentQ, file = paste(dir,"/Comments-Questions.csv", sep = ""), row.names = F)
+    after = nrow(commentQ)
+    printRowsCountDiff(before, after, "Questions-Comments")
+    rm(commentQ)
+    
+    # Comment-Answers.PostId %in% Answers.Id
+    print(noquote("Removing: Comment-Answers.PostId %in% Answers.Id"))
+    commentA = read.csv(paste(dir,"/Comments-Answers.csv", sep = ""))
+    aIds = read.csv(paste(dir,"/Answers.csv", sep = ""))$Id
+    before = nrow(commentA)
+    commentA = commentA[commentA$PostId %in% aIds,] 
+    write.csv(commentA, file = paste(dir,"/Comments-Answers.csv", sep = ""), row.names = F)
+    after = nrow(commentA)
+    printRowsCountDiff(before, after, "Answers-Comments")
+    rm(commentA, aIds)
+    
+    print(noquote("Removing: DONE!"))
     print(noquote(""))
 }
 
@@ -40,7 +103,7 @@ RemoveUnusedAttributes = function(dir){
                          "CommentCount", "CommunityOwnedDate")] 
     write.csv(answers, file = paste(dir,"/Answers.csv", sep = ""), row.names = F)
     rm(answers)
-
+    
     print(noquote("Removing collumns: Tags..."))
     tags = read.csv(paste(dir, "/Tags.csv", sep = ""))
     tags = tags[,c("Id", "TagName", "Count")]
@@ -215,6 +278,7 @@ MainPreProcessment = function(raw.dir = "../AllData/raw/",
     dir.create(preProcessed.dir, showWarnings=F)
     
     CopyAllTables(inputDir=raw.dir, outputDir=preProcessed.dir)
+    RemoveClosedQuestions(preProcessed.dir)
     RemoveUnusedAttributes(preProcessed.dir)
     
     # Data Treatment 

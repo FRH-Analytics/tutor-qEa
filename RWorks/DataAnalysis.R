@@ -13,7 +13,8 @@ Plot.Boxplot = function(df, var, groupVar = "", horizontal = F){
 }
 
 PMFAnalysis.Questions = function(inputDir, outputDir, dataName = "Questions"){
-    questions = read.csv(paste(dir, "Questions.csv", sep = ""), header = T)
+    print(noquote("PMF Analysis - Questions..."))
+    questions = read.csv(paste(inputDir, "Questions.csv", sep = ""), header = T)
     
     png(paste(outputDir, "PMF-", dataName, ".png", sep =""), width = 800, height = 1000)    
     par(mfrow = c(3,2))
@@ -33,10 +34,15 @@ PMFAnalysis.Questions = function(inputDir, outputDir, dataName = "Questions"){
     Plot.Boxplot(questions, var = "CommentCount", horizontal = T)
     Plot.Boxplot(questions, var = "FavoriteCount", horizontal = T)
     dev.off()
+    
+    print(noquote("PMF Analysis - Questions: DONE!"))
+    print(noquote(""))
 }
 
 OutlierAnalysis.Questions = function(inputDir, outputDir, dataName){
-    questions = read.csv(paste(dir, "Questions.csv", sep = ""), header = T)
+    
+    print(noquote("Outlier Analysis - Questions..."))
+    questions = read.csv(paste(inputDir, "Questions.csv", sep = ""), header = T)
     questions$IsCommunity = NULL
     questions[questions$CommunityOwnedDate != "", "IsCommunity"] = "IsCommunity"
     questions[questions$CommunityOwnedDate == "", "IsCommunity"] = "IsNotCommunity"
@@ -49,10 +55,15 @@ OutlierAnalysis.Questions = function(inputDir, outputDir, dataName){
     Plot.Boxplot(questions, var = "CommentCount", groupVar = "IsCommunity", horizontal = T)
     Plot.Boxplot(questions, var = "FavoriteCount", groupVar = "IsCommunity", horizontal = T)
     dev.off()
+    
+    print(noquote("Outlier Analysis - Questions: DONE!"))
+    print(noquote(""))
 }
 
 CorrelationAnalysis = function(inputDir, outputDir){
 
+    print(noquote("Correlation Analysis..."))
+    
     # panel.smooth function is built in.
     # panel.cor puts correlation in upper panels, size proportional to correlation
     panel.cor <- function(x, y, digits=2, prefix="", cex.cor, ...)
@@ -81,6 +92,9 @@ CorrelationAnalysis = function(inputDir, outputDir){
     dev.off()
     
     rm(answers)
+    
+    print(noquote("Correlation Analysis: DONE!"))
+    print(noquote(""))
 }
 
 ########## MAIN ########## 
@@ -102,7 +116,7 @@ MainDataAnalysis = function(dir = "../AllData/preprocessed/"){
     RemoveNoiseAndOutliers(dir)
     
     # 5) Plot the Final Probabilities Mass Functions
-    PMFAnalysis.Questions(questions, outputDir = "output/", dataName = "Questions-Final")
+    PMFAnalysis.Questions(inputDir = dir, outputDir = "output/", dataName = "Questions-Final")
     # TODO (Matheus): Add the new plots here...
     
     # 6) Correlation Analysis
