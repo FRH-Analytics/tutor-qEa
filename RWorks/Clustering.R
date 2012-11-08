@@ -1,3 +1,7 @@
+Plot.PMF = function(df, var){
+    plot(prop.table(table(df[,var])), ylab = "Probabilidade", main = var)
+}
+
 run.Kmedians = function(features){
     # Normalize data
     norm0_1 = function(data){
@@ -20,6 +24,29 @@ run.Kmeans = function(features){
                scaledata = T)                    # scaledata: center the data
 }
 
+persist.clustering = function(clusters, tree, dimensionName){
+    print(noquote(paste("Persisting: ", dimensionName, "...", sep = "")))
+    
+    # Output to file...
+    sink(file = paste("output/Analysis-", tolower(dimensionName), ".txt", sep = ""))
+    write(paste("================ Análise da Dimensão:", dimensionName, "================"), file = "")
+    write("", file = "")
+    
+    write(">> Tamanho dos Clusters:", file = "")
+    count = count(clusters)
+    colnames(count) = c("Cluster", "Count")
+    print(count)
+    write("", file = "")
+    
+    write(">> Resultado da Árvore de Decisão:", file = "")
+    print(tree)
+    sink()
+    # Output to console again...
+    
+    print(noquote("Persisting: DONE!"))
+    print(noquote(""))
+}
+
 clustering = function(preprocessedDir, clusteringDir, dimensionName, createFeaturesFunc){
     
     print(noquote(paste("Clustering: ", dimensionName, "...", sep = "")))
@@ -36,23 +63,23 @@ clustering = function(preprocessedDir, clusteringDir, dimensionName, createFeatu
         write.csv(features, file = featuresFile, row.names = F)
     }   
     
-    # Excluding the ID and Cluster.KMeans collumns
-    if ("Cluster.KMeans" %in% colnames(features)){
-        features = features[,-ncol(features)]
+    if (! "Cluster.KMeans" %in% colnames(features)){
+        # Excluding the ID and Cluster.KMeans collumns
+        # features = features[,-ncol(features)]
+        print(noquote("Clustering: Running KMeans..."))
+        model = run.Kmeans(features[,-1])
+        
+        print(noquote("Clustering: Persisting..."))
+        features$Cluster.KMeans = model$cluster
+        write.csv(features, file = featuresFile, row.names = F)        
+        
     }
-    
-    print(noquote("Clustering..."))
-    model = run.Kmeans(features[,-1])
-    
-    print(noquote("Persisting Clusters..."))
-    features$Cluster.KMeans = model$cluster
-    write.csv(features, file = featuresFile, row.names = F)
     
     print(noquote("Clustering: DONE!"))
     print(noquote(""))
 }
 
-plot.cluster = function(clusteringDir, dimensionName){
+plot.clustering = function(clusteringDir, dimensionName){
     
     print(noquote(paste("Plotting: ", dimensionName, "...", sep = "")))
     
@@ -73,9 +100,39 @@ plot.cluster = function(clusteringDir, dimensionName){
     print(noquote(""))
 }
 
-analyse.cluster = function(clusteringDir, dimensionName){
-    # TODO!
-    # Decision Tree
+analyse.clustering = function(clusteringDir, dimensionName){
+    
+    print(noquote(paste("Analysing: ", dimensionName, "...", sep = "")))
+    
+    features = read.csv(paste(clusteringDir, tolower(dimensionName), ".csv", sep = ""), header = T)
+    id = features$Id
+    features = features[,-1]
+    
+    print(noquote("Analysing: Creating Decision Tree..."))
+    tree = rpart(Cluster.KMeans ~ ., features, method = "class", parms = list(split = "gini"))
+    
+    png(paste("output/Cluster-KMeans-DecisionTree-", dimensionName, ".png",sep = ""), width = 700, height = 600)
+    plot(tree, uniform = T, branch = .5, margin = .1, 
+         main = paste(toupper(dimensionName), "dimension - Decision Tree Analysis"))
+    text(tree, cex = 1, all = T) 
+    dev.off()
+
+    print(noquote("Analysing: Persisting Clustering and Tree..."))
+    persist.clustering(features$Cluster.KMeans, tree, dimensionName)
+    
+    print(noquote("Analysing: Generating Feature PMFs..."))
+    features = features[,-ncol(features)]
+    
+    nRows = ceiling(ncol(features)/2)
+    png(paste("output/PMF-Features-", dimensionName, ".png", sep =""), width = 800, height = (nRows * 300))
+    par(mfrow = c(nRows,2))
+    for(i in 1:ncol(features)){
+        Plot.PMF(features, var = colnames(features)[i])
+    }
+    dev.off()
+    
+    print(noquote("Analysing: DONE!"))
+    print(noquote(""))
 }
 
 createFeatures.popularity = function(preprocessedDir){
@@ -100,12 +157,12 @@ createFeatures.difficulty = function(preprocessedDir){
                           CommentCount = questions$CommentCount,
                           HasAcceptedAnswer = (questions$AcceptedAnswerId != -1))
     
-    features$TimeToMaxScoreAnswer = foreach(i = 1:nrow(features), .combine = rbind) %dopar%{
+    features$WeeksToMaxScoreAnswer = foreach(i = 1:nrow(features), .combine = rbind) %dopar%{
         ans = answers[answers$ParentId == features$Id[i],]
         
         if (nrow(ans) > 0){
             ans = ans[order(ans$Score, ans$CreationDate, decreasing=T),][1,]
-            val = as.numeric(difftime(ans$CreationDate , questions$CreationDate[i], units="hours"))
+            val = floor(difftime(ans$CreationDate, questions$CreationDate[i], units="weeks"))
             
             # PROBLEM 1: Some answers have been created before the question!!! 
             # (Cause: Question Merging...)
@@ -129,6 +186,7 @@ createFeatures.longevity = function(preprocessedDir){
 ####################################################
 library(fpc, quietly = T)
 library(flexclust, quietly = T) 
+library(rpart, quietly=T)
 require(foreach, quietly = T)
 require(doMC, quietly = T)
 library(scatterplot3d, quietly=T)
@@ -142,5 +200,8 @@ clusteringDir = "../AllData/clustering/"
 clustering(preprocessedDir, clusteringDir, "Difficulty", createFeatures.difficulty)
 clustering(preprocessedDir, clusteringDir, "Popularity", createFeatures.popularity)
 
-plot.cluster(clusteringDir, "Difficulty")
-plot.cluster(clusteringDir, "Popularity")
+plot.clustering(clusteringDir, "Difficulty")
+plot.clustering(clusteringDir, "Popularity")
+
+analyse.clustering(clusteringDir, "Difficulty")
+analyse.clustering(clusteringDir, "Popularity")
