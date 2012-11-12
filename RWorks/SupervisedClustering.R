@@ -2,112 +2,234 @@ countWords = function(body){
     return(length(strsplit(body, " ")[[1]]))
 }
 
-content.function = function(qId, questions, answers, qComments, aComments){
+content.function = function(qId){
 
+    # Content: Selecting the Answers and Ordering by CreationDate...
     ans = answers[answers$ParentId == qId, ]
     ans = ans[order(ans$CreationDate),]
+    
+    # Content: Selecting the Question Comments...
     qComm = qComments[qComments$PostId == qId,]
     
+    # Content: Getting the Accepted Answer Id
     accAnsId = questions[questions$Id == qId,]$AcceptedAnswerId
     
     content = NULL
     
-    # Sum the question features
-    # VALUE: Question with positive score comments
-    qValue = sum(qComm$Score)
+    # Content: Question with positive score comments 
+    #          (Poor value... There are bad comments with positive scores)
+    QuestionContent = data.frame(Id = qId, Content = sum(qComm$Score))
+    AnswerContent = NULL
     
-    content = data.frame(qValue = qValue)
-    allAnsData = NULL
-    
+    # Content: Iterating over All Answers and calculating theirs Contents!
     ansAfterAccepted = 0
-    for(i in 1:nrow(ans)){
-        a = ans[i,]
-        aComm = aComments[aComments$PostId == a$Id,]
-
-        diffScoreQuantil = max(max(a$Score - quantile(ans$Score, .25), a$Score - quantile(ans$Score, .75)), 0)
-        
-        # VALUE: Answer Score, Sum(AnswerComment$Score)
-        ansValue = 2 * a$Score + sum(aComm$Score) 
-        # VALUE: BodySize 
-        ansValue = ansValue + sqrt(countWords(as.character(a$Body))) * diffScoreQuantil
-        
-        ansData = data.frame(Id = a$Id, CreationDate = a$CreationDate, 
-                             Score = a$Score, SumCommentScore = sum(aComm$Score), 
-                             BodyWordsNumber = countWords(as.character(a$Body)), 
-                             AcceptedAnswer = F, AfterAccepted = ansAfterAccepted)
-        
-        if (ansAfterAccepted > 0){
-            # TODO: This should be changed to check if the answer ocurred after the VoteEvent, AcceptedByOriginator
-            # VALUE: Answers after the AcceptedEvent
-            ansValue = ansValue + (ansValue * ansAfterAccepted/2)
-            ansAfterAccepted = ansAfterAccepted + 1
+    if (nrow(ans) > 0){
+        for(i in 1:nrow(ans)){
+            a = ans[i,]
+            # Content: Select the Answer Comments
+            aComm = aComments[aComments$PostId == a$Id,]
             
-        }else{
-            if (accAnsId == a$Id){
-                # VALUE: Accepted Answer gain a minimum value
-                ansValue = ansValue + 10
-                ansData$AcceptedAnswer = T
+            # Content: Persist the data to posterior analysis
+            ansContent = data.frame(Id = a$Id, CreationDate = a$CreationDate,
+                                    Score = a$Score, SumCommentScore = sum(aComm$Score), 
+                                    BodyWordCount = countWords(as.character(a$Body)), 
+                                    AcceptedAnswer = F, AfterAccepted = ansAfterAccepted, 
+                                    Content = 0)
+            
+            # Content: Measure the distance of the Score from First and Third quartiles
+            diffScoreQuantil = max(max(a$Score - quantile(ans$Score, .25), a$Score - quantile(ans$Score, .75)), 0)
+            
+            # Content: Answer Score is high predictive, Sum(AnswerComment$Score)
+            ansValue = 2 * a$Score + sum(aComm$Score) 
+            # VALUE: BodySize (depends on the score of the answer)
+            ansValue = ansValue + sqrt(countWords(as.character(a$Body))) * diffScoreQuantil
+            
+            if (ansAfterAccepted > 0){
+                # TODO: This should be changed to check if the answer ocurred after the VoteEvent, AcceptedByOriginator
+                # VALUE: Answers after the AcceptedEvent
+                ansValue = ansValue + (ansValue * ansAfterAccepted/2)
                 ansAfterAccepted = ansAfterAccepted + 1
+            }else{
+                if (accAnsId == a$Id){
+                    # VALUE: Accepted Answer gain a minimum value
+                    ansValue = ansValue + 10
+                    ansContent$AcceptedAnswer = T
+                    ansAfterAccepted = ansAfterAccepted + 1
+                }
+            }
+            ansContent$Content = ansValue
+            AnswerContent = rbind(AnswerContent, ansContent)
+        }
+    }
+    return(list(Question = as.list(QuestionContent), Answers = as.list(AnswerContent)))
+}
+
+selfAnswer.function = function(qId){
+    
+    question = questions[questions$Id == qId,]
+    userId = question$OwnerUserId
+    if (userId == -1){
+        return(data.frame(QuestionValue = 0, AnswersValue = 0))
+    }
+       
+    # Selecting the Answers and Ordering by CreationDate...
+    ans = answers[answers$ParentId == qId, ]
+    
+    # CHECK if there is any answer from the questioner
+    hasAnswersFromQuestioner = (ans$OwnerUserId == userId) * (1:nrow(ans))
+    answersFromQuestionerIndex = hasAnswersFromQuestioner[hasAnswersFromQuestioner != 0]
+    answersFromQuestioner = ans[answersFromQuestionerIndex,]
+
+    if (nrow(answersFromQuestioner) <= 0){
+        return(return(data.frame(QuestionValue = 0, AnswersValue = 0)))
+    }
+
+    theAnswers = answersFromQuestioner[order(answersFromQuestioner$CreationDate),]
+    
+    # Getting the Accepted Answer Id
+    accAnsId = questions[questions$Id == qId,]$AcceptedAnswerId
+    
+    # Considers the Questions: SCORE, FAVORITEs (higher weight)
+    qValue = question$Score^2 + (2 * question$FavoriteCount^2)
+    # Considers the Answers: SCORE, ACCEPTED flag, CREATION_DATE
+    aValue = (theAnswers$Score * (theAnswers$Score * sum(theAnswers$Id == accAnsId))) /answersFromQuestionerIndex
+ 
+    return(data.frame(QuestionValue = qValue, AnswersValue = aValue))
+}
+
+commentDialogueValue = function(comments, questionerId, value, commentType, 
+                                questionersEvent, othersEvent){
+    
+    if (nrow(comments) <= 0){
+        return (NA)
+    }
+    
+    ownerIds = comments[comments$UserId != -1,]$UserId
+    if (length(ownerIds) <= 0){
+        return (NA)
+    }
+
+    commValue = 1
+    lastUserWasQuestioner = T
+    
+    for(i in 1:length(ownerIds)){
+        ownerId = ownerIds[i]
+        newValue = if (lastUserWasQuestioner){
+            if (ownerId == questionerId){
+                commValue + (i + 1)
+            }else{
+                commValue + (2 * i) 
+            }
+        }else{
+            if (ownerId == questionerId){
+                commValue + (2 * i)
+            }else{
+                commValue + (i + 1)
             }
         }
-        content = cbind(content, ansValue)
-        allAnsData = rbind(allAnsData, ansData)
+
+        if(ownerId == questionerId){
+            lastUserWasQuestioner = T
+            value = rbind(value, data.frame(Event = questionersEvent, User = "Questioner", 
+                                            Post = commentType, PostId = comments$Id[i],
+                                            DialoguePoints = (newValue - commValue)))
+        }else{
+            lastUserWasQuestioner = F
+            value = rbind(value, data.frame(Event = othersEvent, User = "Other", 
+                                            Post = commentType, PostId = comments$Id[i],
+                                            DialoguePoints = (newValue - commValue)))
+        }
+        commValue = newValue
     }
-    
-    colnames(content) = c(paste("Q_", qId, sep = ""), paste("A_", ans$Id, sep = ""))
-    return(list(qId = qId, content = sum(content), content.sep = content, ansData = allAnsData))
+    return(value)
 }
 
-plotQuestion = function(index, qContent){
-    x = colnames(qContent[[index]]$content.sep)
-    y = as.numeric(qContent[[index]]$content.sep)
-    accAnsIndex = sum((qContent[[index]]$ansData$AcceptedAnswer == T) * (1: nrow(qContent[[index]]$ansData)))
-    
-    plot(y, type = "h", main = paste("Question", qContent[[index]]$qId, " - Content =", qContent[[index]]$content),
-         xlab = "Event", ylab = "Content", xaxt = "n")
-    axis(1, at=1:length(y), labels=x)
-    pointSize = 2
-    points(1, y[1], type = "b", pch = 20, cex = pointSize, col = "blue")
-    points(2:length(y), y[-1], type = "b", pch = 20, cex = pointSize, col = "red")
-    if (accAnsIndex != 0){
-        points(accAnsIndex + 1, y[accAnsIndex + 1], type = "b", pch = 17, cex = pointSize, col = "green")
+dialogue.function = function(qId){
+    question = questions[questions$Id == qId,]
+    userId = question$OwnerUserId
+    if (userId == -1){
+        return(data.frame(Event = "USER_UNIDENTIFIED", User = "Questioner", 
+                          Post = "Question", PostId = qId, DialoguePoints = 0))
     }
+
+    # Value from the Question
+    value = data.frame(Event = "QUESTION_CREATED", User = "Questioner", 
+                       Post = "Question", PostId = qId, DialoguePoints = 1)
+
+    # Selecting the Question Comments...
+    qComments = qComments[qComments$PostId == qId,]
+    
+    # Value from the Question Comments...
+    qCommentValue = commentDialogueValue(comments=qComments, questionerId=userId, value, commentType="Question_Comment", 
+                                         questionersEvent="QUESTIONERS_Q_COMMENT", othersEvent="OTHERS_Q_COMMENT")    
+    if(class(qCommentValue) == "data.frame") value = qCommentValue
+    
+    # Selecting the Answers and Ordering by CreationDate...
+    ans = answers[answers$ParentId == qId, ]
+    ans = ans[order(ans$CreationDate),]
+
+    # Getting the Accepted Answer Id
+    acceptedAnswerId = questions[questions$Id == qId,]$AcceptedAnswerId
+    
+    # Value from the Answers
+    if (nrow(ans) > 0){
+        for(i in 1:nrow(ans)){
+            a = ans[i,]
+            
+            # Value from the Answer Creation (not such a big dialogue)
+            value = rbind(value, data.frame(Event = "ANSWER_CREATED", User = "Answerer", 
+                                            Post = "Answer", PostId = a$Id, DialoguePoints = 1))
+            
+            if (a$Id == acceptedAnswerId){
+                # Value from the Answer Acceptance (considers that a big dialogue, 
+                # the Questioner accepted the arguments, the value is as high as the Score)
+                value = rbind(value, data.frame(Event = "ANSWER_ACCEPTED", User = "Questioner", 
+                                                Post = "Answer", PostId = a$Id, 
+                                                DialoguePoints = a$Score))    
+            }
+            
+            # Selecting the Answer Comment Users...
+            aComments = qComments[qComments$PostId == qId,]
+            
+            # Value from the Question Comments...
+            answerValue = commentDialogueValue(aComments, userId, value, commentType="Answer_Comment", 
+                                               questionersEvent="QUESTIONERS_A_COMMENT", othersEvent="OTHERS_A_COMMENT")    
+            
+            if(class(answerValue) == "data.frame") value = answerValue
+        }
+    }
+    return(value)    
 }
 
-# MAIN
+
 library(foreach)
 library(doMC)
 registerDoMC()
 
 preprocessedDir = "../AllData/preprocessed/"
-# print(noquote("Reading Data..."))
-# questions = read.csv(paste(preprocessedDir, "Questions.csv", sep = ""), header = T)
-# answers = read.csv(paste(preprocessedDir, "Answers.csv", sep = ""), header = T)
-# qComments = read.csv(paste(preprocessedDir, "Comments-Questions.csv", sep = ""), header = T)
-# aComments = read.csv(paste(preprocessedDir, "Comments-Answers.csv", sep = ""), header = T)
+dir.create("output2/", showWarnings=F)
 
-qContent = foreach(id = questions$Id[11:20]) %dopar%{
-    content.function(id, questions, answers, qComments, aComments)
+print(noquote("Reading Data..."))
+questions = read.csv(paste(preprocessedDir, "Questions.csv", sep = ""), header = T)
+answers = read.csv(paste(preprocessedDir, "Answers.csv", sep = ""), header = T)
+qComments = read.csv(paste(preprocessedDir, "Comments-Questions.csv", sep = ""), header = T)
+aComments = read.csv(paste(preprocessedDir, "Comments-Answers.csv", sep = ""), header = T)
+
+print(noquote("Calculating: New Features...")) 
+QuestionFeatures = foreach(id = questions$Id, .combine = rbind) %dopar%{
+    content = content.function(id)
+    selfAnswer = selfAnswer.function(id)
+    dialogue = dialogue.function(id)
+    data.frame(Id = id, 
+               Content = content$Question$Content + sum(content$Answers$Content),
+               SelfAnswer = selfAnswer$QuestionValue + selfAnswer$AnswersValue,
+               Dialogue = sum(dialogue$DialoguePoints))
 }
 
-# TESTING - PLOTTING
-require(reshape)
-require(ggplot2)
-dir.create("output2", showWarnings=F)
+# Normalize every Feature between 0 and 1
+QuestionFeatures$Content = (QuestionFeatures$Content - min(QuestionFeatures$Content))/ (max(QuestionFeatures$Content) - min(QuestionFeatures$Content))
+QuestionFeatures$SelfAnswer = (QuestionFeatures$SelfAnswer - min(QuestionFeatures$SelfAnswer))/ (max(QuestionFeatures$SelfAnswer) - min(QuestionFeatures$SelfAnswer))
+# QuestionFeatures$Dialogue = (QuestionFeatures$Dialogue - min(QuestionFeatures$Dialogue))/ (max(QuestionFeatures$Dialogue) - min(QuestionFeatures$Dialogue))
 
-png("output2/SuperCluster-Content.png", width = 1000, height = 1200)
-par(mfrow = c(5, 2))
-for (i in 1:length(qContent)){
-    plotQuestion(i, qContent)
-}
-dev.off()
-
-for (i in 1:10){
-    a = qContent[[i]]$ansData
-    b = melt(a[,-ncol(a)], id.vars=c("Id", "CreationDate"))
-    png(paste("output2/SuperCluster: Q_", qContent[[i]]$qId,"-A_", paste(a$Id, collapse = "-"), ".png", sep = ""), width = 600, height = 1000)
-    print(ggplot(b, aes(x = CreationDate, y = value)) + xlab("CreationDate") + ylab("") + 
-        geom_bar(aes(fill = variable), width = .5) + facet_wrap(~variable, ncol=1,scales="free") + 
-        theme(legend.position="none"))
-    dev.off()
-}
+print(noquote("Persisting: QuestionFeatures..."))
+write.csv(QuestionFeatures, file = "output2/QuestionFeatures.csv", row.names = F)
