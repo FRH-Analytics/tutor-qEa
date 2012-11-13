@@ -91,7 +91,7 @@ RemoveUnusedAttributes = function(dir){
     print(noquote("Removing collumns: Questions..."))
     questions = read.csv(paste(dir,"/Questions.csv", sep = ""))
     questions = questions[,c("Id", "AcceptedAnswerId", "CreationDate", "Score", "ViewCount", 
-                             "Body", "LastActivityDate", 
+                             "Body", "OwnerUserId", "LastActivityDate", 
                              "Title", "Tags", "AnswerCount", "CommentCount", "FavoriteCount", 
                              "CommunityOwnedDate")] 
     write.csv(questions, file = paste(dir,"/Questions.csv", sep = ""), row.names = F)
@@ -99,7 +99,7 @@ RemoveUnusedAttributes = function(dir){
     
     print(noquote("Removing collumns: Answers..."))
     answers = read.csv(paste(dir,"/Answers.csv", sep = ""))
-    answers = answers[,c("Id", "ParentId", "CreationDate", "Score", "Body", 
+    answers = answers[,c("Id", "ParentId", "CreationDate", "Score", "Body", "OwnerUserId",
                          "CommentCount", "CommunityOwnedDate")] 
     write.csv(answers, file = paste(dir,"/Answers.csv", sep = ""), row.names = F)
     rm(answers)
@@ -112,13 +112,13 @@ RemoveUnusedAttributes = function(dir){
     
     print(noquote("Removing collumns: Comments-Questions..."))
     question.comments = read.csv(paste(dir, "/Comments-Questions.csv", sep = ""))
-    question.comments = question.comments[,c("Id", "PostId", "Score", "Text", "CreationDate")]
+    question.comments = question.comments[,c("Id", "PostId", "Score", "Text", "CreationDate", "UserId")]
     write.csv(question.comments, paste(dir, "/Comments-Questions.csv", sep = ""), row.names = F)
     rm(question.comments)
     
     print(noquote("Removing collumns: Comments-Answers..."))
     question.answers = read.csv(paste(dir, "/Comments-Answers.csv", sep = ""))
-    question.answers = question.answers[,c("Id", "PostId", "Score", "Text", "CreationDate")]
+    question.answers = question.answers[,c("Id", "PostId", "Score", "Text", "CreationDate", "UserId")]
     write.csv(question.answers, paste(dir, "/Comments-Answers.csv", sep = ""), row.names = F)
     rm(question.answers)
     
@@ -202,6 +202,8 @@ ReplaceNAValues = function(dir){
     questions = read.csv(paste(dir, "/Questions.csv", sep = ""))
     # Set -1 in AcceptedAnswerId with NA values (that means, there is no accepted answer)
     questions[is.na(questions$AcceptedAnswerId),"AcceptedAnswerId"] = -1
+    # Set -1 in OwnerUserId with NA values (that means, there is no user... strange)
+    questions[is.na(questions$OwnerUserId),"OwnerUserId"] = -1
     # Set 0 in AnswerCount, CommentCount or FavoriteCount (that means, there is no answer, 
     # comment or favorite vote)
     questions[is.na(questions$AnswerCount),"AnswerCount"] = 0
@@ -212,6 +214,8 @@ ReplaceNAValues = function(dir){
     
     print(noquote("Replacing: Answer NA's..."))
     answers = read.csv(paste(dir, "/Answers.csv", sep = ""))
+    # Set -1 in OwnerUserId with NA values (that means, there is no user... strange)
+    answers[is.na(answers$OwnerUserId),"OwnerUserId"] = -1
     # Set 0 in CommentCount (that means, there is no comment)
     answers[is.na(answers$CommentCount),"CommentCount"] = 0
     write.csv(answers, file = paste(dir, "/Answers.csv", sep = ""), row.names = F)
@@ -219,6 +223,8 @@ ReplaceNAValues = function(dir){
     
     print(noquote("Replacing: Comments-Questions NA's..."))
     commentsQ = read.csv(paste(dir, "/Comments-Questions.csv", sep = ""))
+    # Set -1 in UserId with NA values (that means, there is no user... strange)
+    commentsQ[is.na(commentsQ$UserId),"UserId"] = -1
     # Set 0 in Score (that means, there is no vote, as the majority)
     commentsQ[is.na(commentsQ$Score),"Score"] = 0
     write.csv(commentsQ, file = paste(dir, "/Comments-Questions.csv", sep = ""), row.names = F)
@@ -226,6 +232,8 @@ ReplaceNAValues = function(dir){
     
     print(noquote("Replacing: Comments-Answers NA's..."))
     commentsA = read.csv(paste(dir, "/Comments-Answers.csv", sep = ""))
+    # Set -1 in UserId with NA values (that means, there is no user... strange)
+    commentsA[is.na(commentsA$UserId),"UserId"] = -1
     # Set 0 in Score (that means, there is no vote, as the majority)
     commentsA[is.na(commentsA$Score),"Score"] = 0
     write.csv(commentsA, file = paste(dir, "/Comments-Answers.csv", sep = ""), row.names = F)
