@@ -116,7 +116,7 @@ commentDialogueValue = function(comments, questionerId, value, commentType,
         ownerId = ownerIds[i]
         newValue = if (lastUserWasQuestioner){
             if (ownerId == questionerId){
-                commValue + (i + 1)
+                commValue + i
             }else{
                 commValue + (2 * i) 
             }
@@ -124,7 +124,7 @@ commentDialogueValue = function(comments, questionerId, value, commentType,
             if (ownerId == questionerId){
                 commValue + (2 * i)
             }else{
-                commValue + (i + 1)
+                commValue + i
             }
         }
 
@@ -201,35 +201,31 @@ dialogue.function = function(qId){
     return(value)    
 }
 
-
-library(foreach)
-library(doMC)
-registerDoMC()
-
-preprocessedDir = "../AllData/preprocessed/"
-dir.create("output2/", showWarnings=F)
-
-print(noquote("Reading Data..."))
-questions = read.csv(paste(preprocessedDir, "Questions.csv", sep = ""), header = T)
-answers = read.csv(paste(preprocessedDir, "Answers.csv", sep = ""), header = T)
-qComments = read.csv(paste(preprocessedDir, "Comments-Questions.csv", sep = ""), header = T)
-aComments = read.csv(paste(preprocessedDir, "Comments-Answers.csv", sep = ""), header = T)
-
-print(noquote("Calculating: New Features...")) 
-QuestionFeatures = foreach(id = questions$Id, .combine = rbind) %dopar%{
-    content = content.function(id)
-    selfAnswer = selfAnswer.function(id)
-    dialogue = dialogue.function(id)
-    data.frame(Id = id, 
-               Content = content$Question$Content + sum(content$Answers$Content),
-               SelfAnswer = selfAnswer$QuestionValue + selfAnswer$AnswersValue,
-               Dialogue = sum(dialogue$DialoguePoints))
+MainSupervisedClustering = function(){
+    library(foreach)
+    
+    # Register the Cores of the Machine (runs only in Linux)
+    if (Sys.info()["sysname"] == "Linux"){
+        library(doMC)
+        registerDoMC()
+    }
+    
+    preprocessedDir = "../AllData/preprocessed/"
+    dir.create("output/", showWarnings=F)
+    
+    print(noquote("Reading Data..."))
+    questions = read.csv(paste(preprocessedDir, "Questions.csv", sep = ""), header = T)
+    answers = read.csv(paste(preprocessedDir, "Answers.csv", sep = ""), header = T)
+    qComments = read.csv(paste(preprocessedDir, "Comments-Questions.csv", sep = ""), header = T)
+    aComments = read.csv(paste(preprocessedDir, "Comments-Answers.csv", sep = ""), header = T)
+    
+    print(noquote("Calculating: New Features...")) 
+    QuestionFeatures = foreach(id = questions$Id, .combine = rbind) %dopar%{
+        dialogue = dialogue.function(id)
+        data.frame(Id = id, 
+                   Dialogue = sum(dialogue$DialoguePoints))
+    }
+    
+    print(noquote("Persisting: QuestionFeatures..."))
+    write.csv(QuestionFeatures, file = "output/QuestionFeatures.csv", row.names = F)   
 }
-
-# Normalize every Feature between 0 and 1
-QuestionFeatures$Content = (QuestionFeatures$Content - min(QuestionFeatures$Content))/ (max(QuestionFeatures$Content) - min(QuestionFeatures$Content))
-QuestionFeatures$SelfAnswer = (QuestionFeatures$SelfAnswer - min(QuestionFeatures$SelfAnswer))/ (max(QuestionFeatures$SelfAnswer) - min(QuestionFeatures$SelfAnswer))
-# QuestionFeatures$Dialogue = (QuestionFeatures$Dialogue - min(QuestionFeatures$Dialogue))/ (max(QuestionFeatures$Dialogue) - min(QuestionFeatures$Dialogue))
-
-print(noquote("Persisting: QuestionFeatures..."))
-write.csv(QuestionFeatures, file = "output2/QuestionFeatures.csv", row.names = F)
