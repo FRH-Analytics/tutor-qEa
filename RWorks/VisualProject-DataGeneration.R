@@ -37,6 +37,9 @@ CreateQuestionData = function(inputDir, outputDir){
     print(noquote("Selecting the question collumns..."))
     questions.data = questions[,c("Id", "Title", "Score", "AnswerCount", "CommentCount")]
     
+    # TODO: Add the real Clusters (delete fake Clusters)
+    # Usar a função merge() nas ids
+    
     print(noquote("Adding fake Clusters..."))
     questions.data$cluster = sample(1:8, nrow(questions.data), replace=T)
     

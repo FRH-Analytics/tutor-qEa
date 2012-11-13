@@ -210,7 +210,7 @@ MainSupervisedClustering = function(){
         registerDoMC()
     }
     
-    preprocessedDir = "AllData/preprocessed/"
+    preprocessedDir = "../AllData/preprocessed/"
     dir.create("output/", showWarnings=F)
     
     print(noquote("Reading Data..."))
@@ -227,5 +227,6 @@ MainSupervisedClustering = function(){
     }
     
     print(noquote("Persisting: QuestionFeatures..."))
-    write.csv(QuestionFeatures, file = "output/QuestionFeatures.csv", row.names = F)   
+    write.csv(QuestionFeatures, file = paste(preprocessedDir,
+                                             "QuestionFeatures.csv", sep = ""), row.names = F)   
 }
