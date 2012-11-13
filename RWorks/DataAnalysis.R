@@ -60,6 +60,77 @@ OutlierAnalysis.Questions = function(inputDir, outputDir, dataName){
     print(noquote(""))
 }
 
+
+PMFAnalysis.Answers = function(inputDir, outputDir, dataName){
+  answers = read.csv(paste(inputDir,"Answers.csv", sep=""),header=T)
+  
+  png(paste(outputDir,"PMF-", dataName, ".png", sep =""), width = 800, height = 400)    
+  par(mfrow = c(1,2))
+  Plot.PMF(answers, var = "Score")
+  Plot.PMF(answers, var = "CommentCount")
+  dev.off()
+  
+  png(paste(outputDir, "Boxplot-", dataName, ".png", sep = ""), width = 600, height = 400)
+  par(mfrow = c(2, 1))
+  Plot.Boxplot(answers, var = "Score", horizontal = T)
+  Plot.Boxplot(answers, var = "CommentCount", horizontal = T)
+  dev.off()
+}
+
+OutlierAnalysis.Answers = function(inputDir, outputDir, dataName){
+  answers = read.csv(paste(inputDir,"Answers.csv", sep=""),header=T)
+  
+  answers$IsCommunity = NULL
+  answers[answers$CommunityOwnedDate != "", "IsCommunity"] = "IsCommunity"
+  answers[answers$CommunityOwnedDate == "", "IsCommunity"] = "IsNotCommunity"
+  
+  png(paste(outputDir, "Boxplot-", dataName, ".png", sep = ""), width = 600, height = 500)
+  par(mfrow = c(2, 1))
+  Plot.Boxplot(answers, var = "Score", groupVar = "IsCommunity", horizontal = T)
+  Plot.Boxplot(answers, var = "CommentCount", groupVar = "IsCommunity", horizontal = T)
+  dev.off()
+}
+
+PMFAnalysis.Comments = function(inputDir, comment.type, outputDir, dataName){
+  comments = read.csv(paste(inputDir,"Comments-",comment.type,".csv",sep=""),header=T)
+  
+  png(paste(outputDir,"PMF-Comments-", dataName, ".png", sep =""), width = 400, height = 400)    
+  Plot.PMF(comments, var = "Score")
+  dev.off()
+  
+  png(paste(outputDir,"Boxplots-Comments-", dataName, ".png", sep = ""), width = 600, height = 200)
+  Plot.Boxplot(comments, var = "Score", horizontal = T)
+  dev.off()
+}
+
+OutlierAnalysis.Comments = function(inputDir, comment.type, outputDir, dataName){
+  comments = read.csv(paste(inputDir,"Comments-",comment.type,".csv",sep=""),header=T)
+  reference = read.csv(paste(inputDir,comment.type,".csv",sep=""),header=T)
+  
+  reference$IsCommunity = NULL
+  reference[reference$CommunityOwnedDate != "", "IsCommunity"] = "IsCommunity"
+  reference[reference$CommunityOwnedDate == "", "IsCommunity"] = "IsNotCommunity"
+  
+  join.table = merge(comments[,c(2,3)],reference[,c("Id","IsCommunity")],
+                     by.x="PostId",by.y="Id")
+  
+  png(paste(outputDir,"Boxplots-Comments-", dataName, ".png", sep = ""), width = 600, height = 400)
+  Plot.Boxplot(join.table, var = "Score", groupVar = "IsCommunity", horizontal = T)
+  dev.off()
+}
+
+PMFAnalysis.Tags = function(inputDir, outputDir, dataName){
+  tags = read.csv(paste(inputDir,"Tags.csv",sep=""),header=T)
+  
+  png(paste(outputDir,"PMF-", dataName, ".png", sep =""), width = 400, height = 400)    
+  Plot.PMF(tags, var = "Count")
+  dev.off()
+  
+  png(paste(outputDir,"Boxplot-", dataName, ".png", sep = ""), width = 600, height = 200)
+  Plot.Boxplot(tags, var = "Count", horizontal = T)
+  dev.off()
+}
+
 CorrelationAnalysis = function(inputDir, outputDir){
 
     print(noquote("Correlation Analysis..."))
@@ -98,27 +169,37 @@ CorrelationAnalysis = function(inputDir, outputDir){
 }
 
 ########## MAIN ########## 
-MainDataAnalysis = function(dir = "../AllData/preprocessed/"){
+MainDataAnalysis = function(dir = "AllData/preprocessed/"){
     
-    # 1) Runs the initial PreProcessment - Cleaning Data
-    source("DataPreProcessment.R")
-    MainPreProcessment()
-    
-    # 2) Plot the Probabilities Mass Functions
-    PMFAnalysis.Questions(inputDir = dir, outputDir = "output/", dataName = "Questions")
-    # TODO (Matheus): Add the other plots here...
-    
-    # 3) Plot the Outlier Analysis Charts
-    OutlierAnalysis.Questions(inputDir = dir, outputDir = "output/", dataName = "Questions_IsCommunity")
-    # TODO (Matheus): Add the other plots here...
-    
-    # 4) Runs the final PreProcessment - Removing the Noise and Outliers
-    RemoveNoiseAndOutliers(dir)
-    
-    # 5) Plot the Final Probabilities Mass Functions
-    PMFAnalysis.Questions(inputDir = dir, outputDir = "output/", dataName = "Questions-Final")
-    # TODO (Matheus): Add the new plots here...
-    
-    # 6) Correlation Analysis
-    CorrelationAnalysis(dir, outputDir = "output/")
+  # 1) Runs the initial PreProcessment - Cleaning Data
+  source("DataPreProcessment.R")
+  MainPreProcessment()
+  
+  # 2) Plot the Probabilities Mass Functions
+  PMFAnalysis.Questions(inputDir = dir, outputDir = "output/", dataName = "Questions")
+  PMFAnalysis.Answers(inputDir = dir, outputDir = "output/", dataName = "Answers")
+  PMFAnalysis.Comments(inputDir = dir, comment.type = "Questions", outputDir = "output/", dataName = "Questions")
+  PMFAnalysis.Comments(inputDir = dir, comment.type = "Answers", outputDir = "output/", dataName = "Answers")
+  PMFAnalysis.Tags(inputDir = dir, outputDir = "output/", dataName = "Tags")
+  
+  # 3) Plot the Outlier Analysis Charts
+  OutlierAnalysis.Questions(inputDir = dir, outputDir = "output/", dataName = "Questions_IsCommunity")
+  OutlierAnalysis.Answers(inputDir = dir, outputDir = "output/", dataName = "Answers_IsCommunity")
+  OutlierAnalysis.Comments(inputDir = dir, comment.type = "Questions", outputDir = "output/",
+                           dataName = "Questions_IsCommunity")
+  OutlierAnalysis.Comments(inputDir = dir, comment.type = "Answers", outputDir = "output/",
+                           dataName = "Answers_IsCommunity")
+  
+  # 4) Runs the final PreProcessment - Removing the Noise and Outliers
+  RemoveNoiseAndOutliers(dir)
+  
+  # 5) Plot the Final Probabilities Mass Functions
+  PMFAnalysis.Questions(inputDir = dir, outputDir = "output/", dataName = "Questions-Final")
+  PMFAnalysis.Answers(inputDir = dir, outputDir = "output/", dataName = "Answers-Final")
+  PMFAnalysis.Comments(inputDir = dir, comment.type = "Questions", outputDir = "output/", dataName = "Questions-Final")
+  PMFAnalysis.Comments(inputDir = dir, comment.type = "Answers", outputDir = "output/", dataName = "Answers-Final")
+  PMFAnalysis.Tags(inputDir = dir, outputDir = "output/", dataName = "Tags-Final")
+  
+  # 6) Correlation Analysis
+  CorrelationAnalysis(dir, outputDir = "output/")
 }

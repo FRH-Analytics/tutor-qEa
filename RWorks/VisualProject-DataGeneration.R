@@ -94,8 +94,8 @@ MainDataAnalysis()
 print(noquote(""))
 print(noquote(">> Visual Analytics Project - Data Generation"))
 
-inputDir = "../AllData/preprocessed/"
-outputDir = "../TutorQeA/data/"
+inputDir = "AllData/preprocessed/"
+outputDir = "data/"
 
 CreateTagLinks(inputDir, outputDir)
 CreateQuestionData(inputDir, outputDir)

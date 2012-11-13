@@ -274,8 +274,8 @@ RemoveNoiseAndOutliers = function(dir){
 
 ################ MAIN ################
 # Machine dependent file paths
-MainPreProcessment = function(raw.dir = "../AllData/raw/", 
-                              preProcessed.dir = "../AllData/preprocessed/"){
+MainPreProcessment = function(raw.dir = "AllData/raw/", 
+                              preProcessed.dir = "AllData/preprocessed/"){
     
     # Data Collection Function Calls
     print(noquote(""))

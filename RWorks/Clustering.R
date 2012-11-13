@@ -181,6 +181,80 @@ createFeatures.longevity = function(preprocessedDir){
     # List Attributes...
 }
 
+createFeatures.coverage = function(preprocessedDir){
+  print(noquote("Reading Data..."))
+  questions = read.csv(paste(preprocessedDir, "Questions.csv", sep = ""), header = T)
+  answers = read.csv(paste(preprocessedDir, "Answers.csv", sep = ""), header = T)
+  
+  print(noquote("Creating Attributes..."))
+  questions$BodySize = foreach(i = 1:nrow(questions), .combine = rbind) %dopar%{    
+    size = length(unlist(strsplit(as.character(questions[i,"Body"])," ")))
+  }
+  
+  questions$TagQuantity = foreach(i = 1:nrow(questions), .combine = rbind) %dopar%{
+    post = read.csv(paste(preprocessedDir,"PostTags.csv",sep=""),header=T)$PostId
+    post.id = questions[i,"Id"]
+    quantity = length(which(post == post.id))
+  }
+  
+  questions$AnswersBodySizeMedian = foreach(i = 1:nrow(questions), .combine = rbind) %dopar%{
+    post.id = questions[i,"Id"]
+    post.answers = answers[answers$ParentId == post.id,]
+    
+    body.sizes = foreach(i = 1:nrow(post.answers), .combine = rbind) %dopar%{
+      size = length(unlist(strsplit(as.character(post.answers[i,"Body"])," ")))
+    }
+    
+    median = median(body.sizes)
+  }
+  
+  features = questions[,c("Id","AnswerCount","BodySize","TagQuantity","AnswersBodySizeMedian")]
+  
+  return(features)
+  
+}
+
+creataFeatures.supervised = function(preprocessedDir){
+  print(noquote("Reading Data..."))
+  questions = read.csv(paste(preprocessedDir, "Questions.csv", sep = ""), header = T)
+  answers = read.csv(paste(preprocessedDir, "Answers.csv", sep = ""), header = T)
+  question.features = read.csv(paste(preprocessedDir, "QuestionFeatures.csv", sep = ""), header = T)
+  
+  features = data.frame(Id = questions$Id,
+                        Coverage = questions$AnswerCount)
+  
+  features$Dialogue = foreach(i = 1:nrow(questions), .combine = rbind) %dopar%{
+    qId = questions[i,"Id"]
+    value = question.features[question.features$Id == qId,"Dialogue"]
+  }
+  
+  features$Impact = foreach(i = 1:nrow(features), .combine = rbind) %dopar%{
+    qId = features$Id[i]
+    question = questions[questions$Id == qId,]
+    ans = answers[answers$ParentId == qId,]
+    
+    qScore = questions[questions$Id == features$Id[i],"Score"]
+    
+    if (nrow(ans) > 0){
+      ans = ans[order(ans$CreationDate, decreasing=F),][1,]
+      val = difftime(ans$CreationDate, question$CreationDate, units="days")
+      val = as.numeric(val,units="days")
+      
+      # PROBLEM 1: Some answers have been created before the question!!! 
+      # (Cause: Question Merging...)
+      val = if (val < 0){0}else{val}
+      result = floor(qScore/val)
+      print(result)
+    } else {
+      # PROBLEM 2: No answer! (Probably very difficult! We set -1...)
+      -1
+      print(-1)
+    }    
+ 
+  }
+  
+}
+
 ####################################################
 ####################### MAIN #######################
 ####################################################
@@ -190,18 +264,28 @@ library(rpart, quietly=T)
 require(foreach, quietly = T)
 require(doMC, quietly = T)
 library(scatterplot3d, quietly=T)
+library(plyr, quietly=T)
 
-registerDoMC()
+if (Sys.info()["sysname"] == "Linux"){
+  library(doMC)
+  registerDoMC()
+}
 
-dir.create("../AllData/clustering", showWarnings=F)
-preprocessedDir = "../AllData/preprocessed/"
-clusteringDir = "../AllData/clustering/"
+dir.create("AllData/clustering", showWarnings=F)
+preprocessedDir = "AllData/preprocessed/"
+clusteringDir = "AllData/clustering/"
 
 clustering(preprocessedDir, clusteringDir, "Difficulty", createFeatures.difficulty)
 clustering(preprocessedDir, clusteringDir, "Popularity", createFeatures.popularity)
+clustering(preprocessedDir, clusteringDir, "Coverage", createFeatures.coverage)
+clustering(preprocessedDir, clusteringDir, "Supervised", createFeatures.supervised)
 
 plot.clustering(clusteringDir, "Difficulty")
 plot.clustering(clusteringDir, "Popularity")
+plot.clustering(clusteringDir, "Coverage")
+plot.clustering(clusteringDir, "Supervised")
 
 analyse.clustering(clusteringDir, "Difficulty")
 analyse.clustering(clusteringDir, "Popularity")
+analyse.clustering(clusteringDir, "Coverage")
+analyse.clustering(clusteringDir, "Supervised")

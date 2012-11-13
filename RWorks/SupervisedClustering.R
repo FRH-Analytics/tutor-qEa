@@ -64,7 +64,7 @@ content.function = function(qId){
     return(list(Question = as.list(QuestionContent), Answers = as.list(AnswerContent)))
 }
 
-selfAnswer.function = function(qId){
+selfAnswer.function = function(qId, questions){
     
     question = questions[questions$Id == qId,]
     userId = question$OwnerUserId
@@ -144,7 +144,7 @@ commentDialogueValue = function(comments, questionerId, value, commentType,
     return(value)
 }
 
-dialogue.function = function(qId){
+dialogue.function = function(qId, questions, comments, answers){
     question = questions[questions$Id == qId,]
     userId = question$OwnerUserId
     if (userId == -1){
@@ -157,7 +157,7 @@ dialogue.function = function(qId){
                        Post = "Question", PostId = qId, DialoguePoints = 1)
 
     # Selecting the Question Comments...
-    qComments = qComments[qComments$PostId == qId,]
+    qComments = comments[comments$PostId == qId,]
     
     # Value from the Question Comments...
     qCommentValue = commentDialogueValue(comments=qComments, questionerId=userId, value, commentType="Question_Comment", 
@@ -210,7 +210,7 @@ MainSupervisedClustering = function(){
         registerDoMC()
     }
     
-    preprocessedDir = "../AllData/preprocessed/"
+    preprocessedDir = "AllData/preprocessed/"
     dir.create("output/", showWarnings=F)
     
     print(noquote("Reading Data..."))
@@ -221,7 +221,7 @@ MainSupervisedClustering = function(){
     
     print(noquote("Calculating: New Features...")) 
     QuestionFeatures = foreach(id = questions$Id, .combine = rbind) %dopar%{
-        dialogue = dialogue.function(id)
+        dialogue = dialogue.function(id,questions,qComments, answers)
         data.frame(Id = id, 
                    Dialogue = sum(dialogue$DialoguePoints))
     }
