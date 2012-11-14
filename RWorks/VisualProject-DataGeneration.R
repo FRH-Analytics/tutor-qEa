@@ -33,15 +33,15 @@ CreateTagLinks = function(inputDir, outputDir){
 CreateQuestionData = function(inputDir, outputDir){
     print(noquote("Creating the QuestionData table (keeping only the needed collumns from Questions)..."))
     questions = read.csv(paste(inputDir,"/Questions.csv", sep = ""))
+	clusters = read.csv("AllData/clustering/supervised.csv",sep=",")[,c("Id","Cluster.KMeans")]
     
     print(noquote("Selecting the question collumns..."))
     questions.data = questions[,c("Id", "Title", "Score", "AnswerCount", "CommentCount")]
     
     # TODO: Add the real Clusters (delete fake Clusters)
     # Usar a função merge() nas ids
-    
-    print(noquote("Adding fake Clusters..."))
-    questions.data$cluster = sample(1:8, nrow(questions.data), replace=T)
+    questions.data = merge(questions.data, clusters, by="Id")    
+    colnames(questions.data)[6] = "Cluster"
     
     write.csv(questions.data, file = paste(outputDir,"/QuestionData.csv", sep = ""), row.names = F)
 }

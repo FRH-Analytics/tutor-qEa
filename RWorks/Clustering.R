@@ -18,7 +18,7 @@ run.Kmedians = function(features){
 
 run.Kmeans = function(features){
     kmeansruns(data = features, criterion="ch",
-               krange = 3:5,                     # krange: range of the number of clusters
+               krange = 3:6,                     # krange: range of the number of clusters
                iter.max = 100,                   # iter.max: number of iterations per execution
                runs = 10,                        # runs: Number of restarts each execution
                scaledata = T)                    # scaledata: center the data
