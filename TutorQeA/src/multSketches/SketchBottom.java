@@ -8,10 +8,9 @@ import util.AnswerData;
 import util.QeAData;
 import util.QuestionData;
 
-public class Sketch3 extends EmbeddedSketch {
+public class SketchBottom extends EmbeddedSketch {
 
 	private static final long serialVersionUID = 1L;
-	private final int NOT_DRAWING = 0, DRAWING = 1;
 
 	private int qHeight;
 	private int qCornerRadius;
@@ -27,11 +26,20 @@ public class Sketch3 extends EmbeddedSketch {
 	protected int myXOrigin;
 	protected int myYOrigin;
 
-	private int centerY = 0, offsetY = 0;
+	private int newYOrigin = 0, offsetY = 0;
 
-	private int drawState;
+	float qX1;
+	float qX2;
+	float qScoreX1;
+	float qScoreX2;
+	float qTitleX1;
+	float qTitleX2;
+	float qAnswerX1;
+	float qAnswerX2;
 
-	public Sketch3(int xOrigin, int yOrigin, int width, int height) {
+	private int selectedQuestionIndex;
+
+	public SketchBottom(int xOrigin, int yOrigin, int width, int height) {
 		myXOrigin = xOrigin;
 		myYOrigin = yOrigin;
 		myWidth = width;
@@ -47,7 +55,7 @@ public class Sketch3 extends EmbeddedSketch {
 	public void setup() {
 		size(myXOrigin + myWidth, myYOrigin + myHeight);
 
-		centerY = 0;
+		newYOrigin = 0;
 		cursor(MOVE);
 		smooth();
 
@@ -58,50 +66,142 @@ public class Sketch3 extends EmbeddedSketch {
 		qHeight = myHeight / 6;
 		qCornerRadius = 5;
 
+		// Fixed X Values (Question Rectangles)
+		qX1 = myXOrigin + questionRectXPadding;
+		qX2 = qX1 + myWidth - 2 * questionRectXPadding;
+
+		qScoreX1 = qX1;
+		qScoreX2 = qScoreX1 + ((qX2 - qX1) * (float) 0.05);
+
+		qTitleX1 = qX1 + ((qX2 - qX1) * (float) 0.06);
+		qTitleX2 = qX1 + ((qX2 - qX1) * (float) 0.5);
+
+		qAnswerX1 = qX1 + ((qX2 - qX1) * (float) 0.51);
+		qAnswerX2 = qX1 + ((qX2 - qX1) * (float) 1);
+
 		// Set no cluster
 		clusterTitleId = -1;
 
-		drawState = DRAWING;
+		selectedQuestionIndex = -1;
 	}
 
 	public void draw() {
 		super.draw();
 
-		switch (drawState) {
-		case (DRAWING):
-			if (mousePressed == true) {
-				centerY = mouseY - offsetY;
-			}
+		if (mousePressed) {
+			newYOrigin = mouseY - offsetY;
+		}
 
-			translate(0, centerY);
-			
-			System.out.println("Drawing");
-			background(255);
-			if (sortedQuestions.size() == 0) {
-				drawNoCluster();
-			} else {
-				drawQuestions();
-			}
-			drawState = NOT_DRAWING;
-			break;
-		default:
+		translate(0, newYOrigin);
+
+		background(255);
+		if (sortedQuestions.size() == 0) {
+			drawNoCluster();
+		} else {
+			drawQuestions();
 		}
 	}
 
 	public void mouseMoved() {
-		// System.out.println("Event: Mouse Moved");
-		drawState = DRAWING;
+		selectedQuestionIndex = getSelectedQuestionIndex(mouseX, mouseY,
+				myXOrigin, myXOrigin + myWidth);
 	}
 
 	public void mousePressed() {
-		// System.out.println("Event: Mouse Pressed");
-		offsetY = mouseY - centerY;
+		// Update the Scroll
+		offsetY = mouseY - newYOrigin;
+
+		// Call the Link of the STATS from StackExchange!!!
+		if (mouseEvent.getClickCount() == 2) {
+			int selectedQuestionIndex = getSelectedQuestionIndex(mouseX,
+					mouseY, qTitleX1, qTitleX2);
+			if (selectedQuestionIndex != -1) {
+				QuestionData q = getQuestionByIndex(selectedQuestionIndex);
+				if (q != null) {
+					link("http://stats.stackexchange.com/questions/"
+							+ q.getId());
+				} else {
+					System.err.println("Unexistent Question Id!");
+				}
+			}
+		}
 	}
 
-	@Override
-	public void mouseDragged() {
-		// System.out.println("Event: Mouse Dragged");
-		drawState = DRAWING;
+	private QuestionData getQuestionByIndex(int questionIndex) {
+		int i = 0;
+		QuestionData qFinal = null;
+		for (QuestionData q : sortedQuestions) {
+			if (i == questionIndex) {
+				qFinal = q;
+				break;
+			}
+			i++;
+		}
+		return qFinal;
+	}
+
+	private void highlightQuestion() {
+		if (selectedQuestionIndex != -1) {
+
+			// float xInPixels, yInPixels, sizeInPixels;
+			// String tooltip;
+
+			float firstQuestionY1 = myYOrigin + questionRectYPadding;
+			float newFirstQuestionY1 = firstQuestionY1 + newYOrigin;
+			float questionsY1Distance = qHeight + questionRectYPadding;
+
+			float qTitleY1 = newFirstQuestionY1
+					+ (questionsY1Distance * selectedQuestionIndex);
+
+			drawQuestionTitle(getQuestionByIndex(selectedQuestionIndex),
+					qTitleX1, qTitleY1, qTitleX2, qTitleY1 + qHeight, false);
+			// fill(clusterItem.getColor(ChartItem.RED),
+			// clusterItem.getColor(ChartItem.GREEN),
+			// clusterItem.getColor(ChartItem.BLUE));
+			// stroke(gridGrayColor / (float) 1.5);
+			// strokeWeight((float) 1.75);
+			// ellipseMode(PApplet.CENTER);
+			//
+			// // Highlight Cluster (PLOT)
+			// xInPixels = getPointXInPixels(clusterItem.getPoint().x);
+			// yInPixels = getPointYInPixels(clusterItem.getPoint().y);
+			// sizeInPixels = getPointSizeInPixels(clusterItem.getSize());
+			//
+			// ellipse(xInPixels, yInPixels, sizeInPixels, sizeInPixels);
+
+			// Draw ToolTip
+			// tooltip = String.valueOf((int) clusterItem.getSize())
+			// + " question(s)";
+			//
+			// fill(50, 100);
+			// strokeWeight((float) 1);
+			// rectMode(PApplet.CENTER);
+			// rect(xInPixels + sizeInPixels / 2, yInPixels
+			// - sizeInPixels / 2, textWidth(tooltip) + 20, 20,
+			// 5, 5);
+			// fill(255);
+			// textSize(12);
+			// textAlign(PApplet.CENTER, PApplet.CENTER);
+			// text(tooltip, xInPixels + sizeInPixels / 2, yInPixels
+			// - sizeInPixels / 2);
+		}
+	}
+
+	private int getSelectedQuestionIndex(float mouseX, float mouseY, float X1,
+			float X2) {
+		int questionIndex = -1;
+
+		float firstQuestionY1 = myYOrigin + questionRectYPadding;
+		float newFirstQuestionY1 = firstQuestionY1 + newYOrigin;
+		float questionsY1Distance = qHeight + questionRectYPadding;
+
+		if (mouseX >= X1
+				&& mouseX <= X2
+				&& (mouseY - newFirstQuestionY1) < (sortedQuestions.size() * questionsY1Distance)) {
+			questionIndex = ((int) Math.ceil((mouseY - newFirstQuestionY1)
+					/ (double) questionsY1Distance)) - 1;
+		}
+		return questionIndex;
 	}
 
 	public void updateQuestionsByCluster(int clusterId) {
@@ -112,12 +212,13 @@ public class Sketch3 extends EmbeddedSketch {
 		// Set the cluster id to the title
 		clusterTitleId = clusterId;
 
+		// Reset the newYOrigin
+		newYOrigin = 0;
+
 		// Sort the new question id based on the question data
 		for (Integer id : QeAData.getQuestionIdsByCluster(clusterId)) {
 			sortedQuestions.add(QeAData.getQuestionIdsToData().get(id));
 		}
-		System.out.println("Event: Update Questions");
-		drawState = DRAWING;
 	}
 
 	public void removeQuestionsAndCluster() {
@@ -142,39 +243,36 @@ public class Sketch3 extends EmbeddedSketch {
 	private void drawQuestions() {
 
 		// First Rectangle boudaries
-		float qX1 = myXOrigin + questionRectXPadding;
 		float qY1 = myYOrigin + questionRectYPadding;
-		float qX2 = qX1 + myWidth - 2 * questionRectXPadding;
 		float qY2 = qY1 + qHeight;
 
-		float qScoreX1 = qX1;
-		float qScoreX2 = qScoreX1 + ((qX2 - qX1) * (float) 0.05);
-
-		float qTitleX1 = qX1 + ((qX2 - qX1) * (float) 0.06);
-		float qTitleX2 = qX1 + ((qX2 - qX1) * (float) 0.5);
-
-		float qAnswerX1 = qX1 + ((qX2 - qX1) * (float) 0.51);
-		float qAnswerX2 = qX1 + ((qX2 - qX1) * (float) 1);
-
 		rectMode(CORNERS);
-		stroke(150, 100);
 		strokeWeight((float) 1.5);
 
 		maxAnswerScoreOfAll = getMaxAnswerScore();
 
+		int i = 0;
+		boolean highlightQuestion;
 		for (QuestionData qData : sortedQuestions) {
+
+			highlightQuestion = (selectedQuestionIndex == i++);
+
+			// Highlight or not the Stroke
+			stroke(150, (highlightQuestion) ? 255 : 100);
 
 			// DRAW score rectangle
 			drawQuestionScore(qData, qScoreX1, qY1, qScoreX2, qY2);
 
 			// DRAW title rectangle
-			drawQuestionTitle(qData, qTitleX1, qY1, qTitleX2, qY2);
+			drawQuestionTitle(qData, qTitleX1, qY1, qTitleX2, qY2,
+					highlightQuestion);
 
 			// DRAW answers rectangle
-			drawQuestionAnswers(qData, qAnswerX1, qY1, qAnswerX2, qY2);
+			drawQuestionAnswers(qData, qAnswerX1, qY1, qAnswerX2, qY2,
+					highlightQuestion);
 
 			// Update the qYOrigin
-			qY1 = qY2 + questionRectXPadding / 3;
+			qY1 = qY2 + questionRectYPadding;
 			qY2 = qY1 + qHeight;
 		}
 
@@ -215,13 +313,21 @@ public class Sketch3 extends EmbeddedSketch {
 	}
 
 	private void drawQuestionTitle(QuestionData qData, float x1, float y1,
-			float x2, float y2) {
+			float x2, float y2, boolean highlightQuestion) {
 
 		ChartItem clusterItem = ChartData.getItemById(qData.getCluster());
 
-		fill(clusterItem.getColor(ChartItem.RED),
-				clusterItem.getColor(ChartItem.GREEN),
-				clusterItem.getColor(ChartItem.BLUE));
+		if (highlightQuestion) {
+			fill(clusterItem.getColor(ChartItem.RED),
+					clusterItem.getColor(ChartItem.GREEN),
+					clusterItem.getColor(ChartItem.BLUE));
+		} else {
+			fill(clusterItem.getColor(ChartItem.RED),
+					clusterItem.getColor(ChartItem.GREEN),
+					clusterItem.getColor(ChartItem.BLUE),
+					clusterItem.getColor(ChartItem.ALPHA));
+		}
+
 		rect(x1, y1, x2, y2, qCornerRadius, qCornerRadius);
 
 		fill(0);
@@ -231,7 +337,7 @@ public class Sketch3 extends EmbeddedSketch {
 	}
 
 	private void drawQuestionAnswers(QuestionData qData, float x1, float y1,
-			float x2, float y2) {
+			float x2, float y2, boolean highlightQuestion) {
 		fill(255);
 		rect(x1, y1, x2, y2, qCornerRadius, qCornerRadius);
 
@@ -260,15 +366,27 @@ public class Sketch3 extends EmbeddedSketch {
 
 				// The MaxScore answers has a different color...
 				if (ans.getScore() == maxScore) {
-					// Green Color
-					fill(59, 217, 127);
+					if (highlightQuestion) {
+						// Green Color
+						fill(59, 217, 127);
+					} else {
+						fill(59, 217, 127, 160);
+					}
 				} else {
 					// The cluster color
 					ChartItem clusterItem = ChartData.getItemById(qData
 							.getCluster());
-					fill(clusterItem.getColor(ChartItem.RED),
-							clusterItem.getColor(ChartItem.GREEN),
-							clusterItem.getColor(ChartItem.BLUE));
+
+					if (highlightQuestion) {
+						fill(clusterItem.getColor(ChartItem.RED),
+								clusterItem.getColor(ChartItem.GREEN),
+								clusterItem.getColor(ChartItem.BLUE));
+					} else {
+						fill(clusterItem.getColor(ChartItem.RED),
+								clusterItem.getColor(ChartItem.GREEN),
+								clusterItem.getColor(ChartItem.BLUE),
+								clusterItem.getColor(ChartItem.ALPHA));
+					}
 				}
 
 				// Ellipse Radius mapped from the maxAnswerScoreEver!!!

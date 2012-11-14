@@ -7,14 +7,12 @@ import java.util.TreeMap;
 
 import org.gicentre.utils.multisketch.EmbeddedSketch;
 
+import processing.core.PApplet;
 import processing.core.PVector;
 import util.CentroidData;
 import util.QeAData;
 
-public class Sketch2 extends EmbeddedSketch {
-
-	private static final long serialVersionUID = 1L;
-	private final int NOT_DRAWING = 0, DRAWING = 1;
+public class SubSketch2 {
 
 	private float plotX1, plotY1;
 	private float plotX2, plotY2;
@@ -46,9 +44,11 @@ public class Sketch2 extends EmbeddedSketch {
 	protected int myXOrigin;
 	protected int myYOrigin;
 
-	private int drawState;
+	protected EmbeddedSketch mySketch;
 
-	public Sketch2(int xOrigin, int yOrigin, int width, int height) {
+	public SubSketch2(EmbeddedSketch parent, int xOrigin, int yOrigin,
+			int width, int height) {
+		mySketch = parent;
 		myXOrigin = xOrigin;
 		myYOrigin = yOrigin;
 		myWidth = width;
@@ -56,8 +56,8 @@ public class Sketch2 extends EmbeddedSketch {
 	}
 
 	public void setup() {
-		size(myXOrigin + myWidth, myYOrigin + myHeight);
-		smooth();
+		// size(myXOrigin + myWidth, myYOrigin + myHeight);
+		mySketch.smooth();
 
 		/*
 		 * WIDTHs (based on myWidth)
@@ -133,45 +133,32 @@ public class Sketch2 extends EmbeddedSketch {
 				* (float) 0.15;
 		minPointSize = ((plotX2 - plotX1) + (plotY2 - plotY1) / 2)
 				* (float) 0.025;
-
-		drawState = DRAWING;
-		background(255);
 	}
 
 	public void draw() {
-		super.draw();
 
-		switch (drawState) {
-		case (DRAWING):
-			background(255);
-			drawTitle();
-			
-			if (ChartData.getSize() > 0) {
-				drawSubtitle();
-				drawAxisLabels();
+		drawTitle();
 
-				// Use thin, gray lines to draw the grid
-				stroke(gridGrayColor);
-				strokeWeight((float) 1);
-				drawXValues();
-				drawYValues();
+		if (ChartData.getSize() > 0) {
+			drawSubtitle();
+			drawAxisLabels();
 
-				// Legend
-				drawLegend();
+			// Use thin, gray lines to draw the grid
+			mySketch.stroke(gridGrayColor);
+			mySketch.strokeWeight((float) 1);
+			drawXValues();
+			drawYValues();
 
-				// Points
-				drawDataPoints();
+			// Legend
+			drawLegend();
 
-				// Highlight Cluster (Hover query)
-				if (selectedClusterId != -1) {
-					highlightClusterAndTooltip();
-				}
-				drawState = NOT_DRAWING;
-			} else {
-				drawNoPlot();
-			}
-			break;
-		default:
+			// Points
+			drawDataPoints();
+
+			// Highlight Cluster (Hover query)
+			highlightClusterAndTooltip();
+		} else {
+			drawNoPlot();
 		}
 	}
 
@@ -179,24 +166,33 @@ public class Sketch2 extends EmbeddedSketch {
 		return selectedClusterId;
 	}
 
+	public boolean isMouseOver() {
+		return (mySketch.mouseX >= myXOrigin
+				&& mySketch.mouseX <= myXOrigin + myWidth
+				&& mySketch.mouseY >= myYOrigin && mySketch.mouseY <= myYOrigin
+				+ myHeight);
+	}
+
 	public void mousePressed() {
-		// System.out.println("Event: Mouse Pressed");
-		if (mouseButton == LEFT) {
+		if (isMouseOver() && mySketch.mouseButton == PApplet.LEFT) {
+			// System.out.println("Event: Mouse LEFT Pressed");
 			if (selectedClusterId != -1) {
 				MainSketch2.SKETCH_3
 						.updateQuestionsByCluster(selectedClusterId);
 			}
 		}
-		drawState = DRAWING;
 	}
 
 	public void mouseMoved() {
-		// System.out.println("Event: Mouse Moved");
-		selectedClusterId = getClusterInLegend(mouseX, mouseY);
-		if (selectedClusterId == -1) {
-			selectedClusterId = getClusterInPlot(mouseX, mouseY);
+		if (isMouseOver()) {
+			// System.out.println("Event: Mouse Moved");
+			selectedClusterId = getClusterInLegend(mySketch.mouseX,
+					mySketch.mouseY);
+			if (selectedClusterId == -1) {
+				selectedClusterId = getClusterInPlot(mySketch.mouseX,
+						mySketch.mouseY);
+			}
 		}
-		drawState = DRAWING;
 	}
 
 	private void highlightClusterAndTooltip() {
@@ -207,40 +203,41 @@ public class Sketch2 extends EmbeddedSketch {
 			int clusterIndex = ChartData.getIndexById(selectedClusterId);
 			ChartItem clusterItem = ChartData.getItemById(selectedClusterId);
 
-			fill(clusterItem.getColor(ChartItem.RED),
+			mySketch.fill(clusterItem.getColor(ChartItem.RED),
 					clusterItem.getColor(ChartItem.GREEN),
 					clusterItem.getColor(ChartItem.BLUE));
-			stroke(gridGrayColor / (float) 1.5);
-			strokeWeight((float) 1.75);
-			ellipseMode(CENTER);
+			mySketch.stroke(gridGrayColor / (float) 1.5);
+			mySketch.strokeWeight((float) 1.75);
+			mySketch.ellipseMode(PApplet.CENTER);
 
 			// Highlight LittleCluster (LEGEND)
 			xInPixels = getLegendLittleClusterX();
 			yInPixels = getLegendLittleClusterY(clusterIndex);
 			sizeInPixels = littleClusterSize;
 
-			ellipse(xInPixels, yInPixels, sizeInPixels, sizeInPixels);
+			mySketch.ellipse(xInPixels, yInPixels, sizeInPixels, sizeInPixels);
 
 			// Highlight Cluster (PLOT)
 			xInPixels = getPointXInPixels(clusterItem.getPoint().x);
 			yInPixels = getPointYInPixels(clusterItem.getPoint().y);
 			sizeInPixels = getPointSizeInPixels(clusterItem.getSize());
 
-			ellipse(xInPixels, yInPixels, sizeInPixels, sizeInPixels);
+			mySketch.ellipse(xInPixels, yInPixels, sizeInPixels, sizeInPixels);
 
 			// Draw ToolTip
 			tooltip = String.valueOf((int) clusterItem.getSize())
 					+ " question(s)";
 
-			fill(50, 100);
-			strokeWeight((float) 1);
-			rectMode(CENTER);
-			rect(xInPixels + sizeInPixels / 2, yInPixels - sizeInPixels / 2,
-					textWidth(tooltip) + 20, 20, 5, 5);
-			fill(255);
-			textSize(12);
-			textAlign(CENTER, CENTER);
-			text(tooltip, xInPixels + sizeInPixels / 2, yInPixels
+			mySketch.fill(50, 100);
+			mySketch.strokeWeight((float) 1);
+			mySketch.rectMode(PApplet.CENTER);
+			mySketch.rect(xInPixels + sizeInPixels / 2, yInPixels
+					- sizeInPixels / 2, mySketch.textWidth(tooltip) + 20, 20,
+					5, 5);
+			mySketch.fill(255);
+			mySketch.textSize(12);
+			mySketch.textAlign(PApplet.CENTER, PApplet.CENTER);
+			mySketch.text(tooltip, xInPixels + sizeInPixels / 2, yInPixels
 					- sizeInPixels / 2);
 		}
 	}
@@ -279,9 +276,7 @@ public class Sketch2 extends EmbeddedSketch {
 			while ((yMax - yMin) % valueDivisions != 0) {
 				yMax++;
 			}
-			drawState = DRAWING;
 		} else {
-			drawState = NOT_DRAWING;
 		}
 		// System.out.println("Event: Plot Update!");
 	}
@@ -330,24 +325,24 @@ public class Sketch2 extends EmbeddedSketch {
 
 	private void drawNoPlot() {
 		String noTag = "No question...";
-		fill(150, 100);
-		strokeWeight((float) 2);
-		rectMode(CENTER);
-		rect(myXOrigin + myWidth / 2, myYOrigin + myHeight / 2,
-				textWidth(noTag) + 30, 30, 5, 5);
-		fill(0);
-		textSize(myHeight / 22);
-		textAlign(CENTER, CENTER);
-		text(noTag, myXOrigin + myWidth / 2, myYOrigin + myHeight / 2);
-		textAlign(CENTER, CENTER);
+		mySketch.fill(150, 100);
+		mySketch.strokeWeight((float) 2);
+		mySketch.rectMode(PApplet.CENTER);
+		mySketch.rect(myXOrigin + myWidth / 2, myYOrigin + myHeight / 2,
+				mySketch.textWidth(noTag) + 30, 30, 5, 5);
+		mySketch.fill(0);
+		mySketch.textSize(myHeight / 22);
+		mySketch.textAlign(PApplet.CENTER, PApplet.CENTER);
+		mySketch.text(noTag, myXOrigin + myWidth / 2, myYOrigin + myHeight / 2);
+		mySketch.textAlign(PApplet.CENTER, PApplet.CENTER);
 	}
 
 	private void drawTitle() {
-		fill(0);
-		textAlign(CENTER);
+		mySketch.fill(0);
+		mySketch.textAlign(PApplet.CENTER);
 		String title = "Question Clusters";
-		textSize(myHeight / 18);
-		text(title, myXOrigin + myWidth / 2, titleYOrigin);
+		mySketch.textSize(myHeight / 20);
+		mySketch.text(title, myXOrigin + myWidth / 2, titleYOrigin);
 	}
 
 	private void drawSubtitle() {
@@ -363,39 +358,40 @@ public class Sketch2 extends EmbeddedSketch {
 			subtitle = subtitle.substring(0, tagTitle.length() - 2);
 		}
 
-		fill(0);
-		textAlign(LEFT);
-		textSize(subtitleSize);
-		text(subtitle, plotX1, subtitleYOrigin);
+		mySketch.fill(0);
+		mySketch.textAlign(PApplet.LEFT);
+		mySketch.textSize(subtitleSize);
+		mySketch.text(subtitle, plotX1, subtitleYOrigin);
 	}
 
 	private void drawAxisLabels() {
-		fill(0);
-		textSize(labelSize);
+		mySketch.fill(0);
+		mySketch.textSize(labelSize);
 
-		// Space in pixels between lines (depends on the size of the text)
-		textLeading(labelSize * (float) 1.25);
+		// Space in pixels between lines (depends on the size of the
+		// mySketch.text)
+		mySketch.textLeading(labelSize * (float) 1.25);
 
 		// X Label
-		textAlign(CENTER, BOTTOM);
-		text("Answer Count", (plotX1 + plotX2) / 2, xLabelYOrigin);
+		mySketch.textAlign(PApplet.CENTER, PApplet.BOTTOM);
+		mySketch.text("Answer Count", (plotX1 + plotX2) / 2, xLabelYOrigin);
 
 		// Y Label (with rotation)
-		textAlign(CENTER, CENTER);
-		pushMatrix();
-		translate(yLabelXOrigin, (plotY1 + plotY2) / 2);
-		rotate(-PI / 2);
-		text("Question Score", 0, 0);
-		popMatrix();
+		mySketch.textAlign(PApplet.CENTER, PApplet.CENTER);
+		mySketch.pushMatrix();
+		mySketch.translate(yLabelXOrigin, (plotY1 + plotY2) / 2);
+		mySketch.rotate(-PApplet.PI / 2);
+		mySketch.text("Question Score", 0, 0);
+		mySketch.popMatrix();
 	}
 
 	private void drawXValues() {
-		fill(0);
-		textSize(valueSize);
-		textAlign(CENTER);
+		mySketch.fill(0);
+		mySketch.textSize(valueSize);
+		mySketch.textAlign(PApplet.CENTER);
 
 		float xSize = plotX2 - plotX1;
-		float fixedYPlace = plotY2 + textAscent() + 5;
+		float fixedYPlace = plotY2 + mySketch.textAscent() + 5;
 		float nextXPlace = plotX1;
 
 		DecimalFormat decimalForm = new DecimalFormat("###.#");
@@ -404,8 +400,8 @@ public class Sketch2 extends EmbeddedSketch {
 		float xInterval = (xMax - xMin) / valueDivisions;
 
 		while (xValue <= xMax) {
-			text(decimalForm.format(xValue), nextXPlace, fixedYPlace);
-			line(nextXPlace, plotY1, nextXPlace, plotY2);
+			mySketch.text(decimalForm.format(xValue), nextXPlace, fixedYPlace);
+			mySketch.line(nextXPlace, plotY1, nextXPlace, plotY2);
 
 			xValue += xInterval;
 			nextXPlace += xSize / valueDivisions;
@@ -413,9 +409,9 @@ public class Sketch2 extends EmbeddedSketch {
 	}
 
 	private void drawYValues() {
-		fill(0);
-		textSize(valueSize);
-		textAlign(RIGHT);
+		mySketch.fill(0);
+		mySketch.textSize(valueSize);
+		mySketch.textAlign(PApplet.RIGHT);
 
 		float ySize = plotY2 - plotY1;
 		float nextYPlace = plotY1;
@@ -428,16 +424,17 @@ public class Sketch2 extends EmbeddedSketch {
 
 		while (yValue >= yMin) {
 
-			float textOffset = textAscent() / 2; // Center vertically
+			float textOffset = mySketch.textAscent() / 2; // PApplet.CENTER
+															// vertically
 			if (yValue == yMin) {
 				textOffset = 0; // Align by the bottom
 			} else if (yValue == yMax) {
-				textOffset = textAscent(); // Align by the top
+				textOffset = mySketch.textAscent(); // Align by the top
 			}
 
-			text(decimalForm.format(yValue), fixedXPlace, nextYPlace
+			mySketch.text(decimalForm.format(yValue), fixedXPlace, nextYPlace
 					+ textOffset);
-			line(plotX1, nextYPlace, plotX2, nextYPlace);
+			mySketch.line(plotX1, nextYPlace, plotX2, nextYPlace);
 
 			yValue -= yInterval;
 			nextYPlace += ySize / valueDivisions;
@@ -445,9 +442,9 @@ public class Sketch2 extends EmbeddedSketch {
 	}
 
 	private void drawDataPoints() {
-		noStroke();
+		mySketch.noStroke();
 
-		ellipseMode(CENTER);
+		mySketch.ellipseMode(PApplet.CENTER);
 
 		float size, x, y;
 		ChartItem clusterItem;
@@ -460,44 +457,44 @@ public class Sketch2 extends EmbeddedSketch {
 			x = getPointXInPixels(clusterItem.getPoint().x);
 			y = getPointYInPixels(clusterItem.getPoint().y);
 
-			fill(clusterItem.getColor(ChartItem.RED),
+			mySketch.fill(clusterItem.getColor(ChartItem.RED),
 					clusterItem.getColor(ChartItem.GREEN),
 					clusterItem.getColor(ChartItem.BLUE),
 					clusterItem.getColor(ChartItem.ALPHA));
-			ellipse(x, y, size, size);
+			mySketch.ellipse(x, y, size, size);
 		}
 	}
 
 	private float getPointXInPixels(float x) {
-		return (map(x, xMin, xMax, plotX1, plotX2));
+		return (PApplet.map(x, xMin, xMax, plotX1, plotX2));
 	}
 
 	private float getPointYInPixels(float y) {
-		return (map(y, yMin, yMax, plotY1, plotY2));
+		return (PApplet.map(y, yMin, yMax, plotY1, plotY2));
 	}
 
 	private float getPointSizeInPixels(float size) {
 		float finalSize;
 		if (ChartData.minSize == ChartData.maxSize) {
-			// Exceptional case. The map would return NaN...
-			finalSize = map(size, ChartData.minSize - 5, ChartData.maxSize + 5,
-					minPointSize, maxPointSize);
+			// Exceptional case. The PApplet.map would return NaN...
+			finalSize = PApplet.map(size, ChartData.minSize - 5,
+					ChartData.maxSize + 5, minPointSize, maxPointSize);
 		} else {
-			finalSize = map(size, ChartData.minSize, ChartData.maxSize,
+			finalSize = PApplet.map(size, ChartData.minSize, ChartData.maxSize,
 					minPointSize, maxPointSize);
 		}
 		return finalSize;
 	}
 
 	private void drawLegend() {
-		noStroke();
+		mySketch.noStroke();
 
 		// Names
-		textAlign(LEFT);
-		textSize(valueSize - 1);
+		mySketch.textAlign(PApplet.LEFT);
+		mySketch.textSize(valueSize - 1);
 
 		// Little Cluster
-		ellipseMode(CENTER);
+		mySketch.ellipseMode(PApplet.CENTER);
 		float littleClusterX, littleClusterY;
 		float textX, textY;
 
@@ -509,20 +506,20 @@ public class Sketch2 extends EmbeddedSketch {
 			littleClusterX = getLegendLittleClusterX();
 			littleClusterY = getLegendLittleClusterY(i);
 
-			// Ellipse
+			// mySketch.ellipse
 			clusterItem = ChartData.getItemById(clusterIds.get(i));
-			fill(clusterItem.getColor(ChartItem.RED),
+			mySketch.fill(clusterItem.getColor(ChartItem.RED),
 					clusterItem.getColor(ChartItem.GREEN),
 					clusterItem.getColor(ChartItem.BLUE),
 					clusterItem.getColor(ChartItem.ALPHA));
-			ellipse(littleClusterX, littleClusterY, littleClusterSize,
+			mySketch.ellipse(littleClusterX, littleClusterY, littleClusterSize,
 					littleClusterSize);
 
 			// Name
 			textX = legendX1 + littleClusterSize + (2 * legendPadding);
 			textY = littleClusterY + (littleClusterSize / 4);
-			fill(0);
-			text("Cluster " + clusterIds.get(i), textX, textY);
+			mySketch.fill(0);
+			mySketch.text("Cluster " + clusterIds.get(i), textX, textY);
 		}
 	}
 

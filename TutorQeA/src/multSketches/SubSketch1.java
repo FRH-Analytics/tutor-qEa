@@ -5,15 +5,14 @@ import java.util.Arrays;
 
 import org.gicentre.utils.multisketch.EmbeddedSketch;
 
+import processing.core.PApplet;
 import processing.core.PFont;
 import util.QeAData;
 import controlP5.ControlEvent;
 import controlP5.ControlP5;
 import controlP5.DropdownList;
 
-public class Sketch1 extends EmbeddedSketch {
-
-	private static final long serialVersionUID = 1L;
+public class SubSketch1 {
 
 	ArrayList<DropdownList> lists = new ArrayList<DropdownList>();
 	private ArrayList<Integer> selectedTags = new ArrayList<Integer>();
@@ -38,7 +37,11 @@ public class Sketch1 extends EmbeddedSketch {
 	protected int myXOrigin;
 	protected int myYOrigin;
 
-	public Sketch1(int xOrigin, int yOrigin, int width, int height) {
+	protected EmbeddedSketch mySketch;
+
+	public SubSketch1(EmbeddedSketch parent, int xOrigin, int yOrigin, int width,
+			int height) {
+		mySketch = parent;
 
 		myXOrigin = xOrigin;
 		myYOrigin = yOrigin;
@@ -62,22 +65,22 @@ public class Sketch1 extends EmbeddedSketch {
 	}
 
 	public void setup() {
-		size(myXOrigin + myWidth, myYOrigin + myHeight);
-		smooth();
+		// size(myXOrigin + myWidth, myYOrigin + myHeight);
+		mySketch.smooth();
 
 		defaultFontSize = 12;
 		defaultFontColor = 120;
-		font = createFont("Helvetica", defaultFontSize - 1);
-		textFont(font);
+		font = mySketch.createFont("Helvetica", defaultFontSize - 1);
+		mySketch.textFont(font);
 
-		noStroke();
+		mySketch.noStroke();
 
-		cp5 = new ControlP5(this);
+		cp5 = new ControlP5(mySketch);
 
 		cp5.addTextfield("input").setPosition(textFieldX, textFieldY)
 				.setSize(textFieldWidth, textFieldHeight).setFont(font)
-				.setFocus(true).setColor(color(0, 0, 0))
-				.setColorBackground(color(255, 255, 255));
+				.setFocus(true).setColor(mySketch.color(0, 0, 0))
+				.setColorBackground(mySketch.color(255, 255, 255));
 
 		cp5.addTextlabel("label1").setText("Initial Tag: ")
 				.setPosition(myXOrigin + 20, myYOrigin + 70).setColor(0)
@@ -92,11 +95,8 @@ public class Sketch1 extends EmbeddedSketch {
 	}
 
 	public void draw() {
-		super.draw();
-		background(255);
 	}
 
-	@Override
 	public void mousePressed() {
 		// TODO Auto-generated method stub
 	}
@@ -115,10 +115,10 @@ public class Sketch1 extends EmbeddedSketch {
 									.getTagLinks()
 									.get((int) theEvent.getValue()).split(",")))));
 		}
-		
+
 		QeAData.setTagList(selectedTags, selectedTagsNames);
 
-		MainSketch2.SKETCH_2.updatePlot();
+		// SketchTop.SKETCH_2.updatePlot();
 	}
 
 	// public void search(int theValue) {
@@ -159,21 +159,21 @@ public class Sketch1 extends EmbeddedSketch {
 	private void addDropDownList(int tagID, ArrayList<String> newTags) {
 
 		int x = ddlX + ddlWidth * (lists.size() % 3);
-		int y = ddlY + ddlHeight * (floor(lists.size() / 3));
+		int y = ddlY + ddlHeight * (PApplet.floor(lists.size() / 3));
 
 		if (newTags.size() > 0) {
 
 			if (QeAData.getTagDictionary().containsKey(tagID)) {
 
-				PFont font2 = createFont("Helvetica", defaultFontSize);
+				PFont font2 = mySketch.createFont("Helvetica", defaultFontSize);
 				DropdownList newD = cp5
 						.addDropdownList("Select Tag " + (lists.size() + 2))
 						.setPosition(x, y).setBarHeight(20)
 						.setWidth(ddlWidth - 10).setHeight(150);
 				newD.getCaptionLabel().toUpperCase(false).setLetterSpacing(3)
 						.setFont(font2).setColor(0);
-				newD.setColorBackground(color(200)).setColorActive(
-						color(255, 128));
+				newD.setColorBackground(mySketch.color(200)).setColorActive(
+						mySketch.color(255, 128));
 
 				for (String tag : newTags) {
 					int id = Integer.valueOf(tag);
@@ -195,7 +195,7 @@ public class Sketch1 extends EmbeddedSketch {
 			} catch (Exception e) {
 			}
 		}
-		textFont(font);
+		mySketch.textFont(font);
 	}
 
 	public void clearList() {
