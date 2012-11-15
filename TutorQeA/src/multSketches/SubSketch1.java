@@ -2,6 +2,7 @@ package multSketches;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Hashtable;
 
 import org.gicentre.utils.multisketch.EmbeddedSketch;
 
@@ -17,7 +18,8 @@ public class SubSketch1 {
 	ArrayList<DropdownList> lists = new ArrayList<DropdownList>();
 	private ArrayList<Integer> selectedTags = new ArrayList<Integer>();
 	private ArrayList<String> selectedTagsNames = new ArrayList<String>();
-	private ArrayList<String> relatedTags = new ArrayList<String>();
+	private ArrayList<Integer> relatedTags = new ArrayList<Integer>();
+	private Hashtable<Integer, ArrayList<Integer>> usefulQuestions = new Hashtable<Integer, ArrayList<Integer>>();
 
 	ControlP5 cp5;
 	DropdownList d1;
@@ -50,7 +52,7 @@ public class SubSketch1 {
 
 		textFieldX = myXOrigin + 20;
 		textFieldY = myYOrigin + 20;
-		textFieldWidth = myWidth - 150;
+		textFieldWidth = myWidth - 50;
 		textFieldHeight = 20;
 
 		// buttonX = myXOrigin + myWidth - 70;
@@ -58,8 +60,8 @@ public class SubSketch1 {
 		// buttonWidth = 50;
 		// buttonHeight = 20;
 
-		ddlX = 20;
-		ddlY = textFieldY + textFieldHeight + 110;
+		ddlX = textFieldX;
+		ddlY = textFieldY + 100;
 		ddlWidth = 150;
 		ddlHeight = 30;
 	}
@@ -83,12 +85,12 @@ public class SubSketch1 {
 				.setColorBackground(mySketch.color(255, 255, 255));
 
 		cp5.addTextlabel("label1").setText("Initial Tag: ")
-				.setPosition(myXOrigin + 20, myYOrigin + 70).setColor(0)
-				.setFont(font);
+				.setPosition(textFieldX, textFieldY + 20).setColor(0)
+				.setFont(mySketch.createFont("Helvetica", 20));
 
 		cp5.addTextlabel("label3").setText("Tags of interest: ")
-				.setPosition(myXOrigin + 20, myYOrigin + 90).setColor(0)
-				.setFont(font);
+				.setPosition(textFieldX, textFieldY + 50).setColor(0)
+				.setFont(mySketch.createFont("Helvetica", 20));
 		// cp5.addButton("search").setValue(0).setPosition(buttonX, buttonY)
 		// .setSize(buttonWidth, buttonHeight).setColorBackground(0);
 
@@ -104,16 +106,12 @@ public class SubSketch1 {
 	public void controlEvent(ControlEvent theEvent) {
 
 		if (theEvent.isGroup()) {
-			selectedTags.add((int) theEvent.getValue());
-			selectedTagsNames.add(QeAData.getTagDictionary().get(
-					(int) theEvent.getValue()));
-			addDropDownList(
-					(int) theEvent.getValue(),
-					intersct(
-							relatedTags,
-							new ArrayList<String>(Arrays.asList(QeAData
-									.getTagLinks()
-									.get((int) theEvent.getValue()).split(",")))));
+			int tagId = (int) theEvent.getValue();
+			selectedTags.add(tagId);
+			selectedTagsNames.add(QeAData.getTagDictionary().get(tagId));
+			updateUsefulQuestions(tagId);
+			createRelatedTags();
+			addDropDownList(tagId, relatedTags);
 		}
 
 		QeAData.setTagList(selectedTags, selectedTagsNames);
@@ -127,6 +125,7 @@ public class SubSketch1 {
 
 	public void input(String theText) {
 		theText = theText.toLowerCase();
+		usefulQuestions = QeAData.getQuestionToTags();
 		if (lists.size() != 0) {
 			clearList();
 		}
@@ -140,23 +139,17 @@ public class SubSketch1 {
 			int tagID = keys.get(values.indexOf(theText));
 			selectedTags.add(tagID);
 			selectedTagsNames.add(QeAData.getTagDictionary().get(tagID));
-			relatedTags = new ArrayList<String>(Arrays.asList(QeAData
-					.getTagLinks().get(tagID).split(",")));
-
-			addDropDownList(
-					tagID,
-					intersct(
-							relatedTags,
-							new ArrayList<String>(Arrays.asList(QeAData
-									.getTagLinks().get(tagID).split(",")))));
-			cp5.addTextlabel("label2").setText(theText).setPosition(80, 70)
-					.setColor(0).setFont(font);
+			updateUsefulQuestions(tagID);
+			createRelatedTags();
+			addDropDownList(tagID, relatedTags);
+			cp5.addTextlabel("label2").setText(theText.toUpperCase()).setPosition(textFieldX + 100,textFieldY + 20)
+					.setColor(0).setFont(mySketch.createFont("Helvetica", 20));
 		} catch (Exception e) {
 		}
 
 	}
 
-	private void addDropDownList(int tagID, ArrayList<String> newTags) {
+	private void addDropDownList(int tagID, ArrayList<Integer> newTags) {
 
 		int x = ddlX + ddlWidth * (lists.size() % 3);
 		int y = ddlY + ddlHeight * (PApplet.floor(lists.size() / 3));
@@ -175,9 +168,8 @@ public class SubSketch1 {
 				newD.setColorBackground(mySketch.color(200)).setColorActive(
 						mySketch.color(255, 128));
 
-				for (String tag : newTags) {
-					int id = Integer.valueOf(tag);
-					newD.addItem(QeAData.getTagDictionary().get(id), id)
+				for (int tag : newTags) {
+					newD.addItem(QeAData.getTagDictionary().get(tag), tag)
 							.setColorLabel(0);
 				}
 
@@ -207,18 +199,32 @@ public class SubSketch1 {
 		selectedTags.clear();
 		selectedTagsNames.clear();
 	}
-
-	private ArrayList<String> intersct(ArrayList<String> l1,
-			ArrayList<String> l2) {
-		ArrayList<String> newList = new ArrayList<String>();
-
-		for (String s : l2) {
-			if (!selectedTags.contains(Integer.valueOf(s))) {
-				if (l1.contains(s)) {
-					newList.add(s);
-				}
+	
+	private void updateUsefulQuestions(Integer newTag){
+		Hashtable<Integer, ArrayList<Integer>> result = new Hashtable<Integer, ArrayList<Integer>>();
+		for(int question:QeAData.getTagToQuestions().get(newTag)){
+			if(usefulQuestions.keySet().contains(question)){
+				result.put(question, usefulQuestions.get(question));
 			}
 		}
-		return newList;
+		
+		usefulQuestions = result;		
 	}
+	
+	private void createRelatedTags(){
+		relatedTags = new ArrayList<Integer>();
+		for(int question:usefulQuestions.keySet()){
+			addRelatedTag(usefulQuestions.get(question));
+		}
+		
+	}
+	
+	private void addRelatedTag(ArrayList<Integer> tagList){
+		for(int tag:tagList){
+			if(!selectedTags.contains(tag) && !relatedTags.contains(tag)){
+				relatedTags.add(tag);
+			}
+		}
+	}
+
 }
