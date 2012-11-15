@@ -72,7 +72,18 @@ public class QuestionData implements Comparable<QuestionData>{
 	
 	@Override
 	public int compareTo(QuestionData other) {
-	 	return other.getScore() - this.getScore();
+	 	int diffScore = other.getScore() - this.getScore();
+	 	if (diffScore == 0){
+	 		int diffTitle = other.getTitle().compareTo(this.getTitle());
+	 		return diffTitle; 
+	 	}else{
+	 		return diffScore;
+	 	}
 	 }
+	
+	@Override
+	public String toString() {
+		return this.getId() + " - " + this.getScore();
+	}
 
 }

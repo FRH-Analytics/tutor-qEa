@@ -26,7 +26,7 @@ public class SketchBottom extends EmbeddedSketch {
 	protected int myXOrigin;
 	protected int myYOrigin;
 
-	private int newYOrigin = 0, offsetY = 0;
+	private float newYOrigin = 0, offsetY = 0;
 
 	float qX1;
 	float qX2;
@@ -38,6 +38,7 @@ public class SketchBottom extends EmbeddedSketch {
 	float qAnswerX2;
 
 	private int selectedQuestionIndex;
+	boolean reachedTop, reachedBottom;
 
 	public SketchBottom(int xOrigin, int yOrigin, int width, int height) {
 		myXOrigin = xOrigin;
@@ -56,7 +57,6 @@ public class SketchBottom extends EmbeddedSketch {
 		size(myXOrigin + myWidth, myYOrigin + myHeight);
 
 		newYOrigin = 0;
-		cursor(MOVE);
 		smooth();
 
 		// Question Rectangles
@@ -88,11 +88,7 @@ public class SketchBottom extends EmbeddedSketch {
 	public void draw() {
 		super.draw();
 
-		if (mousePressed) {
-			newYOrigin = mouseY - offsetY;
-		}
-
-		translate(0, newYOrigin);
+		updateYOrigin();
 
 		background(255);
 		if (sortedQuestions.size() == 0) {
@@ -102,13 +98,39 @@ public class SketchBottom extends EmbeddedSketch {
 		}
 	}
 
+	private void updateYOrigin() {
+
+		if (sortedQuestions.size() >= 0) {
+			if (mousePressed) {
+				cursor(MOVE);
+				if (mouseY - offsetY < 0) {
+					float questionsY1Distance = qHeight + questionRectYPadding;
+					if ((sortedQuestions.size() * questionsY1Distance)
+							- abs(newYOrigin) <= myHeight - 50) {
+						if (mouseY - offsetY > newYOrigin) {
+							newYOrigin = mouseY - offsetY;
+						}
+					} else {
+						newYOrigin = mouseY - offsetY;
+					}
+				} else {
+					newYOrigin = 0;
+				}
+			}else{
+				cursor(ARROW);
+			}
+			translate(0, newYOrigin);
+		}
+	}
+
 	public void mouseMoved() {
 		selectedQuestionIndex = getSelectedQuestionIndex(mouseX, mouseY,
 				myXOrigin, myXOrigin + myWidth);
 	}
 
 	public void mousePressed() {
-		// Update the Scroll
+
+		// Update the Offset
 		offsetY = mouseY - newYOrigin;
 
 		// Call the Link of the STATS from StackExchange!!!
@@ -219,6 +241,9 @@ public class SketchBottom extends EmbeddedSketch {
 		for (Integer id : QeAData.getQuestionIdsByCluster(clusterId)) {
 			sortedQuestions.add(QeAData.getQuestionIdsToData().get(id));
 		}
+
+		// Clean the garbage...
+		System.gc();
 	}
 
 	public void removeQuestionsAndCluster() {
@@ -242,7 +267,7 @@ public class SketchBottom extends EmbeddedSketch {
 
 	private void drawQuestions() {
 
-		// First Rectangle boudaries
+		// First Rectangle boundaries
 		float qY1 = myYOrigin + questionRectYPadding;
 		float qY2 = qY1 + qHeight;
 
