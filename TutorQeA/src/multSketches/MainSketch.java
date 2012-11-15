@@ -9,12 +9,12 @@ import org.gicentre.utils.multisketch.SketchPanel;
 import processing.core.PApplet;
 import util.QeAData;
 
-public class MainSketch2 extends PApplet {
+public class MainSketch extends PApplet {
 
 	private static final long serialVersionUID = 1L;
 
 	public static SketchTop SKETCH_TOP = new SketchTop(0, 0, 1000, 400);
-	public static SketchBottom SKETCH_3 = new SketchBottom(0, 405, 1000, 295);
+	public static SketchBottom SKETCH_BOTTOM = new SketchBottom(0, 405, 1000, 295);
 
 	public void setup() {
 		try {
@@ -39,8 +39,8 @@ public class MainSketch2 extends PApplet {
 		add(spTop);
 		SKETCH_TOP.setIsActive(true);
 
-		SketchPanel sp3 = new SketchPanel(this, SKETCH_3);
-		add(sp3);
-		SKETCH_3.setIsActive(true);
+		SketchPanel spBottom = new SketchPanel(this, SKETCH_BOTTOM);
+		add(spBottom);
+		SKETCH_BOTTOM.setIsActive(true);
 	}
 }

@@ -93,7 +93,7 @@ public class SketchTop extends EmbeddedSketch {
 
 	private void drawMiddleTitle() {
 		float titlePadding = 10;
-		int clusterId = MainSketch2.SKETCH_3.getClusterTitleId();
+		int clusterId = MainSketch.SKETCH_BOTTOM.getClusterTitleId();
 		String middleTitle = (clusterId == -1) ? "Questions and Answers by Cluster"
 				: "Questions and Answers - Cluster " + clusterId;
 
@@ -111,9 +111,9 @@ public class SketchTop extends EmbeddedSketch {
 
 		stroke(100);
 		strokeWeight((float) 2);
-		line(myXOrigin + titlePadding, fixedY, xBeforeTitle - titlePadding,
+		line(myXOrigin + 2 * titlePadding, fixedY, xBeforeTitle - titlePadding,
 				fixedY);
-		line(myXOrigin + myWidth - titlePadding, fixedY, xAfterTitle
+		line(myXOrigin + myWidth - 2 * titlePadding, fixedY, xAfterTitle
 				+ titlePadding, fixedY);
 	}
 

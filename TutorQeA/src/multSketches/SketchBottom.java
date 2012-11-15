@@ -1,9 +1,12 @@
 package multSketches;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.concurrent.ConcurrentSkipListSet;
 
 import org.gicentre.utils.multisketch.EmbeddedSketch;
 
+import processing.core.PApplet;
 import util.AnswerData;
 import util.QeAData;
 import util.QuestionData;
@@ -116,7 +119,7 @@ public class SketchBottom extends EmbeddedSketch {
 				} else {
 					newYOrigin = 0;
 				}
-			}else{
+			} else {
 				cursor(ARROW);
 			}
 			translate(0, newYOrigin);
@@ -271,7 +274,6 @@ public class SketchBottom extends EmbeddedSketch {
 		float qY1 = myYOrigin + questionRectYPadding;
 		float qY2 = qY1 + qHeight;
 
-		rectMode(CORNERS);
 		strokeWeight((float) 1.5);
 
 		maxAnswerScoreOfAll = getMaxAnswerScore();
@@ -282,11 +284,9 @@ public class SketchBottom extends EmbeddedSketch {
 
 			highlightQuestion = (selectedQuestionIndex == i++);
 
-			// Highlight or not the Stroke
-			stroke(150, (highlightQuestion) ? 255 : 100);
-
 			// DRAW score rectangle
-			drawQuestionScore(qData, qScoreX1, qY1, qScoreX2, qY2);
+			drawQuestionScore(qData, qScoreX1, qY1, qScoreX2, qY2,
+					highlightQuestion);
 
 			// DRAW title rectangle
 			drawQuestionTitle(qData, qTitleX1, qY1, qTitleX2, qY2,
@@ -319,7 +319,11 @@ public class SketchBottom extends EmbeddedSketch {
 	}
 
 	private void drawQuestionScore(QuestionData qData, float x1, float y1,
-			float x2, float y2) {
+			float x2, float y2, boolean highlightQuestion) {
+		// Highlight or not the Stroke
+		stroke(150, (highlightQuestion) ? 255 : 100);
+
+		rectMode(PApplet.CORNERS);
 		fill(255);
 		rect(x1, y1, x2, y2, qCornerRadius, qCornerRadius);
 
@@ -353,6 +357,10 @@ public class SketchBottom extends EmbeddedSketch {
 					clusterItem.getColor(ChartItem.ALPHA));
 		}
 
+		// Highlight or not the Stroke
+		stroke(150, (highlightQuestion) ? 255 : 100);
+
+		rectMode(PApplet.CORNERS);
 		rect(x1, y1, x2, y2, qCornerRadius, qCornerRadius);
 
 		fill(0);
@@ -414,6 +422,9 @@ public class SketchBottom extends EmbeddedSketch {
 					}
 				}
 
+				// Highlight or not the Stroke
+				stroke(150, (highlightQuestion) ? 255 : 100);
+
 				// Ellipse Radius mapped from the maxAnswerScoreEver!!!
 				ballRadius = map(ans.getScore(), 0, maxAnswerScoreOfAll,
 						(y2 - y1) / 15, (y2 - y1) / (float) 2.75);
@@ -423,6 +434,9 @@ public class SketchBottom extends EmbeddedSketch {
 
 				ellipse(ballXCenter, ballYCenter - ballRadius, ballRadius,
 						ballRadius);
+
+				drawAnswerTooltip(ans, ballXCenter, ballYCenter - ballRadius,
+						ballRadius, y2 - y1);
 
 				// If the answer is accepted put a star on it!
 				if (ans.isAccepted()) {
@@ -434,6 +448,32 @@ public class SketchBottom extends EmbeddedSketch {
 				// Ball shift
 				ballXCenter += ballRadius + ballPadding;
 			}
+		}
+	}
+
+	private void drawAnswerTooltip(AnswerData ans, float ballXCenter,
+			float ballYCenter, float ballRadius, float rectHeight) {
+
+		// Distance
+		double dist = Math.sqrt(Math.pow(mouseX - ballXCenter, 2)
+				+ Math.pow(mouseY - ballYCenter, 2));
+		float tooltipX, tooltipY;
+
+		if (dist <= ballRadius) {
+			String tooltip = "Score: " + ans.getScore() + " - Comments: "
+					+ ans.getCommentsCount() + "\n" + ans.getCreationDate();
+
+			tooltipX = ballXCenter - textWidth(tooltip) / 2;
+			tooltipY = ballYCenter - rectHeight / 2;
+
+			fill(50, 100);
+			strokeWeight((float) 1);
+			rectMode(PApplet.CENTER);
+			rect(tooltipX, tooltipY, textWidth(tooltip) - 5, 40, 5, 5);
+			fill(255);
+			textSize(12);
+			textAlign(PApplet.CENTER, PApplet.CENTER);
+			text(tooltip, tooltipX, tooltipY);
 		}
 	}
 

@@ -177,7 +177,7 @@ public class SubSketch2 {
 		if (isMouseOver() && mySketch.mouseButton == PApplet.LEFT) {
 			// System.out.println("Event: Mouse LEFT Pressed");
 			if (selectedClusterId != -1) {
-				MainSketch2.SKETCH_3
+				MainSketch.SKETCH_BOTTOM
 						.updateQuestionsByCluster(selectedClusterId);
 			}
 		}
@@ -244,7 +244,7 @@ public class SubSketch2 {
 
 	public void updatePlot() {
 		// Removes the questions and cluster of the Sketch 3
-		MainSketch2.SKETCH_3.removeQuestionsAndCluster();
+		MainSketch.SKETCH_BOTTOM.removeQuestionsAndCluster();
 
 		// Removes the plot data
 		ChartData.removeAllData();
@@ -285,7 +285,7 @@ public class SubSketch2 {
 
 		int clusterId = -1;
 		float xInPixels, yInPixels, radiusInPixels;
-		double dist, finalDist = Double.MAX_VALUE;
+		double dist, smallerRadius = Double.MAX_VALUE;
 		ChartItem clusterItem;
 		for (Integer id : ChartData.getAllIds()) {
 			clusterItem = ChartData.getItemById(id);
@@ -298,9 +298,11 @@ public class SubSketch2 {
 					+ Math.pow(y - yInPixels, 2));
 
 			if (dist <= radiusInPixels) {
-				// Select the smaller cluster that the mouse is over
-				clusterId = (dist < finalDist) ? id : clusterId;
-				break;
+				// Select the cluster with smaller radius that the mouse is over
+				if (radiusInPixels < smallerRadius) {
+					clusterId = id;
+					smallerRadius = radiusInPixels;
+				}
 			}
 		}
 
