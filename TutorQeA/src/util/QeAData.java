@@ -19,7 +19,6 @@ public class QeAData {
 	private static final String POST_TAGS_FILE = "../data/PostTags.csv";
 	private static final String QUESTIONS_DATA_FILE = "../data/QuestionData.csv";
 	private static final String QUESTION_ANSWERS_FILE = "../data/QuestionAnswers.csv";
-//	private static final String QUESTION_ANSWERS_FILE_2 = "../data/QuestionAnswers2.csv";
 	private static final String TAG_LINKS_FILE = "../data/TagLinks.csv";
 	private static final String TAGS_FILE = "../data/TagsDictionary.csv";
 
@@ -110,8 +109,8 @@ public class QeAData {
 				}
 				centroidIdsToData.get(questionDataTmp.getCluster())
 						.addQuestion(questionDataTmp.getId(),
-								questionDataTmp.getAnswerCount(),
-								questionDataTmp.getScore());
+								questionDataTmp.getScope(),
+								questionDataTmp.getDialogue());
 			}
 		}
 	}
@@ -174,8 +173,9 @@ public class QeAData {
 	public static void readQuestionsDataFile() throws IOException {
 		CSVReader csvReader = new CSVReader(new FileReader(QUESTIONS_DATA_FILE));
 
-		// Unique collumns used... At this moment...
-		int questionId, score, answerCount, commentCount, cluster;
+		// Unique columns used... At this moment...
+		int questionId, score, answerCount, cluster;
+		float coverage, dialogue, empathy;
 		String title;
 
 		// Reads the file header
@@ -185,10 +185,13 @@ public class QeAData {
 			title = nextLine[1];
 			score = Integer.valueOf(nextLine[2]);
 			answerCount = Integer.valueOf(nextLine[3]);
-			commentCount = Integer.valueOf(nextLine[4]);
-			cluster = Integer.valueOf(nextLine[5]);
+			coverage = Float.valueOf(nextLine[4]);
+			dialogue = Float.valueOf(nextLine[5]);
+			empathy = Float.valueOf(nextLine[6]);
+			cluster = Integer.valueOf(nextLine[7]);
 			questionIdsToData.put(questionId, new QuestionData(questionId,
-					title, score, answerCount, commentCount, cluster));
+					title, score, answerCount, coverage, dialogue, empathy,
+					cluster));
 		}
 	}
 

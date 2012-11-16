@@ -5,34 +5,34 @@ import java.util.ArrayList;
 public class CentroidData {
 
 	private int clusterId;
-	private int answerCount;
-	private int score;
+	private float scope;
+	private float dialogue;
 	private ArrayList<Integer> questionIds;
 
 	public CentroidData(int clusterId) {
 		this.clusterId = clusterId;
-		this.answerCount = 0;
-		this.score = 0;
+		this.scope = 0;
+		this.dialogue = 0;
 
 		questionIds = new ArrayList<Integer>();
 	}
 
-	public void addQuestion(int id, int answerCount, int score) {
+	public void addQuestion(int id, float scope, float dialogue) {
 		questionIds.add(id);
-		this.answerCount += answerCount;
-		this.score += score;
+		this.scope += scope;
+		this.dialogue += dialogue;
 	}
 
 	public int getClusterSize() {
 		return questionIds.size();
 	}
 
-	public float getMeanAnswerCount() {
-		return (getClusterSize() > 0) ? this.answerCount / getClusterSize() : 0;
+	public float getMeanScope() {
+		return (getClusterSize() > 0) ? this.scope / getClusterSize() : 0;
 	}
 
-	public float getMeanScore() {
-		return (getClusterSize() > 0) ? this.score / getClusterSize() : 0;
+	public float getMeanDialogue() {
+		return (getClusterSize() > 0) ? this.dialogue / getClusterSize() : 0;
 	}
 
 	public int getClusterId() {

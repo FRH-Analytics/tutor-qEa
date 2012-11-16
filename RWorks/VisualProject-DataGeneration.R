@@ -33,15 +33,16 @@ CreateTagLinks = function(inputDir, outputDir){
 CreateQuestionData = function(inputDir, outputDir){
     print(noquote("Creating the QuestionData table (keeping only the needed collumns from Questions)..."))
     questions = read.csv(paste(inputDir,"/Questions.csv", sep = ""))
-	clusters = read.csv("AllData/clustering/supervised.csv",sep=",")[,c("Id","Cluster.KMeans")]
+	supervisedClustering = read.csv("../AllData/clustering/supervised.csv",sep=",")
+    
+    supervisedClustering[,2:4] = round(supervisedClustering[,2:4], 5)
     
     print(noquote("Selecting the question collumns..."))
-    questions.data = questions[,c("Id", "Title", "Score", "AnswerCount", "CommentCount")]
+    questions.data = questions[,c("Id", "Title", "Score", "AnswerCount")]
     
-    # TODO: Add the real Clusters (delete fake Clusters)
-    # Usar a função merge() nas ids
-    questions.data = merge(questions.data, clusters, by="Id")    
-    colnames(questions.data)[6] = "Cluster"
+    print(noquote("Merging with the Clustering Attribute and Cluster results..."))
+    questions.data = merge(questions.data, supervisedClustering, by="Id")
+    colnames(questions.data)[ncol(questions.data)] = "Cluster"
     
     write.csv(questions.data, file = paste(outputDir,"/QuestionData.csv", sep = ""), row.names = F)
 }
@@ -97,8 +98,8 @@ MainDataAnalysis()
 print(noquote(""))
 print(noquote(">> Visual Analytics Project - Data Generation"))
 
-inputDir = "AllData/preprocessed/"
-outputDir = "data/"
+inputDir = "../AllData/preprocessed/"
+outputDir = "../TutorQeA/data/"
 
 CreateTagLinks(inputDir, outputDir)
 CreateQuestionData(inputDir, outputDir)

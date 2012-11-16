@@ -6,16 +6,20 @@ public class QuestionData implements Comparable<QuestionData>{
 	private String title;
 	private int score;
 	private int answerCount;
-	private int commentCount;
+	private float scope;
+	private float dialogue;
+	private float empathy;
 	private int cluster;
 
 	public QuestionData(int id, String title, int score, int answerCount,
-			int commentCount, int cluster) {
+			float scope, float dialogue, float empathy, int cluster) {
 		this.id = id;
 		this.title = title;
 		this.score = score;
 		this.answerCount = answerCount;
-		this.commentCount = commentCount;
+		this.scope = scope;
+		this.dialogue = dialogue;
+		this.empathy = empathy;
 		this.cluster = cluster;
 	}
 
@@ -35,8 +39,16 @@ public class QuestionData implements Comparable<QuestionData>{
 		return answerCount;
 	}
 
-	public int getCommentCount() {
-		return commentCount;
+	public float getScope() {
+		return scope;
+	}
+	
+	public float getDialogue() {
+		return dialogue;
+	}
+	
+	public float getEmpathy() {
+		return empathy;
 	}
 
 	public int getCluster() {
@@ -44,35 +56,19 @@ public class QuestionData implements Comparable<QuestionData>{
 	}
 
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj)
-			return true;
-		if (obj == null)
-			return false;
-		if (getClass() != obj.getClass())
-			return false;
-		QuestionData other = (QuestionData) obj;
-		if (answerCount != other.answerCount)
-			return false;
-		if (cluster != other.cluster)
-			return false;
-		if (commentCount != other.commentCount)
-			return false;
-		if (id != other.id)
-			return false;
-		if (score != other.score)
-			return false;
-		if (title == null) {
-			if (other.title != null)
-				return false;
-		} else if (!title.equals(other.title))
-			return false;
-		return true;
-	}
+	public int compareTo(QuestionData other) {
+	 	int diffScore = other.getScore() - this.getScore();
+	 	if (diffScore == 0){
+	 		int diffTitle = other.getTitle().compareTo(this.getTitle());
+	 		return diffTitle; 
+	 	}else{
+	 		return diffScore;
+	 	}
+	 }
 	
 	@Override
-	public int compareTo(QuestionData other) {
-	 	return other.getScore() - this.getScore();
-	 }
+	public String toString() {
+		return this.getId() + " - " + this.getScore();
+	}
 
 }

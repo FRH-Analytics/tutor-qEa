@@ -169,7 +169,7 @@ CorrelationAnalysis = function(inputDir, outputDir){
 }
 
 ########## MAIN ########## 
-MainDataAnalysis = function(dir = "AllData/preprocessed/"){
+MainDataAnalysis = function(dir = "../AllData/preprocessed/"){
     
   # 1) Runs the initial PreProcessment - Cleaning Data
   source("DataPreProcessment.R")

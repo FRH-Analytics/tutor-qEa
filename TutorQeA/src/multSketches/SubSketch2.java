@@ -1,14 +1,18 @@
+package multSketches;
+
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.TreeMap;
+
+import org.gicentre.utils.multisketch.EmbeddedSketch;
 
 import processing.core.PApplet;
 import processing.core.PVector;
 import util.CentroidData;
 import util.QeAData;
 
-public class Sketch2 extends ComposableSketch {
+public class SubSketch2 {
 
 	private float plotX1, plotY1;
 	private float plotX2, plotY2;
@@ -17,7 +21,7 @@ public class Sketch2 extends ComposableSketch {
 
 	private float labelSize, yLabelXOrigin, xLabelYOrigin;
 
-	private float subtitleSize, titleYOrigin, subtitleYOrigin;
+	private float subtitleSize, subtitleYOrigin, titleYOrigin;
 
 	private float legendX1, legendY1;
 	private float legendX2, legendY2;
@@ -25,7 +29,7 @@ public class Sketch2 extends ComposableSketch {
 	private float legendPartitionSize;
 	private float littleClusterSize;
 
-	private float valueDivisions;
+	private static float valueDivisions = 5;
 	private float valueSize;
 	private float gridGrayColor;
 
@@ -35,12 +39,26 @@ public class Sketch2 extends ComposableSketch {
 	private float maxPointSize;
 	private float minPointSize;
 
-	public Sketch2(MainSketch parent, int xOrigin, int yOrigin, int width,
-			int height) {
-		super(parent, xOrigin, yOrigin, width, height);
+	protected int myWidth;
+	protected int myHeight;
+	protected int myXOrigin;
+	protected int myYOrigin;
+
+	protected EmbeddedSketch mySketch;
+
+	public SubSketch2(EmbeddedSketch parent, int xOrigin, int yOrigin,
+			int width, int height) {
+		mySketch = parent;
+		myXOrigin = xOrigin;
+		myYOrigin = yOrigin;
+		myWidth = width;
+		myHeight = height;
 	}
 
 	public void setup() {
+		// size(myXOrigin + myWidth, myYOrigin + myHeight);
+		mySketch.smooth();
+
 		/*
 		 * WIDTHs (based on myWidth)
 		 * 
@@ -89,7 +107,7 @@ public class Sketch2 extends ComposableSketch {
 		xLabelYOrigin = myYOrigin + (myHeight * (float) 0.99);// The bottom
 
 		// FIXED NUMBER OF CLUSTER
-		maxClusterNumber = 8;
+		maxClusterNumber = 6;
 
 		// No Cluster selected
 		selectedClusterId = -1;
@@ -103,8 +121,6 @@ public class Sketch2 extends ComposableSketch {
 		/*
 		 * Values of the plot
 		 */
-		// FIXED number of divisions
-		valueDivisions = 7;
 		// Value Size
 		valueSize = myWidth / 40;
 
@@ -117,10 +133,10 @@ public class Sketch2 extends ComposableSketch {
 				* (float) 0.15;
 		minPointSize = ((plotX2 - plotX1) + (plotY2 - plotY1) / 2)
 				* (float) 0.025;
-
 	}
 
 	public void draw() {
+
 		drawTitle();
 
 		if (ChartData.getSize() > 0) {
@@ -128,8 +144,8 @@ public class Sketch2 extends ComposableSketch {
 			drawAxisLabels();
 
 			// Use thin, gray lines to draw the grid
-			pApplet.stroke(gridGrayColor);
-			pApplet.strokeWeight((float) 1);
+			mySketch.stroke(gridGrayColor);
+			mySketch.strokeWeight((float) 1);
 			drawXValues();
 			drawYValues();
 
@@ -140,30 +156,39 @@ public class Sketch2 extends ComposableSketch {
 			drawDataPoints();
 
 			// Highlight Cluster (Hover query)
-			if (selectedClusterId != -1) {
-				highlightClusterAndTooltip();
-			}
+			highlightClusterAndTooltip();
 		} else {
 			drawNoPlot();
 		}
 	}
 
+	public int getSelectedClusterId() {
+		return selectedClusterId;
+	}
+
+	public boolean isMouseOver() {
+		return (mySketch.mouseX >= myXOrigin
+				&& mySketch.mouseX <= myXOrigin + myWidth
+				&& mySketch.mouseY >= myYOrigin && mySketch.mouseY <= myYOrigin
+				+ myHeight);
+	}
+
 	public void mousePressed() {
-		if (pApplet.mouseButton == PApplet.LEFT && mouseOverSketch()) {
+		if (isMouseOver() && mySketch.mouseButton == PApplet.LEFT) {
 			if (selectedClusterId != -1) {
-				pApplet.getSketch3()
+				MainSketch.SKETCH_BOTTOM
 						.updateQuestionsByCluster(selectedClusterId);
 			}
 		}
 	}
 
 	public void mouseMoved() {
-		if (mouseOverSketch()) {
-			selectedClusterId = getClusterInLegend(pApplet.mouseX,
-					pApplet.mouseY);
+		if (isMouseOver()) {
+			selectedClusterId = getClusterInLegend(mySketch.mouseX,
+					mySketch.mouseY);
 			if (selectedClusterId == -1) {
-				selectedClusterId = getClusterInPlot(pApplet.mouseX,
-						pApplet.mouseY);
+				selectedClusterId = getClusterInPlot(mySketch.mouseX,
+						mySketch.mouseY);
 			}
 		}
 	}
@@ -176,48 +201,49 @@ public class Sketch2 extends ComposableSketch {
 			int clusterIndex = ChartData.getIndexById(selectedClusterId);
 			ChartItem clusterItem = ChartData.getItemById(selectedClusterId);
 
-			pApplet.fill(clusterItem.getColor(ChartItem.RED),
+			mySketch.fill(clusterItem.getColor(ChartItem.RED),
 					clusterItem.getColor(ChartItem.GREEN),
 					clusterItem.getColor(ChartItem.BLUE));
-			pApplet.stroke(gridGrayColor / (float) 1.5);
-			pApplet.strokeWeight((float) 1.75);
-			pApplet.ellipseMode(PApplet.CENTER);
+			mySketch.stroke(gridGrayColor / (float) 1.5);
+			mySketch.strokeWeight((float) 1.75);
+			mySketch.ellipseMode(PApplet.CENTER);
 
 			// Highlight LittleCluster (LEGEND)
 			xInPixels = getLegendLittleClusterX();
 			yInPixels = getLegendLittleClusterY(clusterIndex);
 			sizeInPixels = littleClusterSize;
 
-			pApplet.ellipse(xInPixels, yInPixels, sizeInPixels, sizeInPixels);
+			mySketch.ellipse(xInPixels, yInPixels, sizeInPixels, sizeInPixels);
 
 			// Highlight Cluster (PLOT)
 			xInPixels = getPointXInPixels(clusterItem.getPoint().x);
 			yInPixels = getPointYInPixels(clusterItem.getPoint().y);
 			sizeInPixels = getPointSizeInPixels(clusterItem.getSize());
 
-			pApplet.ellipse(xInPixels, yInPixels, sizeInPixels, sizeInPixels);
+			mySketch.ellipse(xInPixels, yInPixels, sizeInPixels, sizeInPixels);
 
 			// Draw ToolTip
 			tooltip = String.valueOf((int) clusterItem.getSize())
 					+ " question(s)";
 
-			pApplet.fill(50, 100);
-			pApplet.strokeWeight((float) 1);
-			pApplet.rectMode(PApplet.CENTER);
-			pApplet.rect(xInPixels + sizeInPixels / 2, yInPixels - sizeInPixels
-					/ 2, pApplet.textWidth(tooltip) + 20, 20, 5, 5);
-			pApplet.fill(255);
-			pApplet.textSize(12);
-			pApplet.textAlign(PApplet.CENTER, PApplet.CENTER);
-			pApplet.text(tooltip, xInPixels + sizeInPixels / 2, yInPixels
+			mySketch.fill(50, 100);
+			mySketch.strokeWeight((float) 1);
+			mySketch.rectMode(PApplet.CENTER);
+			mySketch.rect(xInPixels + sizeInPixels / 2, yInPixels
+					- sizeInPixels / 2, mySketch.textWidth(tooltip) + 20, 20,
+					5, 5);
+			mySketch.fill(255);
+			mySketch.textSize(12);
+			mySketch.textAlign(PApplet.CENTER, PApplet.CENTER);
+			mySketch.text(tooltip, xInPixels + sizeInPixels / 2, yInPixels
 					- sizeInPixels / 2);
 		}
 	}
 
 	public void updatePlot() {
 		// Removes the questions and cluster of the Sketch 3
-		pApplet.getSketch3().removeQuestionsAndCluster();
-		
+		MainSketch.SKETCH_BOTTOM.removeQuestionsAndCluster();
+
 		// Removes the plot data
 		ChartData.removeAllData();
 
@@ -225,8 +251,8 @@ public class Sketch2 extends ComposableSketch {
 		Collection<CentroidData> centroids = QeAData.getCentroidDataList();
 		for (CentroidData centroidData : centroids) {
 			ChartData.addData(centroidData.getMeanScope(),
-					centroidData.getMeanDialogue(), centroidData.getClusterSize(),
-					centroidData.getClusterId());
+					centroidData.getMeanDialogue(),
+					centroidData.getClusterSize(), centroidData.getClusterId());
 		}
 
 		// Update the size of the Axis
@@ -242,12 +268,16 @@ public class Sketch2 extends ComposableSketch {
 			xMin = xMin - xMin % 10;
 			yMin = yMin - yMin % 10;
 
-			while ((xMax - xMin) % valueDivisions != 0) {
-				xMax++;
-			}
-			while ((yMax - yMin) % valueDivisions != 0) {
-				yMax++;
-			}
+			// TODO! Fixed values. Is it ok for all attributes?
+			xMax = 1;
+			yMax = 1;
+			// while ((xMax - xMin) % valueDivisions != 0) {
+			// xMax++;
+			// }
+			// while ((yMax - yMin) % valueDivisions != 0) {
+			// yMax++;
+			// }
+		} else {
 		}
 	}
 
@@ -255,7 +285,7 @@ public class Sketch2 extends ComposableSketch {
 
 		int clusterId = -1;
 		float xInPixels, yInPixels, radiusInPixels;
-		double dist, finalDist = Double.MAX_VALUE;
+		double dist, smallerRadius = Double.MAX_VALUE;
 		ChartItem clusterItem;
 		for (Integer id : ChartData.getAllIds()) {
 			clusterItem = ChartData.getItemById(id);
@@ -268,9 +298,11 @@ public class Sketch2 extends ComposableSketch {
 					+ Math.pow(y - yInPixels, 2));
 
 			if (dist <= radiusInPixels) {
-				// Select the smaller cluster that the mouse is over
-				clusterId = (dist < finalDist) ? id : clusterId;
-				break;
+				// Select the cluster with smaller radius that the mouse is over
+				if (radiusInPixels < smallerRadius) {
+					clusterId = id;
+					smallerRadius = radiusInPixels;
+				}
 			}
 		}
 
@@ -295,24 +327,24 @@ public class Sketch2 extends ComposableSketch {
 
 	private void drawNoPlot() {
 		String noTag = "No question...";
-		pApplet.fill(150, 100);
-		pApplet.strokeWeight((float) 2);
-		pApplet.rectMode(PApplet.CENTER);
-		pApplet.rect(myXOrigin + myWidth / 2, myYOrigin + myHeight / 2,
-				pApplet.textWidth(noTag) + 30, 30, 5, 5);
-		pApplet.fill(0);
-		pApplet.textSize(myHeight / 22);
-		pApplet.textAlign(PApplet.CENTER, PApplet.CENTER);
-		pApplet.text(noTag, myXOrigin + myWidth / 2, myYOrigin + myHeight / 2);
-		pApplet.textAlign(PApplet.CENTER, PApplet.CENTER);
+		mySketch.fill(150, 100);
+		mySketch.strokeWeight((float) 2);
+		mySketch.rectMode(PApplet.CENTER);
+		mySketch.rect(myXOrigin + myWidth / 2, myYOrigin + myHeight / 2,
+				mySketch.textWidth(noTag) + 30, 30, 5, 5);
+		mySketch.fill(0);
+		mySketch.textSize(myHeight / 22);
+		mySketch.textAlign(PApplet.CENTER, PApplet.CENTER);
+		mySketch.text(noTag, myXOrigin + myWidth / 2, myYOrigin + myHeight / 2);
+		mySketch.textAlign(PApplet.CENTER, PApplet.CENTER);
 	}
 
 	private void drawTitle() {
-		pApplet.fill(0);
-		pApplet.textAlign(PApplet.CENTER);
+		mySketch.fill(0);
+		mySketch.textAlign(PApplet.CENTER);
 		String title = "Question Clusters";
-		pApplet.textSize(myHeight / 18);
-		pApplet.text(title, myXOrigin + myWidth / 2, titleYOrigin);
+		mySketch.textSize(myHeight / 20);
+		mySketch.text(title, myXOrigin + myWidth / 2, titleYOrigin);
 	}
 
 	private void drawSubtitle() {
@@ -328,49 +360,50 @@ public class Sketch2 extends ComposableSketch {
 			subtitle = subtitle.substring(0, tagTitle.length() - 2);
 		}
 
-		pApplet.fill(0);
-		pApplet.textAlign(PApplet.LEFT);
-		pApplet.textSize(subtitleSize);
-		pApplet.text(subtitle, plotX1, subtitleYOrigin);
+		mySketch.fill(0);
+		mySketch.textAlign(PApplet.LEFT);
+		mySketch.textSize(subtitleSize);
+		mySketch.text(subtitle, plotX1, subtitleYOrigin);
 	}
 
 	private void drawAxisLabels() {
-		pApplet.fill(0);
-		pApplet.textSize(labelSize);
+		mySketch.fill(0);
+		mySketch.textSize(labelSize);
 
-		// Space in pixels between lines (depends on the size of the text)
-		pApplet.textLeading(labelSize * (float) 1.25);
+		// Space in pixels between lines (depends on the size of the
+		// mySketch.text)
+		mySketch.textLeading(labelSize * (float) 1.25);
 
 		// X Label
-		pApplet.textAlign(PApplet.CENTER, PApplet.BOTTOM);
-		pApplet.text("Answer Count", (plotX1 + plotX2) / 2, xLabelYOrigin);
+		mySketch.textAlign(PApplet.CENTER, PApplet.BOTTOM);
+		mySketch.text("Scope", (plotX1 + plotX2) / 2, xLabelYOrigin);
 
 		// Y Label (with rotation)
-		pApplet.textAlign(PApplet.CENTER, PApplet.CENTER);
-		pApplet.pushMatrix();
-		pApplet.translate(yLabelXOrigin, (plotY1 + plotY2) / 2);
-		pApplet.rotate(-PApplet.PI / 2);
-		pApplet.text("Question Score", 0, 0);
-		pApplet.popMatrix();
+		mySketch.textAlign(PApplet.CENTER, PApplet.CENTER);
+		mySketch.pushMatrix();
+		mySketch.translate(yLabelXOrigin, (plotY1 + plotY2) / 2);
+		mySketch.rotate(-PApplet.PI / 2);
+		mySketch.text("Dialogue", 0, 0);
+		mySketch.popMatrix();
 	}
 
 	private void drawXValues() {
-		pApplet.fill(0);
-		pApplet.textSize(valueSize);
-		pApplet.textAlign(PApplet.CENTER);
+		mySketch.fill(0);
+		mySketch.textSize(valueSize);
+		mySketch.textAlign(PApplet.CENTER);
 
 		float xSize = plotX2 - plotX1;
-		float fixedYPlace = plotY2 + pApplet.textAscent() + 5;
+		float fixedYPlace = plotY2 + mySketch.textAscent() + 5;
 		float nextXPlace = plotX1;
 
-		DecimalFormat decimalForm = new DecimalFormat("###.#");
+		DecimalFormat decimalForm = new DecimalFormat("#.###");
 		float xValue = xMin;
 
 		float xInterval = (xMax - xMin) / valueDivisions;
 
 		while (xValue <= xMax) {
-			pApplet.text(decimalForm.format(xValue), nextXPlace, fixedYPlace);
-			pApplet.line(nextXPlace, plotY1, nextXPlace, plotY2);
+			mySketch.text(decimalForm.format(xValue), nextXPlace, fixedYPlace);
+			mySketch.line(nextXPlace, plotY1, nextXPlace, plotY2);
 
 			xValue += xInterval;
 			nextXPlace += xSize / valueDivisions;
@@ -378,9 +411,9 @@ public class Sketch2 extends ComposableSketch {
 	}
 
 	private void drawYValues() {
-		pApplet.fill(0);
-		pApplet.textSize(valueSize);
-		pApplet.textAlign(PApplet.RIGHT);
+		mySketch.fill(0);
+		mySketch.textSize(valueSize);
+		mySketch.textAlign(PApplet.RIGHT);
 
 		float ySize = plotY2 - plotY1;
 		float nextYPlace = plotY1;
@@ -389,20 +422,20 @@ public class Sketch2 extends ComposableSketch {
 		float yValue = yMax;
 		float yInterval = (yMax - yMin) / valueDivisions;
 
-		DecimalFormat decimalForm = new DecimalFormat("###.#");
+		DecimalFormat decimalForm = new DecimalFormat("#.###");
 
 		while (yValue >= yMin) {
 
-			float textOffset = pApplet.textAscent() / 2; // Center vertically
+			float textOffset = mySketch.textAscent() / 2; // PApplet.CENTER
+															// vertically
 			if (yValue == yMin) {
 				textOffset = 0; // Align by the bottom
 			} else if (yValue == yMax) {
-				textOffset = pApplet.textAscent(); // Align by the top
+				textOffset = mySketch.textAscent(); // Align by the top
 			}
-
-			pApplet.text(decimalForm.format(yValue), fixedXPlace, nextYPlace
+			mySketch.text(decimalForm.format(yValue), fixedXPlace, nextYPlace
 					+ textOffset);
-			pApplet.line(plotX1, nextYPlace, plotX2, nextYPlace);
+			mySketch.line(plotX1, nextYPlace, plotX2, nextYPlace);
 
 			yValue -= yInterval;
 			nextYPlace += ySize / valueDivisions;
@@ -410,9 +443,9 @@ public class Sketch2 extends ComposableSketch {
 	}
 
 	private void drawDataPoints() {
-		pApplet.noStroke();
+		mySketch.noStroke();
 
-		pApplet.ellipseMode(PApplet.CENTER);
+		mySketch.ellipseMode(PApplet.CENTER);
 
 		float size, x, y;
 		ChartItem clusterItem;
@@ -425,11 +458,11 @@ public class Sketch2 extends ComposableSketch {
 			x = getPointXInPixels(clusterItem.getPoint().x);
 			y = getPointYInPixels(clusterItem.getPoint().y);
 
-			pApplet.fill(clusterItem.getColor(ChartItem.RED),
+			mySketch.fill(clusterItem.getColor(ChartItem.RED),
 					clusterItem.getColor(ChartItem.GREEN),
 					clusterItem.getColor(ChartItem.BLUE),
 					clusterItem.getColor(ChartItem.ALPHA));
-			pApplet.ellipse(x, y, size, size);
+			mySketch.ellipse(x, y, size, size);
 		}
 	}
 
@@ -438,13 +471,13 @@ public class Sketch2 extends ComposableSketch {
 	}
 
 	private float getPointYInPixels(float y) {
-		return (PApplet.map(y, yMin, yMax, plotY1, plotY2));
+		return (PApplet.map(y, yMin, yMax, plotY2, plotY1));
 	}
 
 	private float getPointSizeInPixels(float size) {
 		float finalSize;
 		if (ChartData.minSize == ChartData.maxSize) {
-			// Exceptional case. The map would return NaN...
+			// Exceptional case. The PApplet.map would return NaN...
 			finalSize = PApplet.map(size, ChartData.minSize - 5,
 					ChartData.maxSize + 5, minPointSize, maxPointSize);
 		} else {
@@ -455,14 +488,14 @@ public class Sketch2 extends ComposableSketch {
 	}
 
 	private void drawLegend() {
-		pApplet.noStroke();
+		mySketch.noStroke();
 
 		// Names
-		pApplet.textAlign(PApplet.LEFT);
-		pApplet.textSize(valueSize - 1);
+		mySketch.textAlign(PApplet.LEFT);
+		mySketch.textSize(valueSize - 1);
 
 		// Little Cluster
-		pApplet.ellipseMode(PApplet.CENTER);
+		mySketch.ellipseMode(PApplet.CENTER);
 		float littleClusterX, littleClusterY;
 		float textX, textY;
 
@@ -474,20 +507,20 @@ public class Sketch2 extends ComposableSketch {
 			littleClusterX = getLegendLittleClusterX();
 			littleClusterY = getLegendLittleClusterY(i);
 
-			// Ellipse
+			// mySketch.ellipse
 			clusterItem = ChartData.getItemById(clusterIds.get(i));
-			pApplet.fill(clusterItem.getColor(ChartItem.RED),
+			mySketch.fill(clusterItem.getColor(ChartItem.RED),
 					clusterItem.getColor(ChartItem.GREEN),
 					clusterItem.getColor(ChartItem.BLUE),
 					clusterItem.getColor(ChartItem.ALPHA));
-			pApplet.ellipse(littleClusterX, littleClusterY, littleClusterSize,
+			mySketch.ellipse(littleClusterX, littleClusterY, littleClusterSize,
 					littleClusterSize);
 
 			// Name
 			textX = legendX1 + littleClusterSize + (2 * legendPadding);
 			textY = littleClusterY + (littleClusterSize / 4);
-			pApplet.fill(0);
-			pApplet.text("Cluster " + clusterIds.get(i), textX, textY);
+			mySketch.fill(0);
+			mySketch.text("Cluster " + clusterIds.get(i), textX, textY);
 		}
 	}
 
