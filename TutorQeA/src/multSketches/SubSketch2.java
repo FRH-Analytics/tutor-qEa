@@ -21,7 +21,7 @@ public class SubSketch2 {
 
 	private float labelSize, yLabelXOrigin, xLabelYOrigin;
 
-	private float subtitleSize, subtitleYOrigin, titleYOrigin;
+	private float subtitleSize, subtitleYOrigin;
 
 	private float legendX1, legendY1;
 	private float legendX2, legendY2;
@@ -56,7 +56,6 @@ public class SubSketch2 {
 	}
 
 	public void setup() {
-		// size(myXOrigin + myWidth, myYOrigin + myHeight);
 		mySketch.smooth();
 
 		/*
@@ -95,12 +94,11 @@ public class SubSketch2 {
 		 */
 
 		// Title
-		subtitleSize = Math.min(myWidth / 35, myHeight / 23);
-		titleYOrigin = myYOrigin + (myHeight * (float) 0.055); // The bottom
+		subtitleSize = myHeight / 20;
 		subtitleYOrigin = myYOrigin + (myHeight * (float) 0.1);
 
 		// Plot
-		plotY1 = myYOrigin + (myHeight * (float) 0.12);
+		plotY1 = myYOrigin + (myHeight * (float) 0.05);
 		plotY2 = myYOrigin + (myHeight * (float) 0.85);
 
 		// Label
@@ -137,10 +135,8 @@ public class SubSketch2 {
 
 	public void draw() {
 
-		drawTitle();
-
 		if (ChartData.getSize() > 0) {
-			drawSubtitle();
+			// drawSubtitle();
 			drawAxisLabels();
 
 			// Use thin, gray lines to draw the grid
@@ -241,11 +237,11 @@ public class SubSketch2 {
 	}
 
 	public void updatePlot() {
-		// Removes the questions and cluster of the Sketch 3
-		MainSketch.SKETCH_BOTTOM.removeQuestionsAndCluster();
-
 		// Removes the plot data
 		ChartData.removeAllData();
+
+		// Removes the questions and cluster of the Sketch 3
+		MainSketch.SKETCH_BOTTOM.removeQuestionsAndCluster();
 
 		// Update the plot data
 		Collection<CentroidData> centroids = QeAData.getCentroidDataList();
@@ -258,26 +254,10 @@ public class SubSketch2 {
 		// Update the size of the Axis
 		if (ChartData.getSize() > 0) {
 			// Update Max and Min plot
-			xMin = ChartData.minX;
-			xMax = ChartData.maxX;
-
-			yMin = ChartData.minY;
-			yMax = ChartData.maxY;
-
-			// Normalize the axis
-			xMin = xMin - xMin % 10;
-			yMin = yMin - yMin % 10;
-
-			// TODO! Fixed values. Is it ok for all attributes?
+			xMin = 0;
 			xMax = 1;
+			yMin = 0;
 			yMax = 1;
-			// while ((xMax - xMin) % valueDivisions != 0) {
-			// xMax++;
-			// }
-			// while ((yMax - yMin) % valueDivisions != 0) {
-			// yMax++;
-			// }
-		} else {
 		}
 	}
 
@@ -326,25 +306,17 @@ public class SubSketch2 {
 	}
 
 	private void drawNoPlot() {
-		String noTag = "No question...";
+		String noTag = "No tag selected...";
 		mySketch.fill(150, 100);
 		mySketch.strokeWeight((float) 2);
 		mySketch.rectMode(PApplet.CENTER);
 		mySketch.rect(myXOrigin + myWidth / 2, myYOrigin + myHeight / 2,
-				mySketch.textWidth(noTag) + 30, 30, 5, 5);
+				mySketch.textWidth(noTag), 30, 5, 5);
 		mySketch.fill(0);
-		mySketch.textSize(myHeight / 22);
+		mySketch.textSize(myHeight / 17);
 		mySketch.textAlign(PApplet.CENTER, PApplet.CENTER);
 		mySketch.text(noTag, myXOrigin + myWidth / 2, myYOrigin + myHeight / 2);
 		mySketch.textAlign(PApplet.CENTER, PApplet.CENTER);
-	}
-
-	private void drawTitle() {
-		mySketch.fill(0);
-		mySketch.textAlign(PApplet.CENTER);
-		String title = "Question Clusters";
-		mySketch.textSize(myHeight / 20);
-		mySketch.text(title, myXOrigin + myWidth / 2, titleYOrigin);
 	}
 
 	private void drawSubtitle() {

@@ -30,7 +30,7 @@ public class SketchTop extends EmbeddedSketch {
 
 	@Override
 	public void setup() {
-		size(myXOrigin + myWidth, myYOrigin + myHeight);
+		size(myWidth, myHeight);
 		SKETCH_1.setup();
 		SKETCH_2.setup();
 	}

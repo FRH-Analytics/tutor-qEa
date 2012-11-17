@@ -1,5 +1,7 @@
 package multSketches;
 
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
 import java.util.concurrent.ConcurrentSkipListSet;
 
 import org.gicentre.utils.multisketch.EmbeddedSketch;
@@ -29,17 +31,16 @@ public class SketchBottom extends EmbeddedSketch {
 
 	private float newYOrigin = 0, offsetY = 0;
 
-	float qX1;
-	float qX2;
-	float qScoreX1;
-	float qScoreX2;
-	float qTitleX1;
-	float qTitleX2;
-	float qAnswerX1;
-	float qAnswerX2;
+	private float qX1;
+	private float qX2;
+	private float qScoreX1;
+	private float qScoreX2;
+	private float qTitleX1;
+	private float qTitleX2;
+	private float qAnswerX1;
+	private float qAnswerX2;
 
 	private int selectedQuestionIndex;
-	boolean reachedTop, reachedBottom;
 
 	public SketchBottom(int xOrigin, int yOrigin, int width, int height) {
 		myXOrigin = xOrigin;
@@ -55,10 +56,10 @@ public class SketchBottom extends EmbeddedSketch {
 	}
 
 	public void setup() {
-		size(myXOrigin + myWidth, myYOrigin + myHeight);
+		size(myWidth, myHeight);
 
-		newYOrigin = 0;
 		smooth();
+		resetNewYOrigin();
 
 		// Question Rectangles
 		questionRectXPadding = myWidth / 50;
@@ -84,43 +85,54 @@ public class SketchBottom extends EmbeddedSketch {
 		clusterTitleId = -1;
 
 		selectedQuestionIndex = -1;
+
+		// Mouse Wheel
+		addMouseWheelListener(new MouseWheelListener() {
+			public void mouseWheelMoved(MouseWheelEvent mwe) {
+//				updateYOrigin(newYOrigin - (mwe.getWheelRotation() * 12));
+				newYOrigin -= (mwe.getWheelRotation() * 12);
+			}
+		});
 	}
 
 	public void draw() {
 		super.draw();
 
-		updateYOrigin();
+		if (mousePressed) {
+			cursor(MOVE);
+			updateYOrigin(mouseY - offsetY);
+		} else {
+			cursor(ARROW);
+		}
 
 		background(255);
-		if (sortedQuestions.size() == 0) {
-			drawNoCluster();
-		} else {
+		translate(0, newYOrigin);
+
+		if (sortedQuestions.size() > 0) {
 			drawQuestions();
+		} else {
+			drawNoCluster();
 		}
 	}
 
-	private void updateYOrigin() {
-
-		if (sortedQuestions.size() >= 0) {
-			if (mousePressed) {
-				cursor(MOVE);
-				if (mouseY - offsetY < 0) {
-					float questionsY1Distance = qHeight + questionRectYPadding;
-					if ((sortedQuestions.size() * questionsY1Distance)
-							- abs(newYOrigin) <= myHeight - 50) {
-						if (mouseY - offsetY > newYOrigin) {
-							newYOrigin = mouseY - offsetY;
-						}
-					} else {
-						newYOrigin = mouseY - offsetY;
-					}
-				} else {
-					newYOrigin = 0;
+	private void resetNewYOrigin(){
+		// TODO: workaround ^^...
+		newYOrigin = -350;
+	}
+	
+	private void updateYOrigin(float nextNewYOrigin) {
+		if (nextNewYOrigin < 0) {
+			float questionsY1Distance = qHeight + questionRectYPadding;
+			if ((sortedQuestions.size() * questionsY1Distance)
+					- abs(newYOrigin) <= myHeight - 50) {
+				if (nextNewYOrigin > newYOrigin) {
+					newYOrigin = nextNewYOrigin;
 				}
 			} else {
-				cursor(ARROW);
+				newYOrigin = nextNewYOrigin;
 			}
-			translate(0, newYOrigin);
+		} else {
+			resetNewYOrigin();
 		}
 	}
 
@@ -189,7 +201,7 @@ public class SketchBottom extends EmbeddedSketch {
 		clusterTitleId = clusterId;
 
 		// Reset the newYOrigin
-		newYOrigin = 0;
+		resetNewYOrigin();
 
 		// Sort the new question id based on the question data
 		for (Integer id : QeAData.getQuestionIdsByCluster(clusterId)) {
@@ -207,7 +219,7 @@ public class SketchBottom extends EmbeddedSketch {
 	}
 
 	private void drawNoCluster() {
-		String noTag = "No cluster...";
+		String noTag = "No cluster selected...";
 		fill(150, 100);
 		strokeWeight((float) 2);
 		rectMode(CENTER);
@@ -343,6 +355,8 @@ public class SketchBottom extends EmbeddedSketch {
 			float ballYCenter = y1 + ((y2 - y1) / 2) + maxBallRadius;
 			float ballXCenter = x1 + ballPadding;
 
+			ChartItem clusterItem = ChartData.getItemById(qData.getCluster());
+
 			for (AnswerData ans : QeAData.getQuestionIdsToAnswers().get(
 					qData.getId())) {
 
@@ -355,9 +369,6 @@ public class SketchBottom extends EmbeddedSketch {
 						fill(59, 217, 127, 160);
 					}
 				} else {
-					// The cluster color
-					ChartItem clusterItem = ChartData.getItemById(qData
-							.getCluster());
 
 					if (highlightQuestion) {
 						fill(clusterItem.getColor(ChartItem.RED),
