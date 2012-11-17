@@ -21,8 +21,6 @@ public class SubSketch2 {
 
 	private float labelSize, yLabelXOrigin, xLabelYOrigin;
 
-	private float subtitleSize, subtitleYOrigin;
-
 	private float legendX1, legendY1;
 	private float legendX2, legendY2;
 	private float legendPadding;
@@ -56,8 +54,6 @@ public class SubSketch2 {
 	}
 
 	public void setup() {
-		mySketch.smooth();
-
 		/*
 		 * WIDTHs (based on myWidth)
 		 * 
@@ -92,10 +88,6 @@ public class SubSketch2 {
 		 * 
 		 * 15% to the x label
 		 */
-
-		// Title
-		subtitleSize = myHeight / 20;
-		subtitleYOrigin = myYOrigin + (myHeight * (float) 0.1);
 
 		// Plot
 		plotY1 = myYOrigin + (myHeight * (float) 0.05);
@@ -136,7 +128,6 @@ public class SubSketch2 {
 	public void draw() {
 
 		if (ChartData.getSize() > 0) {
-			// drawSubtitle();
 			drawAxisLabels();
 
 			// Use thin, gray lines to draw the grid
@@ -162,13 +153,6 @@ public class SubSketch2 {
 		return selectedClusterId;
 	}
 
-	public boolean isMouseOver() {
-		return (mySketch.mouseX >= myXOrigin
-				&& mySketch.mouseX <= myXOrigin + myWidth
-				&& mySketch.mouseY >= myYOrigin && mySketch.mouseY <= myYOrigin
-				+ myHeight);
-	}
-
 	public void mousePressed() {
 		if (isMouseOver() && mySketch.mouseButton == PApplet.LEFT) {
 			if (selectedClusterId != -1) {
@@ -187,8 +171,17 @@ public class SubSketch2 {
 						mySketch.mouseY);
 			}
 		}
+		// Re-Draw...
+		mySketch.loop();
 	}
 
+	private boolean isMouseOver() {
+		return (mySketch.mouseX >= myXOrigin
+				&& mySketch.mouseX <= myXOrigin + myWidth
+				&& mySketch.mouseY >= myYOrigin && mySketch.mouseY <= myYOrigin
+				+ myHeight);
+	}
+	
 	private void highlightClusterAndTooltip() {
 		if (selectedClusterId != -1) {
 
@@ -259,6 +252,8 @@ public class SubSketch2 {
 			yMin = 0;
 			yMax = 1;
 		}
+		// Re-Draw...
+		mySketch.loop();
 	}
 
 	private int getClusterInPlot(int x, int y) {
@@ -317,25 +312,6 @@ public class SubSketch2 {
 		mySketch.textAlign(PApplet.CENTER, PApplet.CENTER);
 		mySketch.text(noTag, myXOrigin + myWidth / 2, myYOrigin + myHeight / 2);
 		mySketch.textAlign(PApplet.CENTER, PApplet.CENTER);
-	}
-
-	private void drawSubtitle() {
-
-		StringBuilder tagTitle = new StringBuilder("Tags: ");
-		for (String tag : QeAData.getChosenTagNames()) {
-			tagTitle.append(tag);
-			tagTitle.append(", ");
-		}
-		String subtitle = tagTitle.toString();
-
-		if (!tagTitle.toString().equals("Tags: ")) {
-			subtitle = subtitle.substring(0, tagTitle.length() - 2);
-		}
-
-		mySketch.fill(0);
-		mySketch.textAlign(PApplet.LEFT);
-		mySketch.textSize(subtitleSize);
-		mySketch.text(subtitle, plotX1, subtitleYOrigin);
 	}
 
 	private void drawAxisLabels() {

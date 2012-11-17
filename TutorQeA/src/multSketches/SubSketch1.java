@@ -66,9 +66,6 @@ public class SubSketch1 {
 	}
 
 	public void setup() {
-		// size(myXOrigin + myWidth, myYOrigin + myHeight);
-		mySketch.smooth();
-
 		defaultFontSize = 12;
 		defaultFontColor = 120;
 		font = mySketch.createFont("Helvetica", defaultFontSize - 1);
