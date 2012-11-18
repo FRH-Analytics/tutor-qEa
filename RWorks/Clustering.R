@@ -176,11 +176,6 @@ createFeatures.difficulty = function(preprocessedDir){
     return(features)
 }
 
-createFeatures.longevity = function(preprocessedDir){
-    # TODO!
-    # List Attributes...
-}
-
 createFeatures.coverage = function(preprocessedDir){
   print(noquote("Reading Data..."))
   questions = read.csv(paste(preprocessedDir, "Questions.csv", sep = ""), header = T)
@@ -215,77 +210,90 @@ createFeatures.coverage = function(preprocessedDir){
 }
 
 createFeatures.supervised = function(preprocessedDir){
-  print(noquote("Reading Data..."))
-  questions = read.csv(paste(preprocessedDir, "Questions.csv", sep = ""), header = T)
-  answers = read.csv(paste(preprocessedDir, "Answers.csv", sep = ""), header = T)
-  question.features = read.csv(paste(preprocessedDir, "QuestionFeatures.csv", sep = ""), header = T)
-
-  print(noquote("Merging Features by Id..."))
-  features = data.frame(Id = questions$Id,
-                        Coverage = questions$AnswerCount)
-  features = merge(features, question.features, by = "Id")
-  
-  print(noquote("Calculating the Empathy..."))
-  features$Empathy = foreach(qId = features$Id, .combine = rbind) %dopar%{
-      question = questions[questions$Id == qId,]
-      ans = answers[answers$ParentId == qId,]
-      
-      qScore = questions[questions$Id == qId,"Score"]
-      
-      if (nrow(ans) > 0){
-          ans = ans[order(ans$CreationDate, decreasing=F),][1,]
-          val = as.numeric(difftime(ans$CreationDate, question$CreationDate, units="hours"))
-          
-          # PROBLEM 1: Some answers have been created before the question!!! 
-          # (Cause: Question Merging...)
-          val = if (val <= 0){-1}else{val}
-          result = floor(qScore/val)
-      } else {
-          # PROBLEM 2: No answer! (Probably very difficult! We set -1...)
-          result = -1
-      }
-      result
-  }
-  
-  # Normalize the Feature between 0 and 1
-  features$Coverage = (features$Coverage - min(features$Coverage))/(max(features$Coverage) - min(features$Coverage))
-  features$Dialogue = (features$Dialogue - min(features$Dialogue))/(max(features$Dialogue) - min(features$Dialogue))
-  features$Empathy = (features$Empathy - min(features$Empathy))/(max(features$Empathy) - min(features$Empathy))
-  
-  return(features)
+    
+    qfeaturesFile = paste(preprocessedDir, "/QuestionFeatures.csv", sep = "")
+    if (!file.exists(qfeaturesFile)){
+        print(noquote("Running the SupervisedClustering script to generate the Dialogue..."))
+        source("SupervisedClustering.R")
+        MainSupervisedClustering()
+    }else{
+        print(noquote("Loading the QuestionFeatures with the Dialogue..."))
+        question.features = read.csv(qfeaturesFile, header = T)
+    }
+    
+    print(noquote("Reading Data..."))
+    questions = read.csv(paste(preprocessedDir, "Questions.csv", sep = ""), header = T)
+    answers = read.csv(paste(preprocessedDir, "Answers.csv", sep = ""), header = T)
+    
+    print(noquote("Merging Features by Id..."))
+    features = data.frame(Id = questions$Id,
+                          Scope = questions$AnswerCount)
+    features = merge(features, question.features, by = "Id")
+    
+    print(noquote("Calculating the Empathy..."))
+    features$Empathy = foreach(qId = features$Id, .combine = rbind) %dopar%{
+        question = questions[questions$Id == qId,]
+        ans = answers[answers$ParentId == qId,]
+        
+        qScore = questions[questions$Id == qId,"Score"]
+        
+        if (nrow(ans) > 0){
+            ans = ans[order(ans$CreationDate, decreasing=F),][1,]
+            val = as.numeric(difftime(ans$CreationDate, question$CreationDate, units="hours"))
+            
+            # PROBLEM 1: Some answers have been created before the question!!! 
+            # (Cause: Question Merging...)
+            val = if (val <= 0){-1}else{val}
+            result = floor(qScore/val)
+        } else {
+            # PROBLEM 2: No answer! (Probably very difficult! We set -1...)
+            result = -1
+        }
+        result
+    }
+    
+    # Normalize the Feature between 0 and 1
+    features$Scope = (features$Scope - min(features$Scope))/(max(features$Scope) - min(features$Scope))
+    features$Dialogue = (features$Dialogue - min(features$Dialogue))/(max(features$Dialogue) - min(features$Dialogue))
+    features$Empathy = (features$Empathy - min(features$Empathy))/(max(features$Empathy) - min(features$Empathy))
+    
+    return(features)
 }
 
 ####################################################
 ####################### MAIN #######################
 ####################################################
-library(fpc, quietly = T)
-library(flexclust, quietly = T) 
-library(rpart, quietly=T)
-require(foreach, quietly = T)
-require(doMC, quietly = T)
-library(scatterplot3d, quietly=T)
-library(plyr, quietly=T)
-
-if (Sys.info()["sysname"] == "Linux"){
-  library(doMC)
-  registerDoMC()
+MainClustering = function(){
+    library(fpc, quietly = T)
+    library(flexclust, quietly = T) 
+    library(rpart, quietly=T)
+    require(foreach, quietly = T)
+    require(doMC, quietly = T)
+    library(scatterplot3d, quietly=T)
+    library(plyr, quietly=T)
+    
+    if (Sys.info()["sysname"] == "Linux"){
+        library(doMC)
+        registerDoMC()
+    }
+    
+    dir.create("../AllData/clustering", showWarnings=F)
+    preprocessedDir = "../AllData/preprocessed/"
+    clusteringDir = "../AllData/clustering/"
+    
+    # clustering(preprocessedDir, clusteringDir, "Difficulty", createFeatures.difficulty)
+    # clustering(preprocessedDir, clusteringDir, "Popularity", createFeatures.popularity)
+    # clustering(preprocessedDir, clusteringDir, "Coverage", createFeatures.coverage)
+    clustering(preprocessedDir, clusteringDir, "Supervised", createFeatures.supervised)
+    
+    # plot.clustering(clusteringDir, "Difficulty")
+    # plot.clustering(clusteringDir, "Popularity")
+    # plot.clustering(clusteringDir, "Coverage")
+    plot.clustering(clusteringDir, "Supervised")
+    
+    # analyse.clustering(clusteringDir, "Difficulty")
+    # analyse.clustering(clusteringDir, "Popularity")
+    # analyse.clustering(clusteringDir, "Coverage")
+    analyse.clustering(clusteringDir, "Supervised")
+    
 }
-
-dir.create("../AllData/clustering", showWarnings=F)
-preprocessedDir = "../AllData/preprocessed/"
-clusteringDir = "../AllData/clustering/"
-
-# clustering(preprocessedDir, clusteringDir, "Difficulty", createFeatures.difficulty)
-# clustering(preprocessedDir, clusteringDir, "Popularity", createFeatures.popularity)
-# clustering(preprocessedDir, clusteringDir, "Coverage", createFeatures.coverage)
-clustering(preprocessedDir, clusteringDir, "Supervised", createFeatures.supervised)
-
-# plot.clustering(clusteringDir, "Difficulty")
-# plot.clustering(clusteringDir, "Popularity")
-# plot.clustering(clusteringDir, "Coverage")
-plot.clustering(clusteringDir, "Supervised")
-
-# analyse.clustering(clusteringDir, "Difficulty")
-# analyse.clustering(clusteringDir, "Popularity")
-# analyse.clustering(clusteringDir, "Coverage")
-analyse.clustering(clusteringDir, "Supervised")

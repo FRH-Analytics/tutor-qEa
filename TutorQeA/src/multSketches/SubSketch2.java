@@ -181,7 +181,7 @@ public class SubSketch2 {
 				&& mySketch.mouseY >= myYOrigin && mySketch.mouseY <= myYOrigin
 				+ myHeight);
 	}
-
+	
 	private void highlightClusterAndTooltip() {
 		if (selectedClusterId != -1) {
 

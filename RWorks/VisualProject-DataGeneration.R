@@ -38,7 +38,7 @@ CreateQuestionData = function(inputDir, outputDir){
     supervisedClustering[,2:4] = round(supervisedClustering[,2:4], 5)
     
     print(noquote("Selecting the question collumns..."))
-    questions.data = questions[,c("Id", "Title", "Score", "AnswerCount")]
+    questions.data = questions[,c("Id", "Title", "Score")]
     
     print(noquote("Merging with the Clustering Attribute and Cluster results..."))
     questions.data = merge(questions.data, supervisedClustering, by="Id")
@@ -93,6 +93,8 @@ if (Sys.info()["sysname"] == "Linux"){
 # Data Collect - Treatment
 source("DataAnalysis.R")
 MainDataAnalysis()
+source("Clustering.R")
+MainClustering()
 
 # Visual Analytics Project - Data Generation
 print(noquote(""))
