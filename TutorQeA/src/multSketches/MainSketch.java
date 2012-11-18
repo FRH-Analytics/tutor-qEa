@@ -13,8 +13,8 @@ public class MainSketch extends PApplet {
 
 	private static final long serialVersionUID = 1L;
 
-	public static SketchTop SKETCH_TOP = new SketchTop(0, 0, 1000, 350);
-	public static SketchBottom SKETCH_BOTTOM = new SketchBottom(0, 350, 1000, 350);
+	public static SketchTop SKETCH_TOP = new SketchTop(1000, 350);
+	public static SketchBottom SKETCH_BOTTOM = new SketchBottom(1000, 350);
 
 	public void setup() {
 		try {

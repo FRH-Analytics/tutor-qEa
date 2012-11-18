@@ -3,7 +3,6 @@ package multSketches;
 import org.gicentre.utils.multisketch.EmbeddedSketch;
 
 import processing.core.PApplet;
-
 import controlP5.ControlEvent;
 
 public class SketchTop extends EmbeddedSketch {
@@ -11,15 +10,11 @@ public class SketchTop extends EmbeddedSketch {
 	private static final long serialVersionUID = 1L;
 	protected int myWidth;
 	protected int myHeight;
-	protected int myXOrigin;
-	protected int myYOrigin;
 
 	private SubSketch1 SKETCH_1;
 	private SubSketch2 SKETCH_2;
 
-	public SketchTop(int xOrigin, int yOrigin, int width, int height) {
-		myXOrigin = xOrigin;
-		myYOrigin = yOrigin;
+	public SketchTop(int width, int height) {
 		myWidth = width;
 		myHeight = height;
 
@@ -31,6 +26,7 @@ public class SketchTop extends EmbeddedSketch {
 	@Override
 	public void setup() {
 		size(myWidth, myHeight);
+		smooth();
 		SKETCH_1.setup();
 		SKETCH_2.setup();
 	}
@@ -39,24 +35,18 @@ public class SketchTop extends EmbeddedSketch {
 	public void draw() {
 		super.draw();
 
-		if (isMouseOver()) {
-			// Draw Background
-			background(255);
+		// Draw Background
+		background(255);
 
-			// SKETCH_1.draw();
-			SKETCH_2.draw();
+		SKETCH_2.draw();
 
-			textAlign(PApplet.LEFT);
+		textAlign(PApplet.LEFT);
 
-			drawMainTitle();
-			drawMiddleTitle();
-			drawMiddleDivision();
-		}
-	}
+		drawMainTitle();
+		drawMiddleTitle();
+		drawMiddleDivision();
 
-	private boolean isMouseOver() {
-		return (mouseX >= myXOrigin && mouseX <= myXOrigin + myWidth
-				&& mouseY >= myYOrigin && mouseY <= myYOrigin + myHeight);
+		noLoop();
 	}
 
 	@Override
@@ -100,21 +90,20 @@ public class SketchTop extends EmbeddedSketch {
 		fill(0);
 		textAlign(PApplet.CENTER, PApplet.CENTER);
 		textSize(18);
-		float fixedY = myYOrigin + myHeight - 30;
-		text(middleTitle, myXOrigin + (myWidth / 2), fixedY);
+		float fixedY = myHeight - 25;
+		text(middleTitle, (myWidth / 2), fixedY);
 		textAlign(PApplet.LEFT);
 
 		// Draw line
 		float titleLength = textWidth(middleTitle);
-		float xBeforeTitle = myXOrigin + (myWidth / 2) - (titleLength / 2);
+		float xBeforeTitle = (myWidth / 2) - (titleLength / 2);
 		float xAfterTitle = xBeforeTitle + titleLength;
 
 		stroke(100);
 		strokeWeight((float) 2);
-		line(myXOrigin + 2 * titlePadding, fixedY, xBeforeTitle - titlePadding,
+		line(2 * titlePadding, fixedY, xBeforeTitle - titlePadding, fixedY);
+		line(myWidth - 2 * titlePadding, fixedY, xAfterTitle + titlePadding,
 				fixedY);
-		line(myXOrigin + myWidth - 2 * titlePadding, fixedY, xAfterTitle
-				+ titlePadding, fixedY);
 	}
 
 	private void drawMiddleDivision() {

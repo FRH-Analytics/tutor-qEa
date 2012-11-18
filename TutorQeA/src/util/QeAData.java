@@ -108,9 +108,11 @@ public class QeAData {
 							new CentroidData(questionDataTmp.getCluster()));
 				}
 				centroidIdsToData.get(questionDataTmp.getCluster())
-						.addQuestion(questionDataTmp.getId(),
-								questionDataTmp.getScope(),
-								questionDataTmp.getDialogue());
+						.addQuestion(
+								questionDataTmp.getId(),
+								questionDataTmp.getFeatureValueByName("Scope"),
+								questionDataTmp
+										.getFeatureValueByName("Dialogue"));
 			}
 		}
 	}
@@ -174,24 +176,29 @@ public class QeAData {
 		CSVReader csvReader = new CSVReader(new FileReader(QUESTIONS_DATA_FILE));
 
 		// Unique columns used... At this moment...
-		int questionId, score, answerCount, cluster;
-		float coverage, dialogue, empathy;
+		int questionId, cluster;
 		String title;
 
-		// Reads the file header
+		ArrayList<Float> values = new ArrayList<Float>();
+		ArrayList<String> names = new ArrayList<String>();
+
+		// Reads the file header and set the names
 		String[] nextLine = csvReader.readNext();
+		names.add(nextLine[2]);
+		names.add(nextLine[3]);
+		names.add(nextLine[4]);
+		names.add(nextLine[5]);
 		while ((nextLine = csvReader.readNext()) != null) {
 			questionId = Integer.valueOf(nextLine[0]);
 			title = nextLine[1];
-			score = Integer.valueOf(nextLine[2]);
-			answerCount = Integer.valueOf(nextLine[3]);
-			coverage = Float.valueOf(nextLine[4]);
-			dialogue = Float.valueOf(nextLine[5]);
-			empathy = Float.valueOf(nextLine[6]);
-			cluster = Integer.valueOf(nextLine[7]);
+			values.add(Float.valueOf(nextLine[2]));
+			values.add(Float.valueOf(nextLine[3]));
+			values.add(Float.valueOf(nextLine[4]));
+			values.add(Float.valueOf(nextLine[5]));
+			cluster = Integer.valueOf(nextLine[6]);
 			questionIdsToData.put(questionId, new QuestionData(questionId,
-					title, score, answerCount, coverage, dialogue, empathy,
-					cluster));
+					title, values, names, cluster));
+			values.clear();
 		}
 	}
 

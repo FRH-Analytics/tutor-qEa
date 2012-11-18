@@ -15,8 +15,8 @@ public class SketchBottom extends EmbeddedSketch {
 
 	private static final long serialVersionUID = 1L;
 
-	private int qHeight;
-	private int qCornerRadius;
+	private float qHeight;
+	private float qCornerRadius;
 	private float questionRectXPadding, questionRectYPadding;
 
 	private float maxAnswerScoreOfAll;
@@ -24,12 +24,10 @@ public class SketchBottom extends EmbeddedSketch {
 	private ConcurrentSkipListSet<QuestionData> sortedQuestions;
 	private int clusterTitleId;
 
-	protected int myWidth;
-	protected int myHeight;
-	protected int myXOrigin;
-	protected int myYOrigin;
+	protected float myWidth;
+	protected float myHeight;
 
-	private float newYOrigin = 0, offsetY = 0;
+	private float newYOrigin;
 
 	private float qX1;
 	private float qX2;
@@ -42,21 +40,15 @@ public class SketchBottom extends EmbeddedSketch {
 
 	private int selectedQuestionIndex;
 
-	public SketchBottom(int xOrigin, int yOrigin, int width, int height) {
-		myXOrigin = xOrigin;
-		myYOrigin = yOrigin;
+	public SketchBottom(int width, int height) {
 		myWidth = width;
 		myHeight = height;
 
 		sortedQuestions = new ConcurrentSkipListSet<QuestionData>();
 	}
 
-	public int getClusterTitleId() {
-		return clusterTitleId;
-	}
-
 	public void setup() {
-		size(myWidth, myHeight);
+		size((int) myWidth, (int) myHeight);
 
 		smooth();
 		resetNewYOrigin();
@@ -69,7 +61,7 @@ public class SketchBottom extends EmbeddedSketch {
 		qCornerRadius = 5;
 
 		// Fixed X Values (Question Rectangles)
-		qX1 = myXOrigin + questionRectXPadding;
+		qX1 = questionRectXPadding;
 		qX2 = qX1 + myWidth - 2 * questionRectXPadding;
 
 		qScoreX1 = qX1;
@@ -89,62 +81,39 @@ public class SketchBottom extends EmbeddedSketch {
 		// Mouse Wheel
 		addMouseWheelListener(new MouseWheelListener() {
 			public void mouseWheelMoved(MouseWheelEvent mwe) {
-//				updateYOrigin(newYOrigin - (mwe.getWheelRotation() * 12));
 				newYOrigin -= (mwe.getWheelRotation() * 12);
+
+				// Re-Draw...
+				loop();
 			}
 		});
 	}
 
 	public void draw() {
+
 		super.draw();
 
-		if (mousePressed) {
-			cursor(MOVE);
-			updateYOrigin(mouseY - offsetY);
-		} else {
-			cursor(ARROW);
-		}
-
 		background(255);
-		translate(0, newYOrigin);
 
 		if (sortedQuestions.size() > 0) {
+			translate(0, newYOrigin);
 			drawQuestions();
 		} else {
 			drawNoCluster();
 		}
-	}
 
-	private void resetNewYOrigin(){
-		// TODO: workaround ^^...
-		newYOrigin = -350;
-	}
-	
-	private void updateYOrigin(float nextNewYOrigin) {
-		if (nextNewYOrigin < 0) {
-			float questionsY1Distance = qHeight + questionRectYPadding;
-			if ((sortedQuestions.size() * questionsY1Distance)
-					- abs(newYOrigin) <= myHeight - 50) {
-				if (nextNewYOrigin > newYOrigin) {
-					newYOrigin = nextNewYOrigin;
-				}
-			} else {
-				newYOrigin = nextNewYOrigin;
-			}
-		} else {
-			resetNewYOrigin();
-		}
+		noLoop();
 	}
 
 	public void mouseMoved() {
-		selectedQuestionIndex = getSelectedQuestionIndex(mouseX, mouseY,
-				myXOrigin, myXOrigin + myWidth);
+		selectedQuestionIndex = getSelectedQuestionIndex(mouseX, mouseY, 0,
+				myWidth);
+
+		// Re-Draw...
+		loop();
 	}
 
 	public void mousePressed() {
-
-		// Update the Offset
-		offsetY = mouseY - newYOrigin;
 
 		// Call the Link of the STATS from StackExchange!!!
 		if (mouseEvent.getClickCount() == 2) {
@@ -160,6 +129,14 @@ public class SketchBottom extends EmbeddedSketch {
 				}
 			}
 		}
+	}
+
+	public int getClusterTitleId() {
+		return clusterTitleId;
+	}
+
+	private void resetNewYOrigin() {
+		newYOrigin = 0;
 	}
 
 	private QuestionData getQuestionByIndex(int questionIndex) {
@@ -179,7 +156,7 @@ public class SketchBottom extends EmbeddedSketch {
 			float X2) {
 		int questionIndex = -1;
 
-		float firstQuestionY1 = myYOrigin + questionRectYPadding;
+		float firstQuestionY1 = questionRectYPadding;
 		float newFirstQuestionY1 = firstQuestionY1 + newYOrigin;
 		float questionsY1Distance = qHeight + questionRectYPadding;
 
@@ -216,37 +193,55 @@ public class SketchBottom extends EmbeddedSketch {
 		sortedQuestions.clear();
 		clusterTitleId = -1;
 		selectedQuestionIndex = -1;
+
+		// Re-Draw...
+		loop();
 	}
 
 	private void drawNoCluster() {
-		String noTag = "No cluster selected...";
-		fill(150, 100);
+		String noCluster = "No cluster selected...";
+		stroke(100);
 		strokeWeight((float) 2);
+		fill(150, 100);
 		rectMode(CENTER);
-		rect(myXOrigin + myWidth / 2, myYOrigin + myHeight / 2,
-				textWidth(noTag) + 30, 30, 5, 5);
+		rect(myWidth / 2, myHeight / 2, textWidth(noCluster) + 30, 30, 5, 5);
 		fill(0);
 		textSize(myHeight / 25);
 		textAlign(CENTER, CENTER);
-		text(noTag, myXOrigin + myWidth / 2, myYOrigin + myHeight / 2);
-		textAlign(LEFT);
+		text(noCluster, myWidth / 2, myHeight / 2);
 	}
 
 	private void drawQuestions() {
 
 		// First Rectangle boundaries
-		float qY1 = myYOrigin + questionRectYPadding;
-		float qY2 = qY1 + qHeight;
+		float qY1 = 0;
+		float qY2 = 0;
 
 		strokeWeight((float) 1.5);
 
 		maxAnswerScoreOfAll = getMaxAnswerScore();
 
-		int i = 0;
+		int i = -1;
 		boolean highlightQuestion;
 		for (QuestionData qData : sortedQuestions) {
 
-			highlightQuestion = (selectedQuestionIndex == i++);
+			// Update the qY's
+			qY1 = qY2 + questionRectYPadding;
+			qY2 = qY1 + qHeight;
+			i++;
+
+			// Check if the Question is outside (before the draw area)
+			if (qY1 + newYOrigin < 0 && qY2 + newYOrigin < 0) {
+				// Performance improvement...
+				continue;
+			}
+			// Check if the Question is outside (after the draw area)
+			if (qY1 + newYOrigin > myHeight && qY2 + newYOrigin > myHeight) {
+				// This is a HUGE performance improvement!!
+				break;
+			}
+
+			highlightQuestion = (selectedQuestionIndex == i);
 
 			// DRAW score rectangle
 			drawQuestionScore(qData, qScoreX1, qY1, qScoreX2, qY2,
@@ -259,10 +254,6 @@ public class SketchBottom extends EmbeddedSketch {
 			// DRAW answers rectangle
 			drawQuestionAnswers(qData, qAnswerX1, qY1, qAnswerX2, qY2,
 					highlightQuestion);
-
-			// Update the qYOrigin
-			qY1 = qY2 + questionRectYPadding;
-			qY2 = qY1 + qHeight;
 		}
 	}
 
@@ -292,14 +283,15 @@ public class SketchBottom extends EmbeddedSketch {
 		textAlign(CENTER, CENTER);
 
 		// Draw votes
-		String voteString = (qData.getScore() == 1) ? "vote" : "votes";
+		int value = Math.round(qData.getFeatureValueByName("Score"));
+		String voteString = (value == 1) ? "vote" : "votes";
 		textSize((y2 - y1) / 4);
 		float y1Votes = y2 - (float) 2 * textAscent();
 		text(voteString, x1, y1Votes, x2, y2);
 
 		// Draw number
 		textSize((y2 - y1) / (float) 3);
-		text(String.valueOf(qData.getScore()), x1, y1, x2, y1Votes);
+		text(String.valueOf(value), x1, y1, x2, y1Votes);
 	}
 
 	private void drawQuestionTitle(QuestionData qData, float x1, float y1,
@@ -360,26 +352,15 @@ public class SketchBottom extends EmbeddedSketch {
 			for (AnswerData ans : QeAData.getQuestionIdsToAnswers().get(
 					qData.getId())) {
 
-				// The MaxScore answers has a different color...
-				if (ans.getScore() == maxScore) {
-					if (highlightQuestion) {
-						// Green Color
-						fill(59, 217, 127);
-					} else {
-						fill(59, 217, 127, 160);
-					}
+				if (highlightQuestion) {
+					fill(clusterItem.getColor(ChartItem.RED),
+							clusterItem.getColor(ChartItem.GREEN),
+							clusterItem.getColor(ChartItem.BLUE));
 				} else {
-
-					if (highlightQuestion) {
-						fill(clusterItem.getColor(ChartItem.RED),
-								clusterItem.getColor(ChartItem.GREEN),
-								clusterItem.getColor(ChartItem.BLUE));
-					} else {
-						fill(clusterItem.getColor(ChartItem.RED),
-								clusterItem.getColor(ChartItem.GREEN),
-								clusterItem.getColor(ChartItem.BLUE),
-								clusterItem.getColor(ChartItem.ALPHA));
-					}
+					fill(clusterItem.getColor(ChartItem.RED),
+							clusterItem.getColor(ChartItem.GREEN),
+							clusterItem.getColor(ChartItem.BLUE),
+							clusterItem.getColor(ChartItem.ALPHA));
 				}
 
 				// Highlight or not the Stroke

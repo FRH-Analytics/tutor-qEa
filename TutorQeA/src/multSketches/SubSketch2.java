@@ -21,8 +21,6 @@ public class SubSketch2 {
 
 	private float labelSize, yLabelXOrigin, xLabelYOrigin;
 
-	private float subtitleSize, subtitleYOrigin;
-
 	private float legendX1, legendY1;
 	private float legendX2, legendY2;
 	private float legendPadding;
@@ -56,8 +54,6 @@ public class SubSketch2 {
 	}
 
 	public void setup() {
-		mySketch.smooth();
-
 		/*
 		 * WIDTHs (based on myWidth)
 		 * 
@@ -92,10 +88,6 @@ public class SubSketch2 {
 		 * 
 		 * 15% to the x label
 		 */
-
-		// Title
-		subtitleSize = myHeight / 20;
-		subtitleYOrigin = myYOrigin + (myHeight * (float) 0.1);
 
 		// Plot
 		plotY1 = myYOrigin + (myHeight * (float) 0.05);
@@ -136,7 +128,6 @@ public class SubSketch2 {
 	public void draw() {
 
 		if (ChartData.getSize() > 0) {
-			// drawSubtitle();
 			drawAxisLabels();
 
 			// Use thin, gray lines to draw the grid
@@ -162,13 +153,6 @@ public class SubSketch2 {
 		return selectedClusterId;
 	}
 
-	public boolean isMouseOver() {
-		return (mySketch.mouseX >= myXOrigin
-				&& mySketch.mouseX <= myXOrigin + myWidth
-				&& mySketch.mouseY >= myYOrigin && mySketch.mouseY <= myYOrigin
-				+ myHeight);
-	}
-
 	public void mousePressed() {
 		if (isMouseOver() && mySketch.mouseButton == PApplet.LEFT) {
 			if (selectedClusterId != -1) {
@@ -187,6 +171,15 @@ public class SubSketch2 {
 						mySketch.mouseY);
 			}
 		}
+		// Re-Draw...
+		mySketch.loop();
+	}
+
+	private boolean isMouseOver() {
+		return (mySketch.mouseX >= myXOrigin
+				&& mySketch.mouseX <= myXOrigin + myWidth
+				&& mySketch.mouseY >= myYOrigin && mySketch.mouseY <= myYOrigin
+				+ myHeight);
 	}
 
 	private void highlightClusterAndTooltip() {
@@ -259,6 +252,8 @@ public class SubSketch2 {
 			yMin = 0;
 			yMax = 1;
 		}
+		// Re-Draw...
+		mySketch.loop();
 	}
 
 	private int getClusterInPlot(int x, int y) {
@@ -317,25 +312,6 @@ public class SubSketch2 {
 		mySketch.textAlign(PApplet.CENTER, PApplet.CENTER);
 		mySketch.text(noTag, myXOrigin + myWidth / 2, myYOrigin + myHeight / 2);
 		mySketch.textAlign(PApplet.CENTER, PApplet.CENTER);
-	}
-
-	private void drawSubtitle() {
-
-		StringBuilder tagTitle = new StringBuilder("Tags: ");
-		for (String tag : QeAData.getChosenTagNames()) {
-			tagTitle.append(tag);
-			tagTitle.append(", ");
-		}
-		String subtitle = tagTitle.toString();
-
-		if (!tagTitle.toString().equals("Tags: ")) {
-			subtitle = subtitle.substring(0, tagTitle.length() - 2);
-		}
-
-		mySketch.fill(0);
-		mySketch.textAlign(PApplet.LEFT);
-		mySketch.textSize(subtitleSize);
-		mySketch.text(subtitle, plotX1, subtitleYOrigin);
 	}
 
 	private void drawAxisLabels() {
@@ -578,14 +554,23 @@ class ChartData {
 class ChartItem implements Comparable<ChartItem> {
 	public static final int RED = 0, GREEN = 1, BLUE = 2, ALPHA = 3;
 
-	private static final int alpha = 160;
-	private static final int[][] RGBA_COLOURS = { { 141, 211, 199, alpha },
-			{ 255, 255, 179, alpha }, { 190, 186, 218, alpha },
-			{ 251, 128, 114, alpha }, { 128, 177, 211, alpha },
-			{ 253, 180, 98, alpha }, { 179, 222, 105, alpha },
-			{ 252, 205, 229, alpha }, { 217, 217, 217, alpha },
-			{ 188, 128, 189, alpha }, { 204, 235, 197, alpha },
-			{ 255, 237, 111, alpha } };
+	private static final int alpha = 255;
+	private static final int[][] RGBA_CATHEGORICAL_COLOURS = {
+			{ 141, 211, 199, alpha }, { 255, 255, 179, alpha },
+			{ 190, 186, 218, alpha }, { 251, 128, 114, alpha },
+			{ 128, 177, 211, alpha }, { 253, 180, 98, alpha },
+			{ 179, 222, 105, alpha }, { 252, 205, 229, alpha },
+			{ 217, 217, 217, alpha }, { 188, 128, 189, alpha },
+			{ 204, 235, 197, alpha }, { 255, 237, 111, alpha } };
+
+	private static final int[][] RGBA_SEQUENTIAL_COLOURS = {
+			{ 255, 255, 204, alpha },
+			// { 255, 237, 160, alpha },
+			{ 254, 217, 118, alpha },
+			// { 254, 178, 76, alpha },
+			{ 253, 141, 60, alpha }, { 252, 78, 42, alpha },
+			// { 227, 26, 28, alpha },
+			{ 177, 0, 38, alpha } };
 
 	private PVector point;
 	private float size;
@@ -610,7 +595,7 @@ class ChartItem implements Comparable<ChartItem> {
 	}
 
 	public int getColor(int component) {
-		return (RGBA_COLOURS[id - 1][component]);
+		return (RGBA_SEQUENTIAL_COLOURS[id - 1][component]);
 	}
 
 	@Override
