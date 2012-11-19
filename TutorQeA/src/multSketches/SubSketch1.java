@@ -11,27 +11,28 @@ import util.QeAData;
 import controlP5.ControlEvent;
 import controlP5.ControlP5;
 import controlP5.DropdownList;
+import controlP5.Textfield;
 
 public class SubSketch1 {
 
-	ArrayList<DropdownList> lists = new ArrayList<DropdownList>();
 	private ArrayList<Integer> selectedTags = new ArrayList<Integer>();
 	private ArrayList<String> selectedTagsNames = new ArrayList<String>();
 	private ArrayList<Integer> relatedTags = new ArrayList<Integer>();
 	private Hashtable<Integer, ArrayList<Integer>> usefulQuestions = new Hashtable<Integer, ArrayList<Integer>>();
 
 	ControlP5 cp5;
-	DropdownList d1;
+	ArrayList<DropdownList> lists = new ArrayList<DropdownList>();
+	Textfield tagSearchField;
 
+	float searchX, searchY, tagsOfInterestX, tagsOfInterestY;
 	int textFieldX, textFieldY, textFieldWidth, textFieldHeight;
-
-	int buttonX, buttonY, buttonWidth, buttonHeight;
-
 	int ddlX, ddlY, ddlWidth, ddlHeight;
 
 	int defaultFontSize;
 	int defaultFontColor;
 	PFont font;
+
+	private float highlightColor;
 
 	protected int myWidth;
 	protected int myHeight;
@@ -40,84 +41,74 @@ public class SubSketch1 {
 
 	protected EmbeddedSketch mySketch;
 
-	public SubSketch1(EmbeddedSketch parent, int xOrigin, int yOrigin, int width,
-			int height) {
+	public SubSketch1(EmbeddedSketch parent, int xOrigin, int yOrigin,
+			int width, int height) {
 		mySketch = parent;
 
 		myXOrigin = xOrigin;
 		myYOrigin = yOrigin;
 		myWidth = width;
 		myHeight = height;
-
-		textFieldX = myXOrigin + 20;
-		textFieldY = myYOrigin + 20;
-		textFieldWidth = myWidth - 50;
-		textFieldHeight = 20;
-
-		// buttonX = myXOrigin + myWidth - 70;
-		// buttonY = myYOrigin + 20;
-		// buttonWidth = 50;
-		// buttonHeight = 20;
-
-		ddlX = textFieldX;
-		ddlY = textFieldY + 100;
-		ddlWidth = 150;
-		ddlHeight = 30;
 	}
 
 	public void setup() {
+
 		defaultFontSize = 12;
-		defaultFontColor = 120;
-		font = mySketch.createFont("Helvetica", defaultFontSize - 1);
+		font = mySketch.createFont("Helvetica", defaultFontSize);
 		mySketch.textFont(font);
 
-		mySketch.noStroke();
+		searchX = myXOrigin + 20;
+		searchY = myYOrigin + 30;
+
+		tagsOfInterestX = searchX;
+		tagsOfInterestY = searchY + 30;
+
+		textFieldX = (int) (searchX + 75);
+		textFieldY = (int) searchY - 15;
+		textFieldWidth = myWidth - 250;
+		textFieldHeight = (int) (defaultFontSize * 1.75);
+
+		ddlX = myXOrigin + 20;
+		ddlY = (int) tagsOfInterestY + 30;
+		ddlWidth = 150;
+		ddlHeight = 30;
+
+		highlightColor = 200;
 
 		cp5 = new ControlP5(mySketch);
 
-		cp5.addTextfield("input").setPosition(textFieldX, textFieldY)
+		tagSearchField = cp5.addTextfield("input")
+				.setPosition(textFieldX, textFieldY)
 				.setSize(textFieldWidth, textFieldHeight).setFont(font)
 				.setFocus(true).setColor(mySketch.color(0, 0, 0))
-				.setColorBackground(mySketch.color(255, 255, 255));
-
-		cp5.addTextlabel("label1").setText("Initial Tag: ")
-				.setPosition(textFieldX, textFieldY + 20).setColor(0)
-				.setFont(mySketch.createFont("Helvetica", 20));
-
-		cp5.addTextlabel("label3").setText("Tags of interest: ")
-				.setPosition(textFieldX, textFieldY + 50).setColor(0)
-				.setFont(mySketch.createFont("Helvetica", 20));
-		// cp5.addButton("search").setValue(0).setPosition(buttonX, buttonY)
-		// .setSize(buttonWidth, buttonHeight).setColorBackground(0);
+				.setColorActive(mySketch.color(highlightColor))
+				.setColorCursor(mySketch.color(highlightColor))
+				.setColorBackground(mySketch.color(255));
 
 	}
 
 	public void draw() {
+		drawTexts();
 	}
 
-	public void mousePressed() {
-		// TODO Auto-generated method stub
-	}
-
-	public void controlEvent(ControlEvent theEvent) {
-
-		if (theEvent.isGroup()) {
-			int tagId = (int) theEvent.getValue();
-			selectedTags.add(tagId);
-			selectedTagsNames.add(QeAData.getTagDictionary().get(tagId));
-			updateUsefulQuestions(tagId);
-			createRelatedTags();
-			addDropDownList(tagId, relatedTags);
+	public void keyPressed() {
+		if (tagSearchField.isActive()) {
+			// Re-Draw...
+			mySketch.loop();
 		}
-
-		QeAData.setTagList(selectedTags, selectedTagsNames);
-
-		// SketchTop.SKETCH_2.updatePlot();
 	}
 
-	// public void search(int theValue) {
-	// clearList();
-	// }
+	private void drawTexts() {
+
+		mySketch.textSize(15);
+		mySketch.textAlign(PApplet.LEFT);
+
+		String text = "Search:";
+		mySketch.text(text, searchX, searchY);
+
+		text = "Tags of Interest:";
+		mySketch.text(text, tagsOfInterestX, tagsOfInterestY);
+	}
 
 	public void input(String theText) {
 		theText = theText.toLowerCase();
@@ -131,59 +122,69 @@ public class SubSketch1 {
 		ArrayList<String> values = new ArrayList<String>(QeAData
 				.getTagDictionary().values());
 
-		try {
-			int tagID = keys.get(values.indexOf(theText));
+		int index = values.indexOf(theText);
+		if (index >= 0) {
+			int tagID = keys.get(index);
 			selectedTags.add(tagID);
 			selectedTagsNames.add(QeAData.getTagDictionary().get(tagID));
 			updateUsefulQuestions(tagID);
+			addDropDownList(tagID, relatedTags);
 			createRelatedTags();
 			addDropDownList(tagID, relatedTags);
-			cp5.addTextlabel("label2").setText(theText.toUpperCase()).setPosition(textFieldX + 100,textFieldY + 20)
-					.setColor(0).setFont(mySketch.createFont("Helvetica", 20));
-		} catch (Exception e) {
 		}
-
 	}
 
-	private void addDropDownList(int tagID, ArrayList<Integer> newTags) {
+	public void controlEvent(ControlEvent theEvent) {
 
-		int x = ddlX + ddlWidth * (lists.size() % 3);
-		int y = ddlY + ddlHeight * (PApplet.floor(lists.size() / 3));
-
-		if (newTags.size() > 0) {
-
-			if (QeAData.getTagDictionary().containsKey(tagID)) {
-
-				PFont font2 = mySketch.createFont("Helvetica", defaultFontSize);
-				DropdownList newD = cp5
-						.addDropdownList("Select Tag " + (lists.size() + 2))
-						.setPosition(x, y).setBarHeight(20)
-						.setWidth(ddlWidth - 10).setHeight(150);
-				newD.getCaptionLabel().toUpperCase(false).setLetterSpacing(3)
-						.setFont(font2).setColor(0);
-				newD.setColorBackground(mySketch.color(200)).setColorActive(
-						mySketch.color(255, 128));
-
-				for (int tag : newTags) {
-					newD.addItem(QeAData.getTagDictionary().get(tag), tag)
-							.setColorLabel(0);
-				}
-
-				lists.add(newD);
-				try {
-					lists.get(lists.size() - 2).disableCollapse();
-				} catch (Exception e) {
-				}
-
-				relatedTags = newTags;
-			}
-		} else {
-			try {
+		if (theEvent.isGroup()) {
+			int tagId = (int) theEvent.getValue();
+			selectedTags.add(tagId);
+			selectedTagsNames.add(QeAData.getTagDictionary().get(tagId));
+			updateUsefulQuestions(tagId);
+			createRelatedTags();
+			if (relatedTags.size() > 0) {
+				// Add a new list
+				addDropDownList(tagId, relatedTags);
+			} else {
+				// Disable the last list
 				lists.get(lists.size() - 1).disableCollapse();
-			} catch (Exception e) {
 			}
 		}
-		mySketch.textFont(font);
+
+		QeAData.setTagList(selectedTags, selectedTagsNames);
+	}
+
+	private void addDropDownList(int tagId, ArrayList<Integer> newTags) {
+
+		float x = ddlX + ddlWidth * (lists.size() % 3);
+		float y = ddlY + ddlHeight * (PApplet.floor(lists.size() / 3));
+
+		// Create the new DropdownList
+		PFont font2 = mySketch.createFont("Helvetica", defaultFontSize);
+		DropdownList newD = cp5
+				.addDropdownList("Select Tag " + (lists.size() + 2))
+				.setPosition(x, y).setBarHeight(20).setWidth(ddlWidth - 10)
+				.setHeight(150).setColorBackground(mySketch.color(235))
+				.setColorForeground(mySketch.color(highlightColor))
+				.setColorLabel(0);
+		newD.getCaptionLabel().toUpperCase(false).setLetterSpacing(3)
+				.setFont(font2).setColor(0);
+
+		// Add the new tags
+		for (int tag : newTags) {
+			newD.addItem(QeAData.getTagDictionary().get(tag), tag);
+		}
+
+		// Disable the previous or this list
+		if (newTags.size() > 0) {
+			lists.get(lists.size() - 1).disableCollapse();
+		} else {
+			newD.disableCollapse();
+			newD.setLabel(QeAData.getTagDictionary().get(tagId));
+		}
+
+		// Add the list
+		lists.add(newD);
 	}
 
 	public void clearList() {
@@ -196,31 +197,30 @@ public class SubSketch1 {
 		selectedTagsNames.clear();
 	}
 
-	private void updateUsefulQuestions(Integer newTag){
+	private void updateUsefulQuestions(Integer newTag) {
 		Hashtable<Integer, ArrayList<Integer>> result = new Hashtable<Integer, ArrayList<Integer>>();
-		for(int question:QeAData.getTagToQuestions().get(newTag)){
-			if(usefulQuestions.keySet().contains(question)){
+		for (int question : QeAData.getTagToQuestions().get(newTag)) {
+			if (usefulQuestions.keySet().contains(question)) {
 				result.put(question, usefulQuestions.get(question));
 			}
 		}
 
-		usefulQuestions = result;		
+		usefulQuestions = result;
 	}
 
-	private void createRelatedTags(){
+	private void createRelatedTags() {
 		relatedTags = new ArrayList<Integer>();
-		for(int question:usefulQuestions.keySet()){
+		for (int question : usefulQuestions.keySet()) {
 			addRelatedTag(usefulQuestions.get(question));
 		}
 
 	}
 
-	private void addRelatedTag(ArrayList<Integer> tagList){
-		for(int tag:tagList){
-			if(!selectedTags.contains(tag) && !relatedTags.contains(tag)){
+	private void addRelatedTag(ArrayList<Integer> tagList) {
+		for (int tag : tagList) {
+			if (!selectedTags.contains(tag) && !relatedTags.contains(tag)) {
 				relatedTags.add(tag);
 			}
 		}
 	}
-
 }

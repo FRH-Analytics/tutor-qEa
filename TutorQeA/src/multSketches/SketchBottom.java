@@ -397,20 +397,26 @@ public class SketchBottom extends EmbeddedSketch {
 
 		// Distance
 		double dist = Math.sqrt(Math.pow(mouseX - ballXCenter, 2)
-				+ Math.pow(mouseY - ballYCenter + abs(newYOrigin), 2));
-		float tooltipX, tooltipY;
-
+				+ Math.pow(mouseY - ballYCenter - newYOrigin, 2));
+		float tooltipX, tooltipY, tooltipHeight = 40;
+		String tooltip = "";
+		
 		if (dist <= ballRadius) {
-			String tooltip = "Score: " + ans.getScore() + " - Comments: "
+			if (ans.isAccepted()){
+				tooltip += "ACCEPTED answer!\n";
+				tooltipHeight += tooltipHeight/2; 
+			}
+			
+			tooltip += "Score: " + ans.getScore() + " - Comments: "
 					+ ans.getCommentsCount() + "\n" + ans.getCreationDate();
-
+			
 			tooltipX = ballXCenter - textWidth(tooltip) / 2;
 			tooltipY = ballYCenter - rectHeight / 3;
 
 			fill(50, 100);
 			strokeWeight((float) 1);
 			rectMode(PApplet.CENTER);
-			rect(tooltipX, tooltipY, textWidth(tooltip) - 5, 40, 5, 5);
+			rect(tooltipX, tooltipY, textWidth(tooltip) - 5, tooltipHeight, 5, 5);
 			fill(255);
 			textSize(12);
 			textAlign(PApplet.CENTER, PApplet.CENTER);

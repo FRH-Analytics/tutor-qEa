@@ -181,7 +181,7 @@ public class SubSketch2 {
 				&& mySketch.mouseY >= myYOrigin && mySketch.mouseY <= myYOrigin
 				+ myHeight);
 	}
-	
+
 	private void highlightClusterAndTooltip() {
 		if (selectedClusterId != -1) {
 
@@ -566,11 +566,11 @@ class ChartItem implements Comparable<ChartItem> {
 	private static final int[][] RGBA_SEQUENTIAL_COLOURS = {
 			{ 255, 255, 204, alpha },
 			// { 255, 237, 160, alpha },
-			{ 254, 217, 118, alpha },
-			// { 254, 178, 76, alpha },
+			{ 254, 217, 118, alpha }, { 254, 178, 76, alpha },
 			{ 253, 141, 60, alpha }, { 252, 78, 42, alpha },
-			// { 227, 26, 28, alpha },
-			{ 177, 0, 38, alpha } };
+			{ 227, 26, 28, alpha }
+	// { 177, 0, 38, alpha }
+	};
 
 	private PVector point;
 	private float size;

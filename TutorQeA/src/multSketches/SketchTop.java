@@ -1,5 +1,8 @@
 package multSketches;
 
+import java.awt.event.MouseWheelEvent;
+import java.awt.event.MouseWheelListener;
+
 import org.gicentre.utils.multisketch.EmbeddedSketch;
 
 import processing.core.PApplet;
@@ -29,6 +32,14 @@ public class SketchTop extends EmbeddedSketch {
 		smooth();
 		SKETCH_1.setup();
 		SKETCH_2.setup();
+
+		// Mouse Wheel
+		addMouseWheelListener(new MouseWheelListener() {
+			public void mouseWheelMoved(MouseWheelEvent mwe) {
+				// Re-Draw...
+				loop();
+			}
+		});
 	}
 
 	@Override
@@ -38,6 +49,7 @@ public class SketchTop extends EmbeddedSketch {
 		// Draw Background
 		background(255);
 
+		SKETCH_1.draw();
 		SKETCH_2.draw();
 
 		textAlign(PApplet.LEFT);
@@ -56,6 +68,11 @@ public class SketchTop extends EmbeddedSketch {
 
 	public void mouseMoved() {
 		SKETCH_2.mouseMoved();
+	}
+
+	@Override
+	public void keyPressed() {
+		SKETCH_1.keyPressed();
 	}
 
 	/*
