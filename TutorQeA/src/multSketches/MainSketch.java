@@ -2,7 +2,6 @@ package multSketches;
 
 import java.awt.GridLayout;
 import java.io.IOException;
-import java.text.ParseException;
 
 import org.gicentre.utils.multisketch.SketchPanel;
 
@@ -21,16 +20,14 @@ public class MainSketch extends PApplet {
 			QeAData.readTagLinksFile();
 			QeAData.readTagDictionaryFile();
 			QeAData.readPostTagsFile();
-			QeAData.readQuestionsDataFile();
-			QeAData.readQuestionAnswersFile();
+			// The QuestionData and QuestionAnswers are read by demand, but
+			// after demanded the first time, they are completely stored in
+			// memory as the others.
 		} catch (IOException e) {
 			e.printStackTrace();
 			System.exit(1);
-		} catch (ParseException e) {
-			e.printStackTrace();
-			System.exit(1);
 		}
-		
+
 		size(1001, 701);
 		setLayout(new GridLayout(2, 0));
 
@@ -39,7 +36,7 @@ public class MainSketch extends PApplet {
 		add(spTop);
 		SKETCH_TOP.setIsActive(true);
 		SKETCH_TOP.setParentSketch(this);
-		
+
 		SketchPanel spBottom = new SketchPanel(this, SKETCH_BOTTOM);
 		spBottom.setBounds(0, 350, 1000, 350);
 		add(spBottom);

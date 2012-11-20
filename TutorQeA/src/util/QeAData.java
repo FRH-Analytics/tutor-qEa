@@ -16,11 +16,11 @@ import au.com.bytecode.opencsv.CSVReader;
 
 public class QeAData {
 
-	private static final String POST_TAGS_FILE = "../data/PostTags.csv";
-	private static final String QUESTIONS_DATA_FILE = "../data/QuestionData.csv";
-	private static final String QUESTION_ANSWERS_FILE = "../data/QuestionAnswers.csv";
-	private static final String TAG_LINKS_FILE = "../data/TagLinks.csv";
-	private static final String TAGS_FILE = "../data/TagsDictionary.csv";
+	private static final String POST_TAGS_FILE = "data/PostTags.csv";
+	private static final String QUESTIONS_DATA_FILE = "data/QuestionData.csv";
+	private static final String QUESTION_ANSWERS_FILE = "data/QuestionAnswers.csv";
+	private static final String TAG_LINKS_FILE = "data/TagLinks.csv";
+	private static final String TAGS_FILE = "data/TagsDictionary.csv";
 
 	// ArrayList with the chosen tags, the order expresses the intern
 	// relationship between the tags
@@ -97,7 +97,16 @@ public class QeAData {
 				}
 			}
 
-			// Define the Centroids Data
+			// READ THE QUESTION_DATA file if it was not read yet...
+			if (questionIdsToData.size() == 0) {
+				try {
+					readQuestionsDataFile();
+				} catch (IOException e) {
+					System.err.println("Error reading the QUESTION_DATA_FILE!");
+				}
+			}
+
+			// Define the Centroids Data (based on the QuestionData)
 			QuestionData questionDataTmp;
 			for (Integer qId : chosenQuestions) {
 				questionDataTmp = questionIdsToData.get(qId);
@@ -172,6 +181,36 @@ public class QeAData {
 
 	}
 
+	public static void readTagLinksFile() throws IOException {
+
+		CSVReader reader = new CSVReader(new FileReader(TAG_LINKS_FILE));
+
+		String[] nextLine = reader.readNext();
+		while ((nextLine = reader.readNext()) != null) {
+			int key = Integer.valueOf(nextLine[0]);
+			if (tagLinks.containsKey(key)) {
+				tagLinks.put(Integer.valueOf(nextLine[0]),
+						tagLinks.get(Integer.valueOf(nextLine[0])) + ","
+								+ nextLine[1]);
+			} else {
+				tagLinks.put(Integer.valueOf(nextLine[0]), nextLine[1]);
+			}
+		}
+		reader.close();
+
+	}
+
+	public static void readTagDictionaryFile() throws IOException {
+
+		CSVReader reader = new CSVReader(new FileReader(TAGS_FILE));
+
+		String[] nextLine = reader.readNext();
+		while ((nextLine = reader.readNext()) != null) {
+			tagDictionary.put(Integer.valueOf(nextLine[0]), nextLine[1]);
+		}
+		reader.close();
+	}
+
 	public static void readQuestionsDataFile() throws IOException {
 		CSVReader csvReader = new CSVReader(new FileReader(QUESTIONS_DATA_FILE));
 
@@ -215,9 +254,6 @@ public class QeAData {
 
 		DateFormat format = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
 
-		/*
-		 * FILE 1
-		 */
 		CSVReader csvReader = new CSVReader(new FileReader(
 				QUESTION_ANSWERS_FILE));
 
@@ -240,36 +276,6 @@ public class QeAData {
 					new AnswerData(answerId, score, creationDate,
 							answerCommentsCount, isAccepted));
 		}
-	}
-
-	public static void readTagLinksFile() throws IOException {
-
-		CSVReader reader = new CSVReader(new FileReader(TAG_LINKS_FILE));
-
-		String[] nextLine = reader.readNext();
-		while ((nextLine = reader.readNext()) != null) {
-			int key = Integer.valueOf(nextLine[0]);
-			if (tagLinks.containsKey(key)) {
-				tagLinks.put(Integer.valueOf(nextLine[0]),
-						tagLinks.get(Integer.valueOf(nextLine[0])) + ","
-								+ nextLine[1]);
-			} else {
-				tagLinks.put(Integer.valueOf(nextLine[0]), nextLine[1]);
-			}
-		}
-		reader.close();
-
-	}
-
-	public static void readTagDictionaryFile() throws IOException {
-
-		CSVReader reader = new CSVReader(new FileReader(TAGS_FILE));
-
-		String[] nextLine = reader.readNext();
-		while ((nextLine = reader.readNext()) != null) {
-			tagDictionary.put(Integer.valueOf(nextLine[0]), nextLine[1]);
-		}
-		reader.close();
 	}
 
 	public static Hashtable<Integer, ArrayList<Integer>> getTagToQuestions() {

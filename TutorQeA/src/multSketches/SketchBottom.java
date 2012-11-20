@@ -2,6 +2,8 @@ package multSketches;
 
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
+import java.io.IOException;
+import java.text.ParseException;
 import java.util.concurrent.ConcurrentSkipListSet;
 
 import org.gicentre.utils.multisketch.EmbeddedSketch;
@@ -117,10 +119,10 @@ public class SketchBottom extends EmbeddedSketch {
 
 		// Call the Link of the STATS from StackExchange!!!
 		if (mouseEvent.getClickCount() == 2) {
-			int selectedQuestionIndex = getSelectedQuestionIndex(mouseX,
-					mouseY, qTitleX1, qTitleX2);
-			if (selectedQuestionIndex != -1) {
-				QuestionData q = getQuestionByIndex(selectedQuestionIndex);
+			int selectedQuestion = getSelectedQuestionIndex(mouseX, mouseY,
+					qTitleX1, qTitleX2);
+			if (selectedQuestion != -1) {
+				QuestionData q = getQuestionByIndex(selectedQuestion);
 				if (q != null) {
 					link("http://stats.stackexchange.com/questions/"
 							+ q.getId());
@@ -171,14 +173,26 @@ public class SketchBottom extends EmbeddedSketch {
 
 	public void updateQuestionsByCluster(int clusterId) {
 
-		// Remove everything...
-		removeQuestionsAndCluster();
+		// READ THE QUESTION_ANSWER_FILE if it wasn't read yet...
+		if (QeAData.getQuestionIdsToAnswers().size() == 0) {
+			try {
+				QeAData.readQuestionAnswersFile();
+			} catch (IOException e) {
+				System.err.println("Error reading the QUESTION_ANSWERS_FILE!");
+			} catch (ParseException e) {
+				System.err
+						.println("Parsing error reading the QUESTION_ANSWERS_FILE!");
+			}
+		}
 
 		// Set the cluster id to the title
 		clusterTitleId = clusterId;
 
 		// Reset the newYOrigin
 		resetNewYOrigin();
+
+		// Remove everything...
+		removeQuestionsAndCluster();
 
 		// Sort the new question id based on the question data
 		for (Integer id : QeAData.getQuestionIdsByCluster(clusterId)) {
@@ -320,11 +334,35 @@ public class SketchBottom extends EmbeddedSketch {
 		textAlign(LEFT, CENTER);
 		textSize((y2 - y1) / (float) 3.2);
 		text(qData.getTitle(), x1, y1, x2, y2);
+
+		if (highlightQuestion && mouseX >= qTitleX1 && mouseX <= qTitleX2) {
+			// Tooltip with link
+			drawToolTipQuestion(qData);
+		}
+	}
+
+	private void drawToolTipQuestion(QuestionData qData) {
+
+		String tooltip = "http://stats.stackexchange.com/questions/"
+				+ qData.getId();
+
+		float tooltipX = mouseX - textWidth(tooltip) / (float)2.5;
+		float tooltipY = mouseY - 15;
+
+		fill(50, 100);
+		strokeWeight((float) 1);
+		rectMode(PApplet.CENTER);
+		rect(tooltipX, tooltipY, textWidth(tooltip)/(float)1.25, 20, 5, 5);
+		fill(255);
+		textSize(12);
+		textAlign(PApplet.CENTER, PApplet.CENTER);
+		text(tooltip, tooltipX, tooltipY);
 	}
 
 	private void drawQuestionAnswers(QuestionData qData, float x1, float y1,
 			float x2, float y2, boolean highlightQuestion) {
 		fill(255);
+		rectMode(PApplet.LEFT);
 		rect(x1, y1, x2, y2, qCornerRadius, qCornerRadius);
 
 		// DRAW CIRCLES with answers
@@ -400,23 +438,24 @@ public class SketchBottom extends EmbeddedSketch {
 				+ Math.pow(mouseY - ballYCenter - newYOrigin, 2));
 		float tooltipX, tooltipY, tooltipHeight = 40;
 		String tooltip = "";
-		
+
 		if (dist <= ballRadius) {
-			if (ans.isAccepted()){
+			if (ans.isAccepted()) {
 				tooltip += "ACCEPTED answer!\n";
-				tooltipHeight += tooltipHeight/2; 
+				tooltipHeight += tooltipHeight / 2;
 			}
-			
+
 			tooltip += "Score: " + ans.getScore() + " - Comments: "
 					+ ans.getCommentsCount() + "\n" + ans.getCreationDate();
-			
+
 			tooltipX = ballXCenter - textWidth(tooltip) / 2;
 			tooltipY = ballYCenter - rectHeight / 3;
 
 			fill(50, 100);
 			strokeWeight((float) 1);
 			rectMode(PApplet.CENTER);
-			rect(tooltipX, tooltipY, textWidth(tooltip) - 5, tooltipHeight, 5, 5);
+			rect(tooltipX, tooltipY, textWidth(tooltip) - 5, tooltipHeight, 5,
+					5);
 			fill(255);
 			textSize(12);
 			textAlign(PApplet.CENTER, PApplet.CENTER);
