@@ -1,9 +1,12 @@
 package multSketches;
 
+import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.io.IOException;
+import java.text.DecimalFormat;
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.concurrent.ConcurrentSkipListSet;
 
 import org.gicentre.utils.multisketch.EmbeddedSketch;
@@ -33,8 +36,8 @@ public class SketchBottom extends EmbeddedSketch {
 
 	private float qX1;
 	private float qX2;
-	private float qScoreX1;
-	private float qScoreX2;
+	private float qFeatureX1;
+	private float qFeatureX2;
 	private float qTitleX1;
 	private float qTitleX2;
 	private float qAnswerX1;
@@ -66,13 +69,13 @@ public class SketchBottom extends EmbeddedSketch {
 		qX1 = questionRectXPadding;
 		qX2 = qX1 + myWidth - 2 * questionRectXPadding;
 
-		qScoreX1 = qX1;
-		qScoreX2 = qScoreX1 + ((qX2 - qX1) * (float) 0.05);
+		qFeatureX1 = qX1;
+		qFeatureX2 = qFeatureX1 + ((qX2 - qX1) * (float) 0.07);
 
-		qTitleX1 = qX1 + ((qX2 - qX1) * (float) 0.06);
-		qTitleX2 = qX1 + ((qX2 - qX1) * (float) 0.5);
+		qTitleX1 = qX1 + ((qX2 - qX1) * (float) 0.08);
+		qTitleX2 = qX1 + ((qX2 - qX1) * (float) 0.52);
 
-		qAnswerX1 = qX1 + ((qX2 - qX1) * (float) 0.51);
+		qAnswerX1 = qX1 + ((qX2 - qX1) * (float) 0.53);
 		qAnswerX2 = qX1 + ((qX2 - qX1) * (float) 1);
 
 		// Set no cluster
@@ -116,9 +119,28 @@ public class SketchBottom extends EmbeddedSketch {
 	}
 
 	public void mousePressed() {
-
-		// Call the Link of the STATS from StackExchange!!!
-		if (mouseEvent.getClickCount() == 2) {
+		
+		if (mouseEvent.getClickCount() == 1) {
+			// Change the Question Order
+			int selectedQuestion = getSelectedQuestionIndex(mouseX, mouseY,
+					qFeatureX1, qFeatureX2);
+			if (selectedQuestion != -1) {
+				int newIndex = -1;
+				if (mouseEvent.getButton() == MouseEvent.BUTTON1){
+					newIndex = (QuestionData.getSortByIndex() + 1) % QuestionData.getFeatureNames().size();
+				}else{
+					if (QuestionData.getSortByIndex() != 0){
+						newIndex = (QuestionData.getSortByIndex() - 1) % QuestionData.getFeatureNames().size();						
+					}else{
+						newIndex = QuestionData.getFeatureNames().size() - 1;
+					}
+				}
+	
+				QuestionData.setSortByIndex(newIndex);
+				updateQuestionsByCluster(clusterTitleId);
+			}
+		} else if (mouseEvent.getClickCount() == 2) {
+			// Call the Link of the STATS from StackExchange!!!
 			int selectedQuestion = getSelectedQuestionIndex(mouseX, mouseY,
 					qTitleX1, qTitleX2);
 			if (selectedQuestion != -1) {
@@ -185,14 +207,14 @@ public class SketchBottom extends EmbeddedSketch {
 			}
 		}
 
+		// Remove everything...
+		removeQuestionsAndCluster();
+
 		// Set the cluster id to the title
 		clusterTitleId = clusterId;
 
 		// Reset the newYOrigin
 		resetNewYOrigin();
-
-		// Remove everything...
-		removeQuestionsAndCluster();
 
 		// Sort the new question id based on the question data
 		for (Integer id : QeAData.getQuestionIdsByCluster(clusterId)) {
@@ -258,7 +280,7 @@ public class SketchBottom extends EmbeddedSketch {
 			highlightQuestion = (selectedQuestionIndex == i);
 
 			// DRAW score rectangle
-			drawQuestionScore(qData, qScoreX1, qY1, qScoreX2, qY2,
+			drawQuestionFeatureToSort(qData, qFeatureX1, qY1, qFeatureX2, qY2,
 					highlightQuestion);
 
 			// DRAW title rectangle
@@ -284,28 +306,32 @@ public class SketchBottom extends EmbeddedSketch {
 		return maxScore;
 	}
 
-	private void drawQuestionScore(QuestionData qData, float x1, float y1,
-			float x2, float y2, boolean highlightQuestion) {
+	private void drawQuestionFeatureToSort(QuestionData qData, float x1,
+			float y1, float x2, float y2, boolean highlightQuestion) {
 		// Highlight or not the Stroke
 		stroke(150, (highlightQuestion) ? 255 : 100);
 
-		rectMode(PApplet.CORNERS);
+		// Draw Rectangle
 		fill(255);
+		rectMode(PApplet.CORNERS);
 		rect(x1, y1, x2, y2, qCornerRadius, qCornerRadius);
 
-		fill(0);
-		textAlign(CENTER, CENTER);
+		textSize((y2 - y1) / (float) 5);
 
-		// Draw votes
-		int value = Math.round(qData.getFeatureValueByName("Score"));
-		String voteString = (value == 1) ? "vote" : "votes";
-		textSize((y2 - y1) / 4);
-		float y1Votes = y2 - (float) 2 * textAscent();
-		text(voteString, x1, y1Votes, x2, y2);
+		// Draw value and name of feature
+		DecimalFormat decimalForm = new DecimalFormat("#.###");
+		double value = qData.getFeatureValueOfSortIndex();
+		String featureString = QuestionData.getFeatureNameOfSortIndex();
+		float y1Feature = y2 - (float) 2 * textAscent();
+
+		fill(0);
+
+		textAlign(PApplet.CENTER, PApplet.CENTER);
+		text(featureString, x1, y1Feature, x2, y2);
 
 		// Draw number
 		textSize((y2 - y1) / (float) 3);
-		text(String.valueOf(value), x1, y1, x2, y1Votes);
+		text(decimalForm.format(value), x1, y1, x2, y1Feature);
 	}
 
 	private void drawQuestionTitle(QuestionData qData, float x1, float y1,
@@ -331,7 +357,7 @@ public class SketchBottom extends EmbeddedSketch {
 		rect(x1, y1, x2, y2, qCornerRadius, qCornerRadius);
 
 		fill(0);
-		textAlign(LEFT, CENTER);
+		textAlign(PApplet.LEFT, PApplet.CENTER);
 		textSize((y2 - y1) / (float) 3.2);
 		text(qData.getTitle(), x1, y1, x2, y2);
 
@@ -346,13 +372,14 @@ public class SketchBottom extends EmbeddedSketch {
 		String tooltip = "http://stats.stackexchange.com/questions/"
 				+ qData.getId();
 
-		float tooltipX = mouseX - textWidth(tooltip) / (float)2.5;
-		float tooltipY = mouseY - 15;
+		float tooltipX = mouseX - textWidth(tooltip) / (float) 2.5;
+		float tooltipY = mouseY - 15 - newYOrigin;
 
 		fill(50, 100);
 		strokeWeight((float) 1);
 		rectMode(PApplet.CENTER);
-		rect(tooltipX, tooltipY, textWidth(tooltip)/(float)1.25, 20, 5, 5);
+		rect(tooltipX, tooltipY, textWidth(tooltip) / (float) 1.25, 20, 5, 5);
+
 		fill(255);
 		textSize(12);
 		textAlign(PApplet.CENTER, PApplet.CENTER);

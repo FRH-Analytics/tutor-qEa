@@ -227,6 +227,8 @@ public class QeAData {
 		names.add(nextLine[3]);
 		names.add(nextLine[4]);
 		names.add(nextLine[5]);
+		QuestionData.setFeatureNames(names);
+		QuestionData.setSortByIndex(0);
 		while ((nextLine = csvReader.readNext()) != null) {
 			questionId = Integer.valueOf(nextLine[0]);
 			title = nextLine[1];
@@ -236,7 +238,7 @@ public class QeAData {
 			values.add(Float.valueOf(nextLine[5]));
 			cluster = Integer.valueOf(nextLine[6]);
 			questionIdsToData.put(questionId, new QuestionData(questionId,
-					title, values, names, cluster));
+					title, values, cluster));
 			values.clear();
 		}
 	}
