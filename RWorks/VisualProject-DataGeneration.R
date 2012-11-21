@@ -35,10 +35,10 @@ CreateQuestionData = function(inputDir, outputDir){
     questions = read.csv(paste(inputDir,"/Questions.csv", sep = ""))
 	supervisedClustering = read.csv("../AllData/clustering/supervised.csv",sep=",")
     
-    supervisedClustering[,2:4] = round(supervisedClustering[,2:4], 5)
+    supervisedClustering[,3:5] = round(supervisedClustering[,3:5], 5)
     
     print(noquote("Selecting the question collumns..."))
-    questions.data = questions[,c("Id", "Title", "Score")]
+    questions.data = questions[,c("Id", "Title")]
     
     print(noquote("Merging with the Clustering Attribute and Cluster results..."))
     questions.data = merge(questions.data, supervisedClustering, by="Id")
@@ -101,7 +101,7 @@ print(noquote(""))
 print(noquote(">> Visual Analytics Project - Data Generation"))
 
 inputDir = "../AllData/preprocessed/"
-outputDir = "../TutorQeA/data/"
+outputDir = "../TutorQeA/src/data/"
 
 CreateTagLinks(inputDir, outputDir)
 CreateQuestionData(inputDir, outputDir)

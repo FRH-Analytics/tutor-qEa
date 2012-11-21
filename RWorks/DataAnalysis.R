@@ -169,37 +169,37 @@ CorrelationAnalysis = function(inputDir, outputDir){
 }
 
 ########## MAIN ########## 
-MainDataAnalysis = function(dir = "../AllData/preprocessed/"){
+MainDataAnalysis = function(dir = "../AllData/preprocessed/", outputDir = "output/analysis"){
     
   # 1) Runs the initial PreProcessment - Cleaning Data
   source("DataPreProcessment.R")
   MainPreProcessment()
   
   # 2) Plot the Probabilities Mass Functions
-  PMFAnalysis.Questions(inputDir = dir, outputDir = "output/", dataName = "Questions")
-  PMFAnalysis.Answers(inputDir = dir, outputDir = "output/", dataName = "Answers")
-  PMFAnalysis.Comments(inputDir = dir, comment.type = "Questions", outputDir = "output/", dataName = "Questions")
-  PMFAnalysis.Comments(inputDir = dir, comment.type = "Answers", outputDir = "output/", dataName = "Answers")
-  PMFAnalysis.Tags(inputDir = dir, outputDir = "output/", dataName = "Tags")
+  PMFAnalysis.Questions(inputDir = dir, outputDir , dataName = "Questions")
+  PMFAnalysis.Answers(inputDir = dir, outputDir, dataName = "Answers")
+  PMFAnalysis.Comments(inputDir = dir, comment.type = "Questions", outputDir, dataName = "Questions")
+  PMFAnalysis.Comments(inputDir = dir, comment.type = "Answers", outputDir, dataName = "Answers")
+  PMFAnalysis.Tags(inputDir = dir, outputDir, dataName = "Tags")
   
   # 3) Plot the Outlier Analysis Charts
-  OutlierAnalysis.Questions(inputDir = dir, outputDir = "output/", dataName = "Questions_IsCommunity")
-  OutlierAnalysis.Answers(inputDir = dir, outputDir = "output/", dataName = "Answers_IsCommunity")
-  OutlierAnalysis.Comments(inputDir = dir, comment.type = "Questions", outputDir = "output/",
+  OutlierAnalysis.Questions(inputDir = dir, outputDir, dataName = "Questions_IsCommunity")
+  OutlierAnalysis.Answers(inputDir = dir, outputDir, dataName = "Answers_IsCommunity")
+  OutlierAnalysis.Comments(inputDir = dir, comment.type = "Questions", outputDir,
                            dataName = "Questions_IsCommunity")
-  OutlierAnalysis.Comments(inputDir = dir, comment.type = "Answers", outputDir = "output/",
+  OutlierAnalysis.Comments(inputDir = dir, comment.type = "Answers", outputDir,
                            dataName = "Answers_IsCommunity")
   
   # 4) Runs the final PreProcessment - Removing the Noise and Outliers
   RemoveNoiseAndOutliers(dir)
   
   # 5) Plot the Final Probabilities Mass Functions
-  PMFAnalysis.Questions(inputDir = dir, outputDir = "output/", dataName = "Questions-Final")
-  PMFAnalysis.Answers(inputDir = dir, outputDir = "output/", dataName = "Answers-Final")
-  PMFAnalysis.Comments(inputDir = dir, comment.type = "Questions", outputDir = "output/", dataName = "Questions-Final")
-  PMFAnalysis.Comments(inputDir = dir, comment.type = "Answers", outputDir = "output/", dataName = "Answers-Final")
-  PMFAnalysis.Tags(inputDir = dir, outputDir = "output/", dataName = "Tags-Final")
+  PMFAnalysis.Questions(inputDir = dir, outputDir, dataName = "Questions-Final")
+  PMFAnalysis.Answers(inputDir = dir, outputDir, dataName = "Answers-Final")
+  PMFAnalysis.Comments(inputDir = dir, comment.type = "Questions", outputDir, dataName = "Questions-Final")
+  PMFAnalysis.Comments(inputDir = dir, comment.type = "Answers", outputDir, dataName = "Answers-Final")
+  PMFAnalysis.Tags(inputDir = dir, outputDir, dataName = "Tags-Final")
   
   # 6) Correlation Analysis
-  CorrelationAnalysis(dir, outputDir = "output/")
+  CorrelationAnalysis(dir, outputDir)
 }
