@@ -7,6 +7,9 @@ import java.util.TreeMap;
 
 import org.gicentre.utils.multisketch.EmbeddedSketch;
 
+import controlP5.ControlEvent;
+import controlP5.ControlP5;
+
 import processing.core.PApplet;
 import processing.core.PVector;
 import util.CentroidData;
@@ -18,6 +21,9 @@ public class SubSketch2 {
 	private float plotX2, plotY2;
 
 	private float xMin, xMax, yMin, yMax;
+
+	private String[] attributes = { "Score", "Dialogue", "Scope", "Empathy" };
+	private String xAttributeName = "Scope", yAttributeName = "Dialogue";
 
 	private float labelSize, yLabelXOrigin, xLabelYOrigin;
 
@@ -43,6 +49,8 @@ public class SubSketch2 {
 	protected int myYOrigin;
 
 	protected EmbeddedSketch mySketch;
+
+	private ControlP5 cp5_2;
 
 	public SubSketch2(EmbeddedSketch parent, int xOrigin, int yOrigin,
 			int width, int height) {
@@ -123,6 +131,8 @@ public class SubSketch2 {
 				* (float) 0.15;
 		minPointSize = ((plotX2 - plotX1) + (plotY2 - plotY1) / 2)
 				* (float) 0.025;
+
+		cp5_2 = new ControlP5(mySketch);
 	}
 
 	public void draw() {
@@ -182,6 +192,18 @@ public class SubSketch2 {
 				+ myHeight);
 	}
 
+	public void controlEvent(ControlEvent theEvent) {
+		if (theEvent.isGroup()) {
+			if (theEvent.getName().equals("X axis")) {
+				xAttributeName = attributes[(int) theEvent.getValue()];
+			}
+			if (theEvent.getName().equals("Y axis")) {
+				yAttributeName = attributes[(int) theEvent.getValue()];
+			}
+		}
+
+	}
+
 	private void highlightClusterAndTooltip() {
 		if (selectedClusterId != -1) {
 
@@ -236,11 +258,29 @@ public class SubSketch2 {
 		// Removes the questions and cluster of the Sketch 3
 		MainSketch.SKETCH_BOTTOM.removeQuestionsAndCluster();
 
+		float maxXValue = 0, minXValue = 1, maxYValue = 0, minYValue = 1;
+
 		// Update the plot data
 		Collection<CentroidData> centroids = QeAData.getCentroidDataList();
 		for (CentroidData centroidData : centroids) {
-			ChartData.addData(centroidData.getMeanScope(),
-					centroidData.getMeanDialogue(),
+			float centroidXValue = getMeanByAttName("x", centroidData);
+			float centroidYValue = getMeanByAttName("y", centroidData);
+
+			if (centroidXValue > maxXValue) {
+				maxXValue = centroidXValue;
+			}
+			if (centroidXValue < minXValue) {
+				minXValue = centroidXValue;
+			}
+
+			if (centroidYValue > maxYValue) {
+				maxYValue = centroidYValue;
+			}
+			if (centroidYValue < minYValue) {
+				minYValue = centroidYValue;
+			}
+
+			ChartData.addData(centroidXValue, centroidYValue,
 					centroidData.getClusterSize(), centroidData.getClusterId());
 		}
 
@@ -248,12 +288,27 @@ public class SubSketch2 {
 		if (ChartData.getSize() > 0) {
 			// Update Max and Min plot
 			xMin = 0;
-			xMax = 1;
+			xMax = (float) (maxXValue + ((maxXValue - minXValue) * 0.1));
 			yMin = 0;
-			yMax = 1;
+			yMax = (float) (maxYValue + ((maxYValue - minYValue) * 0.1));
 		}
 		// Re-Draw...
 		mySketch.loop();
+	}
+
+	private float getMeanByAttName(String axis, CentroidData centroidData) {
+		String att = axis.equals("x") ? xAttributeName : yAttributeName;
+
+		if (att.equals("Score")) {
+			return centroidData.getMeanScore();
+		} else if (att.equals("Dialogue")) {
+			return centroidData.getMeanDialogue();
+		} else if (att.equals("Scope")) {
+			return centroidData.getMeanScope();
+		} else {
+			return centroidData.getMeanEmpathy();
+		}
+
 	}
 
 	private int getClusterInPlot(int x, int y) {
@@ -324,15 +379,41 @@ public class SubSketch2 {
 
 		// X Label
 		mySketch.textAlign(PApplet.CENTER, PApplet.BOTTOM);
-		mySketch.text("Scope", (plotX1 + plotX2) / 2, xLabelYOrigin);
+		addAxisDropDownList();
+		mySketch.text(xAttributeName, (plotX1 + plotX2) / 2, xLabelYOrigin);
+		
 
 		// Y Label (with rotation)
 		mySketch.textAlign(PApplet.CENTER, PApplet.CENTER);
 		mySketch.pushMatrix();
 		mySketch.translate(yLabelXOrigin, (plotY1 + plotY2) / 2);
 		mySketch.rotate(-PApplet.PI / 2);
-		mySketch.text("Dialogue", 0, 0);
+		mySketch.text(yAttributeName, 0, 0);
 		mySketch.popMatrix();
+	}
+
+	private void addAxisDropDownList() {
+		int highlightColor = 200;
+		if (cp5_2.getGroup("X axis") == null) {
+			cp5_2.addDropdownList("X axis")
+					.setPosition(plotX2 - 10, xLabelYOrigin)
+					.addItems(attributes)
+					.setColorBackground(mySketch.color(235))
+					.setColorForeground(mySketch.color(highlightColor))
+					.setColorLabel(0)
+					.getCaptionLabel().toUpperCase(false).setLetterSpacing(3)
+					.setColor(0);
+		}
+		if (cp5_2.getGroup("Y axis") == null) {
+			cp5_2.addDropdownList("Y axis")
+					.setPosition(yLabelXOrigin, 60/*(plotY1 + plotY2) / 2*/)
+					.addItems(attributes)
+					.setColorBackground(mySketch.color(235))
+					.setColorForeground(mySketch.color(highlightColor))
+					.setColorLabel(0)
+					.getCaptionLabel().toUpperCase(false).setLetterSpacing(3)
+					.setColor(0);
+		}
 	}
 
 	private void drawXValues() {
@@ -554,7 +635,7 @@ class ChartData {
 class ChartItem implements Comparable<ChartItem> {
 	public static final int RED = 0, GREEN = 1, BLUE = 2, ALPHA = 3;
 
-	private static final int alpha = 255;
+	private static int alpha = 100;
 	private static final int[][] RGBA_CATHEGORICAL_COLOURS = {
 			{ 141, 211, 199, alpha }, { 255, 255, 179, alpha },
 			{ 190, 186, 218, alpha }, { 251, 128, 114, alpha },
@@ -595,7 +676,7 @@ class ChartItem implements Comparable<ChartItem> {
 	}
 
 	public int getColor(int component) {
-		return (RGBA_SEQUENTIAL_COLOURS[id - 1][component]);
+		return (RGBA_CATHEGORICAL_COLOURS[id - 1][component]);
 	}
 
 	@Override

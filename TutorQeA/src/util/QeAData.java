@@ -120,8 +120,9 @@ public class QeAData {
 						.addQuestion(
 								questionDataTmp.getId(),
 								questionDataTmp.getFeatureValueByName("Scope"),
-								questionDataTmp
-										.getFeatureValueByName("Dialogue"));
+								questionDataTmp.getFeatureValueByName("Dialogue"),
+								questionDataTmp.getFeatureValueByName("Empathy"),
+								questionDataTmp.getFeatureValueByName("Score"));
 			}
 		}
 	}

@@ -83,7 +83,12 @@ public class SketchTop extends EmbeddedSketch {
 	}
 
 	public void controlEvent(ControlEvent theEvent) {
-		SKETCH_1.controlEvent(theEvent);
+		if (theEvent.getName().equals("X axis") || theEvent.getName().equals("Y axis")) {
+			SKETCH_2.controlEvent(theEvent);
+
+		} else {
+			SKETCH_1.controlEvent(theEvent);
+		}
 		SKETCH_2.updatePlot();
 	}
 
