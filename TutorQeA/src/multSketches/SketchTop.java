@@ -21,8 +21,8 @@ public class SketchTop extends EmbeddedSketch {
 		myWidth = width;
 		myHeight = height;
 
-		SKETCH_1 = new SubSketch1(this, 0, 50, myWidth / 2, myHeight - 100);
-		SKETCH_2 = new SubSketch2(this, myWidth / 2, 50, myWidth / 2,
+		SKETCH_1 = new SubSketch1(this, 0, 50, myWidth / 3, myHeight - 100);
+		SKETCH_2 = new SubSketch2(this, myWidth / 3, 50, 2 * myWidth / 3,
 				myHeight - 100);
 	}
 
@@ -53,6 +53,7 @@ public class SketchTop extends EmbeddedSketch {
 		SKETCH_2.draw();
 
 		textAlign(PApplet.LEFT);
+		strokeWeight(1);
 
 		drawMainTitle();
 		drawMiddleTitle();
@@ -83,7 +84,8 @@ public class SketchTop extends EmbeddedSketch {
 	}
 
 	public void controlEvent(ControlEvent theEvent) {
-		if (theEvent.getName().equals("X axis") || theEvent.getName().equals("Y axis")) {
+		if (theEvent.getName().equals("X axis")
+				|| theEvent.getName().equals("Y axis")) {
 			SKETCH_2.controlEvent(theEvent);
 
 		} else {
@@ -122,7 +124,6 @@ public class SketchTop extends EmbeddedSketch {
 		float xAfterTitle = xBeforeTitle + titleLength;
 
 		stroke(100);
-		strokeWeight((float) 2);
 		line(2 * titlePadding, fixedY, xBeforeTitle - titlePadding, fixedY);
 		line(myWidth - 2 * titlePadding, fixedY, xAfterTitle + titlePadding,
 				fixedY);
@@ -130,7 +131,6 @@ public class SketchTop extends EmbeddedSketch {
 
 	private void drawMiddleDivision() {
 		stroke(100);
-		strokeWeight((float) 2);
-		line(myWidth / 2, 55, myWidth / 2, myHeight - 50);
+		line(myWidth / 3, 55, myWidth / 3, myHeight - 50);
 	}
 }

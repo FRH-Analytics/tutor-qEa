@@ -15,7 +15,8 @@ clustering.runKCenters = function(features, kccaFamilyName, outputDir){
                   FUN = kcca, family=kccaFamily(kccaFamilyName), multicore =T)
 }
 
-clustering.selectCentroidsNum = function(stepFlexclustObj, data, kccaFamilyName){
+clustering.selectCentroidsNum = function(stepFlexclustObj, data, kccaFamilyName, 
+                                         outputDir, dimensionName){
 
     getUserInput.intRange = function(msg, grepPattern, intRange){
         n = NA
@@ -27,7 +28,9 @@ clustering.selectCentroidsNum = function(stepFlexclustObj, data, kccaFamilyName)
     }
     
     # TODO: Create a PNG with this...
+    png(paste(outputDir, dimensionName, "-", kccaFamilyName, "-.png", sep = ""), width = 850, height = 900)
     plot(stepFlexclustObj, main = kccaFamilyName)
+    dev.off()
 
     print(noquote("Compare the Clusterings: By its distances in a X-Y scatterplot..."))
     xCol = getUserInput.intRange(paste("Select the X axis collumn (1 to ", ncol(data), "): ", sep = ""), 

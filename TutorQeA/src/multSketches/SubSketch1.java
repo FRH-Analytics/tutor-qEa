@@ -63,9 +63,9 @@ public class SubSketch1 {
 		tagsOfInterestX = searchX;
 		tagsOfInterestY = searchY + 30;
 
-		textFieldX = (int) (searchX + 75);
+		textFieldX = (int) (searchX + 65);
 		textFieldY = (int) searchY - 15;
-		textFieldWidth = myWidth - 250;
+		textFieldWidth = (int) (myWidth / (float) 1.5);
 		textFieldHeight = (int) (defaultFontSize * 1.75);
 
 		ddlX = myXOrigin + 20;
@@ -124,13 +124,16 @@ public class SubSketch1 {
 
 		int index = values.indexOf(theText);
 		if (index >= 0) {
-			int tagID = keys.get(index);
-			selectedTags.add(tagID);
-			selectedTagsNames.add(QeAData.getTagDictionary().get(tagID));
-			updateUsefulQuestions(tagID);
-			addDropDownList(tagID, relatedTags);
+			int tagId = keys.get(index);
+			selectedTags.add(tagId);
+			selectedTagsNames.add(QeAData.getTagDictionary().get(tagId));
+			updateUsefulQuestions(tagId);
+
+			addDropDownList(tagId, relatedTags);
+			disableDDL(lists.size() - 1, tagId);
+
 			createRelatedTags();
-			addDropDownList(tagID, relatedTags);
+			addDropDownList(tagId, relatedTags);
 		}
 	}
 
@@ -142,12 +145,13 @@ public class SubSketch1 {
 			selectedTagsNames.add(QeAData.getTagDictionary().get(tagId));
 			updateUsefulQuestions(tagId);
 			createRelatedTags();
+
+			// Disable the last list
+			disableDDL(lists.size() - 1, tagId);
+
 			if (relatedTags.size() > 0) {
 				// Add a new list
 				addDropDownList(tagId, relatedTags);
-			} else {
-				// Disable the last list
-				lists.get(lists.size() - 1).disableCollapse();
 			}
 		}
 
@@ -156,15 +160,16 @@ public class SubSketch1 {
 
 	private void addDropDownList(int tagId, ArrayList<Integer> newTags) {
 
-		float x = ddlX + ddlWidth * (lists.size() % 3);
-		float y = ddlY + ddlHeight * (PApplet.floor(lists.size() / 3));
+		float x = ddlX + ddlWidth + 10;
+		float y = ddlY;
 
 		// Create the new DropdownList
 		PFont font2 = mySketch.createFont("Helvetica", defaultFontSize);
 		DropdownList newD = cp5
-				.addDropdownList("Select Tag " + (lists.size() + 2))
-				.setPosition(x, y).setBarHeight(20).setWidth(ddlWidth - 10)
-				.setHeight(150).setColorBackground(mySketch.color(235))
+				.addDropdownList("Select Another Tag " + (lists.size() + 1))
+				.setLabel("Select Another Tag").setPosition(x, y)
+				.setBarHeight(20).setWidth(ddlWidth).setHeight(150)
+				.setItemHeight(13).setColorBackground(mySketch.color(235))
 				.setColorForeground(mySketch.color(highlightColor))
 				.setColorLabel(0);
 		newD.getCaptionLabel().toUpperCase(false).setLetterSpacing(3)
@@ -175,16 +180,23 @@ public class SubSketch1 {
 			newD.addItem(QeAData.getTagDictionary().get(tag), tag);
 		}
 
-		// Disable the previous or this list
-		if (newTags.size() > 0) {
-			lists.get(lists.size() - 1).disableCollapse();
-		} else {
-			newD.disableCollapse();
-			newD.setLabel(QeAData.getTagDictionary().get(tagId));
-		}
-
 		// Add the list
 		lists.add(newD);
+
+	}
+
+	private void disableDDL(int index, int tagId) {
+
+		// Set the TAG in the Tags of Interest list position
+		float newX = ddlX;
+		float newY = ddlY + ddlHeight * index;
+		lists.get(index).setPosition(newX, newY);
+
+		// Disable list
+		lists.get(index).disableCollapse();
+
+		// Set its name
+		lists.get(index).setLabel(QeAData.getTagDictionary().get(tagId));
 	}
 
 	public void clearList() {

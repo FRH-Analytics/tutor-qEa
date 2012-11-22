@@ -6,7 +6,6 @@ import java.awt.event.MouseWheelListener;
 import java.io.IOException;
 import java.text.DecimalFormat;
 import java.text.ParseException;
-import java.util.ArrayList;
 import java.util.concurrent.ConcurrentSkipListSet;
 
 import org.gicentre.utils.multisketch.EmbeddedSketch;
@@ -119,23 +118,25 @@ public class SketchBottom extends EmbeddedSketch {
 	}
 
 	public void mousePressed() {
-		
+
 		if (mouseEvent.getClickCount() == 1) {
 			// Change the Question Order
 			int selectedQuestion = getSelectedQuestionIndex(mouseX, mouseY,
 					qFeatureX1, qFeatureX2);
 			if (selectedQuestion != -1) {
 				int newIndex = -1;
-				if (mouseEvent.getButton() == MouseEvent.BUTTON1){
-					newIndex = (QuestionData.getSortByIndex() + 1) % QuestionData.getFeatureNames().size();
-				}else{
-					if (QuestionData.getSortByIndex() != 0){
-						newIndex = (QuestionData.getSortByIndex() - 1) % QuestionData.getFeatureNames().size();						
-					}else{
+				if (mouseEvent.getButton() == MouseEvent.BUTTON1) {
+					newIndex = (QuestionData.getSortByIndex() + 1)
+							% QuestionData.getFeatureNames().size();
+				} else {
+					if (QuestionData.getSortByIndex() != 0) {
+						newIndex = (QuestionData.getSortByIndex() - 1)
+								% QuestionData.getFeatureNames().size();
+					} else {
 						newIndex = QuestionData.getFeatureNames().size() - 1;
 					}
 				}
-	
+
 				QuestionData.setSortByIndex(newIndex);
 				updateQuestionsByCluster(clusterTitleId);
 			}
@@ -249,9 +250,9 @@ public class SketchBottom extends EmbeddedSketch {
 
 	private void drawQuestions() {
 
-		// First Rectangle boundaries
-		float qY1 = 0;
-		float qY2 = 0;
+		// First Rectangle boundaries (not 0 to avoid hidding the tooltips)
+		float qY1 = 20;
+		float qY2 = 20;
 
 		strokeWeight((float) 1.5);
 
@@ -358,8 +359,18 @@ public class SketchBottom extends EmbeddedSketch {
 
 		fill(0);
 		textAlign(PApplet.LEFT, PApplet.CENTER);
-		textSize((y2 - y1) / (float) 3.2);
-		text(qData.getTitle(), x1, y1, x2, y2);
+
+		// Adapt the text size to the width of the title
+		float textRectRatio = (textWidth(qData.getTitle()) * (float) 1.05)
+				/ (x2 - x1 - 6);
+
+		if (textRectRatio > 2) {
+			textSize((y2 - y1) / (float) (3.6 + textRectRatio - 1.5));
+		} else {
+			textSize((y2 - y1) / (float) (3.6));
+		}
+
+		text(qData.getTitle(), x1 + 3, y1, x2 - 3, y2);
 
 		if (highlightQuestion && mouseX >= qTitleX1 && mouseX <= qTitleX2) {
 			// Tooltip with link
@@ -380,8 +391,8 @@ public class SketchBottom extends EmbeddedSketch {
 		rectMode(PApplet.CENTER);
 		rect(tooltipX, tooltipY, textWidth(tooltip) / (float) 1.25, 20, 5, 5);
 
-		fill(255);
 		textSize(12);
+		fill(255);
 		textAlign(PApplet.CENTER, PApplet.CENTER);
 		text(tooltip, tooltipX, tooltipY);
 	}
