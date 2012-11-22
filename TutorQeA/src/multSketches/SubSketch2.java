@@ -32,6 +32,8 @@ public class SubSketch2 {
 	private float legendPadding;
 	private float legendPartitionSize;
 	private float littleClusterSize;
+	
+	private float xInPixels, yInPixels, sizeInPixels;
 
 	private static float valueDivisions = 5;
 	private float valueSize;
@@ -39,6 +41,7 @@ public class SubSketch2 {
 
 	private int maxClusterNumber;
 	private int selectedClusterId;
+	private int chosenClusterId;
 
 	private float maxPointSize;
 	private float minPointSize;
@@ -109,7 +112,10 @@ public class SubSketch2 {
 
 		// No Cluster selected
 		selectedClusterId = -1;
-
+		
+		//No Cluster chosen
+		chosenClusterId = -1;
+		
 		// Legend (starts in the top and goes to the bottom of the plot)
 		legendY1 = plotY1;
 		legendY2 = plotY2;
@@ -166,6 +172,7 @@ public class SubSketch2 {
 	public void mousePressed() {
 		if (isMouseOver() && mySketch.mouseButton == PApplet.LEFT) {
 			if (selectedClusterId != -1) {
+				chosenClusterId = selectedClusterId;
 				MainSketch.SKETCH_BOTTOM
 						.updateQuestionsByCluster(selectedClusterId);
 			}
@@ -207,31 +214,10 @@ public class SubSketch2 {
 	private void highlightClusterAndTooltip() {
 		if (selectedClusterId != -1) {
 
-			float xInPixels, yInPixels, sizeInPixels;
 			String tooltip;
-			int clusterIndex = ChartData.getIndexById(selectedClusterId);
 			ChartItem clusterItem = ChartData.getItemById(selectedClusterId);
 
-			mySketch.fill(clusterItem.getColor(ChartItem.RED),
-					clusterItem.getColor(ChartItem.GREEN),
-					clusterItem.getColor(ChartItem.BLUE));
-			mySketch.stroke(gridGrayColor / (float) 1.5);
-			mySketch.strokeWeight((float) 1.75);
-			mySketch.ellipseMode(PApplet.CENTER);
-
-			// Highlight LittleCluster (LEGEND)
-			xInPixels = getLegendLittleClusterX();
-			yInPixels = getLegendLittleClusterY(clusterIndex);
-			sizeInPixels = littleClusterSize;
-
-			mySketch.ellipse(xInPixels, yInPixels, sizeInPixels, sizeInPixels);
-
-			// Highlight Cluster (PLOT)
-			xInPixels = getPointXInPixels(clusterItem.getPoint().x);
-			yInPixels = getPointYInPixels(clusterItem.getPoint().y);
-			sizeInPixels = getPointSizeInPixels(clusterItem.getSize());
-
-			mySketch.ellipse(xInPixels, yInPixels, sizeInPixels, sizeInPixels);
+			highlight(clusterItem);
 
 			// Draw ToolTip
 			tooltip = String.valueOf((int) clusterItem.getSize())
@@ -249,6 +235,33 @@ public class SubSketch2 {
 			mySketch.text(tooltip, xInPixels + sizeInPixels / 2, yInPixels
 					- sizeInPixels / 2);
 		}
+	}
+	
+	private void highlight(ChartItem clusterItem){
+		int clusterIndex = ChartData.getIndexById(selectedClusterId);
+		
+		mySketch.fill(clusterItem.getColor(ChartItem.RED),
+				clusterItem.getColor(ChartItem.GREEN),
+				clusterItem.getColor(ChartItem.BLUE));
+		mySketch.stroke(gridGrayColor / (float) 1.5);
+		mySketch.strokeWeight((float) 1.75);
+		mySketch.ellipseMode(PApplet.CENTER);
+
+		// Highlight LittleCluster (LEGEND)
+		xInPixels = getLegendLittleClusterX();
+		yInPixels = getLegendLittleClusterY(clusterIndex);
+		sizeInPixels = littleClusterSize;
+
+		mySketch.ellipse(xInPixels, yInPixels, sizeInPixels, sizeInPixels);
+
+		// Highlight Cluster (PLOT)
+		xInPixels = getPointXInPixels(clusterItem.getPoint().x);
+		yInPixels = getPointYInPixels(clusterItem.getPoint().y);
+		sizeInPixels = getPointSizeInPixels(clusterItem.getSize());
+
+		mySketch.ellipse(xInPixels, yInPixels, sizeInPixels, sizeInPixels);
+		
+		mySketch.noStroke();
 	}
 
 	public void updatePlot() {
@@ -486,12 +499,14 @@ public class SubSketch2 {
 			size = getPointSizeInPixels(clusterItem.getSize());
 			x = getPointXInPixels(clusterItem.getPoint().x);
 			y = getPointYInPixels(clusterItem.getPoint().y);
-
+			
 			mySketch.fill(clusterItem.getColor(ChartItem.RED),
 					clusterItem.getColor(ChartItem.GREEN),
 					clusterItem.getColor(ChartItem.BLUE),
 					clusterItem.getColor(ChartItem.ALPHA));
 			mySketch.ellipse(x, y, size, size);
+			
+			if (clusterItem.getId() == chosenClusterId) highlight(clusterItem);
 		}
 	}
 
@@ -550,6 +565,8 @@ public class SubSketch2 {
 			textY = littleClusterY + (littleClusterSize / 4);
 			mySketch.fill(0);
 			mySketch.text("Cluster " + clusterIds.get(i), textX, textY);
+			
+//			if (clusterIds.get(i) == chosenClusterId) highlight(clusterItem);
 		}
 	}
 
@@ -678,7 +695,7 @@ class ChartItem implements Comparable<ChartItem> {
 	public int getColor(int component) {
 		return (RGBA_CATHEGORICAL_COLOURS[id - 1][component]);
 	}
-
+	
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj)
