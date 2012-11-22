@@ -1,4 +1,4 @@
-clustering.runKCenters = function(features, kccaFamilyName, outputDir){
+clustering.runKCenters = function(data, kccaFamilyName, outputDir){
     norm.0_1 = function(data){
         (data - min(data))/(max(data) - min(data))
     }
@@ -6,48 +6,57 @@ clustering.runKCenters = function(features, kccaFamilyName, outputDir){
         (data - mean(data))/sd(data)
     }
     
-    features2 = as.data.frame(sapply(features, norm.standardScore))
-
+    data = as.data.frame(sapply(data, norm.standardScore))
+    
     krange = 2:8
     repetitions = 10
     
-    stepFlexclust(features2, k = krange, nrep = repetitions, save.data = F,
-                  FUN = kcca, family=kccaFamily(kccaFamilyName), multicore =T)
+    stepFlexclust(data, k = krange, nrep = repetitions, save.data = F,
+                  FUN = kcca, family=kccaFamily(kccaFamilyName), multicore = F)
 }
 
-clustering.selectCentroidsNum = function(stepFlexclustObj, data, kccaFamilyName, 
-                                         outputDir, dimensionName){
-
-    getUserInput.intRange = function(msg, grepPattern, intRange){
+clustering.kCentroidsSelection = function(allClusteringObj, data, kccaFamilyName, 
+                                          outputDir, dimensionName){
+    
+    getUserInput.intRange = function(msg, startRange, endRange){
         n = NA
-        while(! n %in% intRange){
-            n <- readline(msg)
-            n <- ifelse(grepl(grepPattern,n),-1,as.integer(n))
+        while(! n %in% startRange:endRange){
+            n = readline(paste(msg,  " (", startRange," to ", endRange, "): ", sep = ""))
+            n = ifelse(grepl(paste("[^", startRange, "-", endRange, "]",sep = ""),n), NA, as.integer(n))
         }
         return(n)
     }
     
-    # TODO: Create a PNG with this...
-    png(paste(outputDir, dimensionName, "-", kccaFamilyName, "-.png", sep = ""), width = 850, height = 900)
-    plot(stepFlexclustObj, main = kccaFamilyName)
+    print(noquote(paste(kccaFamilyName, "Centroids Selection: Plotting Sum of Within distances...")))
+    png(paste(outputDir, dimensionName, "-", kccaFamilyName, "-K_SumWithins.png", sep = ""), width = 600, height = 500)
+    plot(allClusteringObj, main = kccaFamilyName)
     dev.off()
 
-    print(noquote("Compare the Clusterings: By its distances in a X-Y scatterplot..."))
-    xCol = getUserInput.intRange(paste("Select the X axis collumn (1 to ", ncol(data), "): ", sep = ""), 
-                                 paste("[^1-", ncol(data), "]",sep = ""), 1:ncol(data))
-    yCol = getUserInput.intRange(paste("Select the Y axis collumn (1 to ", ncol(data), "): ", sep = ""), 
-                                 paste("[^1-", ncol(data), "]",sep = ""), 1:ncol(data))
+    print(noquote(paste(kccaFamilyName, "Centroids Selection: Plotting the Neighborhood graph...")))
+    xCol = getUserInput.intRange("Select the X axis collumn", 1, ncol(data))
+    yCol = getUserInput.intRange("Select the Y axis collumn", 1, ncol(data))
     
-    # TODO: Create a huge PNG with this...
-    image(getModel(stepFlexclustObj, 1), data = data, which = c(xCol, yCol))
+    png(paste(outputDir, dimensionName, "-", kccaFamilyName, "-K_VoronoiCells.png", sep = ""), width = 900, height = 1200)
+    nRows = ceiling(length(allClusteringObj@k)/2)
+    par(mfrow = c(nRows,2))
+    for(i in 1:length(allClusteringObj@k)){
+        image(getModel(allClusteringObj, i), data = data, which = c(xCol, yCol), 
+              xlab = colnames(data)[xCol], ylab = colnames(data)[yCol])
+        title(paste(kccaFamilyName, "with", allClusteringObj@k[i], "Centroids"))
+    }
+    dev.off()
+    print(noquote(paste(kccaFamilyName, "Centroid Selection: Analyse the Neighborhood and Voronoi cells and...")))
+    centroidsNum = getUserInput.intRange("Select the Centroids Number", min(allClusteringObj@k), 
+                                         max(allClusteringObj@k))
+
+    print(noquote(paste(kccaFamilyName, "Centroids Selection: Plotting Barchart of selected Cluster...")))
+    png(paste(outputDir, dimensionName, "-", kccaFamilyName, "-Barchart.png", sep = ""), width = 800, height = 850)
+    plot(barchart(getModel(allClusteringObj, centroidsNum-1), data = data, 
+             main = paste("Barchart\n", kccaFamilyName, "with", centroidsNum, " Centroids")))
+    dev.off()
     
-    centroidsNum = getUserInput.intRange(paste("Select the Centroids Number (", min(stepFlexclustObj@k), 
-                                               " to ", max(stepFlexclustObj@k), "): ", sep = ""), 
-                                       paste("[^", min(stepFlexclustObj@k), "-", max(stepFlexclustObj@k), "]",sep = ""), 
-                                         min(stepFlexclustObj@k):max(stepFlexclustObj@k))
-    
-    # TODO: Create a PNG with this...
-    barchart(getModel(stepFlexclustObj, centroidsNum-1))
+    print(noquote(paste(kccaFamilyName, "Centroids Selection: DONE!")))
+    print(noquote(""))
     
     return(centroidsNum)
 }
@@ -75,21 +84,37 @@ clustering = function(preprocessedDir, clusteringDir, dimensionName,
     onlyData[,"Cluster.KMeans"] = NULL
     onlyData[,"Cluster.KMedians"] = NULL
 
-    if (! "Cluster.KMeans" %in% colnames(features)){
+    ## KMEANS
+    kmeansFile = paste(clusteringDir, tolower(dimensionName), "-Kmeans.dat", sep = "")
+    if (file.exists(kmeansFile)){
+        print(noquote("Clustering: Loading KMeans..."))
+        load(kmeansFile)
+    }else{
+        print(noquote("Clustering: Running KMeans..."))
         allKMeans = clustering.runKCenters(onlyData, kccaFamilyName="kmeans", outputDir)
-        
-        centroidNum.KMeans = clustering.selectCentroidsNum(allKMeans, onlyData, kccaFamilyName="Kmeans")
-        
-        features$Cluster.KMeans = getModel(allKMeans, centroidNum.KMeans - 1)@cluster
-    }
-    if (! "Cluster.KMedians" %in% colnames(features)){
-        allKMedians = clustering.runKCenters(onlyData, kccaFamilyName="kmedians", outputDir)
-        
-        centroidNum.KMedians = clustering.selectCentroidsNum(allKMedians, onlyData, kccaFamilyName="Kmedians")    
-        
-        features$Cluster.KMedians = getModel(allKMedians, centroidNum.KMedians - 1)@cluster
+        save(allKMeans, file = kmeansFile)
     }
     
+    centroidNum.KMeans = clustering.kCentroidsSelection(allKMeans, onlyData, kccaFamilyName="Kmeans", 
+                                                        outputDir, dimensionName)
+    features$Cluster.KMeans = getModel(allKMeans, centroidNum.KMeans - 1)@cluster
+    
+    ## KMEDIANS
+    kmediansFile = paste(clusteringDir, tolower(dimensionName), "-Kmedians.dat", sep = "")
+    if (file.exists(kmediansFile)){
+        print(noquote("Clustering: Loading KMedians..."))
+        load(kmediansFile)
+    }else{
+        print(noquote("Clustering: Running KMedians..."))
+        allKMedians = clustering.runKCenters(onlyData, kccaFamilyName="kmedians", outputDir)
+        save(allKMedians, file = kmediansFile)
+    }
+    
+    centroidNum.KMedians = clustering.kCentroidsSelection(allKMedians, onlyData, kccaFamilyName="Kmedians", 
+                                                          outputDir, dimensionName)    
+    features$Cluster.KMedians = getModel(allKMedians, centroidNum.KMedians - 1)@cluster
+    
+    ## PERSISTING Clusters in featureFile
     print(noquote("Clustering: Persisting..."))
     write.csv(features, file = featuresFile, row.names = F)
     
@@ -216,7 +241,8 @@ createFeatures.tutorQeA = function(preprocessedDir){
 MainClustering = function(){
     library(flexclust, quietly = T) 
     library(rpart, quietly=T)
-    require(doMC, quietly = T)
+    library(doMC, quietly = T)
+    library(plyr, quietly = T)
     
     if (Sys.info()["sysname"] == "Linux"){
         library(doMC)
@@ -230,7 +256,7 @@ MainClustering = function(){
     clusteringDir = "../AllData/clustering/"
     outputDir = "output/clustering/"
     
-    allKcenters = clustering(preprocessedDir, clusteringDir, dimensionName = "TutorQeA",
+    clustering(preprocessedDir, clusteringDir, dimensionName = "TutorQeA",
                              createFeaturesFunc = createFeatures.tutorQeA, outputDir)
 
     # KMEANS
@@ -245,3 +271,4 @@ MainClustering = function(){
     analyse.clustering(clusteringDir, outputDir, dimensionName = "TutorQeA", kccaFamilyName="KMedians",
                        clusterColName="Cluster.KMedians", nonFeatureCols = c(1, 6, 7))
 }
+MainClustering()
