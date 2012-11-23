@@ -125,11 +125,11 @@ public class QeAData {
 				centroidIdsToData.get(questionDataTmp.getCluster())
 						.addQuestion(
 								questionDataTmp.getId(),
-								questionDataTmp.getFeatureValueByName("Scope"),
+								questionDataTmp.getFeatureValueByName("AnswerCount"),
 								questionDataTmp
-										.getFeatureValueByName("Dialogue"),
+										.getFeatureValueByName("Debate"),
 								questionDataTmp
-										.getFeatureValueByName("Empathy"),
+										.getFeatureValueByName("Hotness"),
 								questionDataTmp.getFeatureValueByName("Score"));
 			}
 		}

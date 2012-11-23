@@ -33,15 +33,16 @@ CreateTagLinks = function(inputDir, outputDir){
 CreateQuestionData = function(inputDir, outputDir){
     print(noquote("Creating the QuestionData table (keeping only the needed collumns from Questions)..."))
     questions = read.csv(paste(inputDir,"/Questions.csv", sep = ""))
-	supervisedClustering = read.csv("../AllData/clustering/supervised.csv",sep=",")
-    
-    supervisedClustering[,3:5] = round(supervisedClustering[,3:5], 5)
+	tutorQeAClustering = read.csv("../AllData/clustering/tutorqea.csv",sep=",")
+
+    # Delete KMedians
+    tutorQeAClustering$Cluster.KMedians = NULL
     
     print(noquote("Selecting the question collumns..."))
     questions.data = questions[,c("Id", "Title")]
     
     print(noquote("Merging with the Clustering Attribute and Cluster results..."))
-    questions.data = merge(questions.data, supervisedClustering, by="Id")
+    questions.data = merge(questions.data, tutorQeAClustering, by="Id")
     colnames(questions.data)[ncol(questions.data)] = "Cluster"
     
     write.csv(questions.data, file = paste(outputDir,"/QuestionData.csv", sep = ""), row.names = F)
@@ -91,10 +92,10 @@ if (Sys.info()["sysname"] == "Linux"){
 }
 
 # Data Collect - Treatment
-source("DataAnalysis.R")
-MainDataAnalysis()
-source("Clustering.R")
-MainClustering()
+# source("DataAnalysis.R")
+# MainDataAnalysis()
+# source("Clustering.R")
+# MainClustering()
 
 # Visual Analytics Project - Data Generation
 print(noquote(""))
