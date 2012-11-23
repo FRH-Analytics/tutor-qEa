@@ -7,13 +7,11 @@ import java.util.TreeMap;
 
 import org.gicentre.utils.multisketch.EmbeddedSketch;
 
-import controlP5.ControlEvent;
-import controlP5.ControlP5;
-
 import processing.core.PApplet;
 import processing.core.PVector;
 import util.CentroidData;
 import util.QeAData;
+import controlP5.ControlP5;
 
 public class SubSketch2 {
 
@@ -53,8 +51,6 @@ public class SubSketch2 {
 	protected int myYOrigin;
 
 	protected EmbeddedSketch mySketch;
-
-	private ControlP5 cp5_2;
 
 	public SubSketch2(EmbeddedSketch parent, int xOrigin, int yOrigin,
 			int width, int height) {
@@ -145,7 +141,6 @@ public class SubSketch2 {
 		minPointSize = ((plotX2 - plotX1) + (plotY2 - plotY1) / 2)
 				* (float) 0.025;
 
-		cp5_2 = new ControlP5(mySketch);
 	}
 
 	public void draw() {
@@ -369,7 +364,7 @@ public class SubSketch2 {
 		mySketch.fill(220);
 		mySketch.rectMode(PApplet.CORNER);
 		mySketch.rect(myXOrigin + 10, myYOrigin + 10, myWidth - 20, myYOrigin
-				+ myHeight - 55, 50, 50);
+				+ myHeight - 65, 50, 50);
 		mySketch.fill(255);
 
 		mySketch.textSize(myHeight / 12);

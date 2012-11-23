@@ -105,7 +105,7 @@ hotness.function = function(question, ans){
         
         # PROBLEM 1: Some answers have been created before the question!!! 
         # (Cause: Question Merging...)
-        val = if (val <= 0){-1}else{val}
+        val = if (val <= 0){1}else{val}
         
         floor(question$Score/val)
     } else {

@@ -26,9 +26,9 @@ public class SketchTop extends EmbeddedSketch {
 		myWidth = width;
 		myHeight = height;
 
-		SKETCH_1 = new SubSketch1(this, 0, 50, myWidth / 3, myHeight - 125);
+		SKETCH_1 = new SubSketch1(this, 0, 50, myWidth / 3, myHeight - 110);
 		SKETCH_2 = new SubSketch2(this, myWidth / 3, 50, 2 * myWidth / 3,
-				myHeight - 125);
+				myHeight - 110);
 	}
 
 	@Override

@@ -86,14 +86,15 @@ public class SketchBottom extends EmbeddedSketch {
 				float qTotalHeight = sortedQuestions.size() * qHeight
 						+ (sortedQuestions.size() - 1) * questionRectYPadding;
 
+				float multRotation = 10;
 				// Does NOT permit that the questions disappear!!!
 				if (mwe.getWheelRotation() > 0) {
 					if ((newYOrigin + qTotalHeight + qHeight / 2) > myHeight) {
-						newYOrigin -= (mwe.getWheelRotation() * 12);
+						newYOrigin -= (mwe.getWheelRotation() * multRotation);
 					}
 				} else {
 					if (newYOrigin < 0) {
-						newYOrigin -= (mwe.getWheelRotation() * 12);
+						newYOrigin -= (mwe.getWheelRotation() * multRotation);
 					}
 				}
 
@@ -247,15 +248,22 @@ public class SketchBottom extends EmbeddedSketch {
 		rect(scrollBarX1, -newYOrigin, scrollBarX2 - scrollBarX1, -newYOrigin
 				+ myHeight);
 
-		// TODO: The height should be adaptable.
-		// TODO: This bar should not appear when there is no necessity.
-		fill(225);
-		rect(scrollBarX1, -newYOrigin, scrollBarX2 - scrollBarX1 - 1,
-				-newYOrigin + 10);
+		float qTotalHeight = sortedQuestions.size() * qHeight
+				+ (sortedQuestions.size() - 1) * questionRectYPadding;
+
+		float barHeight = 40;
+		float barY1 = Math.min(1, -newYOrigin
+				/ ((qTotalHeight + qHeight / 2) - myHeight));
+
+		if (qTotalHeight > myHeight) {
+			fill(225);
+			rect(scrollBarX1, -newYOrigin + barY1 * (myHeight - barHeight),
+					scrollBarX2 - scrollBarX1 - 1, barHeight);
+		}
 	}
 
 	private void drawNoCluster() {
-		 
+
 		String noCluster = "No cluster selected...";
 		noStroke();
 		fill(220);
