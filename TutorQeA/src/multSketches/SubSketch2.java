@@ -22,10 +22,11 @@ public class SubSketch2 {
 
 	private float xMin, xMax, yMin, yMax;
 
-	private String[] attributes = { "Score", "Dialogue", "Scope", "Empathy" };
 	private String xAttributeName = "Scope", yAttributeName = "Dialogue";
 
-	private float labelSize, yLabelXOrigin, xLabelYOrigin;
+	private float labelSize, labelLetterWidth, labelLetterHeight;
+	private float xLabelYOrigin, xLabelXOrigin, labelXState;
+	private float yLabelYOrigin, yLabelXOrigin, labelYState;
 
 	private float legendX1, legendY1;
 	private float legendX2, legendY2;
@@ -75,18 +76,22 @@ public class SubSketch2 {
 		 * 18% to the legend
 		 */
 
-		// Y label
-		labelSize = myWidth / 35;
-		yLabelXOrigin = myXOrigin + (myWidth * (float) 0.02); // LEFT
-
 		// X Corners of the plot
 		plotX1 = myXOrigin + (myWidth * (float) 0.12);
-		plotX2 = myXOrigin + (myWidth * (float) 0.81);
+		plotX2 = myXOrigin + (myWidth * (float) 0.65);
+
+		labelSize = myWidth / 45;
+		labelLetterWidth = 8;
+		labelLetterHeight = 10;
+
+		xLabelYOrigin = myYOrigin + myHeight;
+		xLabelXOrigin = (plotX1 + plotX2) / 2;
+		labelXState = 0;
 
 		// Legend
 		legendPadding = myWidth * (float) 0.0075;
-		legendX1 = myXOrigin + (myWidth * (float) 0.82);
-		legendX2 = myXOrigin + (myWidth * (float) 0.99);
+		legendX1 = myXOrigin + (myWidth * (float) 0.66);
+		legendX2 = myXOrigin + (myWidth * (float) 0.83);
 
 		/*
 		 * HEIGHT
@@ -105,7 +110,9 @@ public class SubSketch2 {
 		plotY2 = myYOrigin + (myHeight * (float) 0.85);
 
 		// Label
-		xLabelYOrigin = myYOrigin + (myHeight * (float) 0.99);// The bottom
+		yLabelXOrigin = myXOrigin + (myWidth * (float) 0.02); // LEFT
+		yLabelYOrigin = (plotY1 + plotY2) / 2;
+		labelYState = 0;
 
 		// FIXED NUMBER OF CLUSTER
 		maxClusterNumber = 6;
@@ -126,7 +133,7 @@ public class SubSketch2 {
 		 * Values of the plot
 		 */
 		// Value Size
-		valueSize = myWidth / 40;
+		valueSize = myWidth / 60;
 
 		gridGrayColor = 235;
 
@@ -171,6 +178,7 @@ public class SubSketch2 {
 
 	public void mousePressed() {
 		if (isMouseOver() && mySketch.mouseButton == PApplet.LEFT) {
+			changeLabel();
 			if (selectedClusterId != -1) {
 				chosenClusterId = selectedClusterId;
 				MainSketch.SKETCH_BOTTOM
@@ -197,25 +205,13 @@ public class SubSketch2 {
 				+ myHeight);
 	}
 
-	public void controlEvent(ControlEvent theEvent) {
-		if (theEvent.isGroup()) {
-			if (theEvent.getName().equals("X axis")) {
-				xAttributeName = attributes[(int) theEvent.getValue()];
-			}
-			if (theEvent.getName().equals("Y axis")) {
-				yAttributeName = attributes[(int) theEvent.getValue()];
-			}
-		}
-
-	}
-
 	private void highlightClusterAndTooltip() {
 		if (selectedClusterId != -1) {
 
 			String tooltip;
 			ChartItem clusterItem = ChartData.getItemById(selectedClusterId);
 
-			highlight(clusterItem);
+			highlight(clusterItem, selectedClusterId);
 
 			// Draw ToolTip
 			tooltip = String.valueOf((int) clusterItem.getSize())
@@ -235,7 +231,7 @@ public class SubSketch2 {
 		}
 	}
 
-	private void highlight(ChartItem clusterItem) {
+	private void highlight(ChartItem clusterItem, int clusterId) {
 		int clusterIndex = ChartData.getIndexById(selectedClusterId);
 
 		mySketch.fill(clusterItem.getColor(ChartItem.RED),
@@ -372,8 +368,8 @@ public class SubSketch2 {
 		mySketch.noStroke();
 		mySketch.fill(220);
 		mySketch.rectMode(PApplet.CORNER);
-		mySketch.rect(myXOrigin + 10, myYOrigin + 10, myWidth - 20,
-				myYOrigin + myHeight - 55, 50, 50);
+		mySketch.rect(myXOrigin + 10, myYOrigin + 10, myWidth - 20, myYOrigin
+				+ myHeight - 55, 50, 50);
 		mySketch.fill(255);
 
 		mySketch.textSize(myHeight / 12);
@@ -392,7 +388,6 @@ public class SubSketch2 {
 
 		// X Label
 		mySketch.textAlign(PApplet.CENTER, PApplet.BOTTOM);
-		addAxisDropDownList();
 		mySketch.text(xAttributeName, (plotX1 + plotX2) / 2, xLabelYOrigin);
 
 		// Y Label (with rotation)
@@ -404,30 +399,51 @@ public class SubSketch2 {
 		mySketch.popMatrix();
 	}
 
-	private void addAxisDropDownList() {
-		int highlightColor = 200;
-		if (cp5_2.getGroup("X axis") == null) {
-			cp5_2.addDropdownList("X axis")
-					.setPosition(plotX2 - 10, xLabelYOrigin)
-					.addItems(attributes)
-					.setColorBackground(mySketch.color(235))
-					.setColorForeground(mySketch.color(highlightColor))
-					.setColorLabel(0).getCaptionLabel().toUpperCase(false)
-					.setLetterSpacing(3).setColor(0);
+	private void changeLabel() {
+		int label = overLabel(mySketch.mouseX, mySketch.mouseY);
+		if (label != -1) {
+			if (label == 0) {
+				labelXState = labelXState == 3 ? 0 : labelXState + 1;
+			}
+			if (label == 1) {
+				labelYState = labelYState == 3 ? 0 : labelYState + 1;
+			}
+			updateLabels();
+			updatePlot();
 		}
-		if (cp5_2.getGroup("Y axis") == null) {
-			cp5_2.addDropdownList("Y axis").setPosition(yLabelXOrigin, 60/*
-																		 * (plotY1
-																		 * +
-																		 * plotY2
-																		 * ) / 2
-																		 */)
-					.addItems(attributes)
-					.setColorBackground(mySketch.color(235))
-					.setColorForeground(mySketch.color(highlightColor))
-					.setColorLabel(0).getCaptionLabel().toUpperCase(false)
-					.setLetterSpacing(3).setColor(0);
+	}
+
+	private void updateLabels() {
+		String[] xSequence = { "Score", "Dialogue", "Scope", "Empathy" };
+		String[] ySequence = { "Dialogue", "Scope", "Empathy", "Score" };
+
+		xAttributeName = xSequence[(int) labelXState];
+		yAttributeName = ySequence[(int) labelYState];
+	}
+
+	private int overLabel(int x, int y) {
+		int over = -1;
+		// case x
+		if (x > xLabelXOrigin - (xAttributeName.length() * labelLetterWidth)
+				/ 2
+				&& x < xLabelXOrigin
+						+ (xAttributeName.length() * labelLetterWidth) / 2
+				&& y > (xLabelYOrigin - 8) - labelLetterHeight / 2
+				&& y < (xLabelYOrigin - 8) + labelLetterHeight / 2) {
+			over = 0;
 		}
+		// case y
+		if (y > yLabelYOrigin - (yAttributeName.length() * labelLetterWidth)
+				/ 2
+				&& y < yLabelYOrigin
+						+ (yAttributeName.length() * labelLetterWidth) / 2
+				&& x > (yLabelXOrigin + 5) - labelLetterHeight / 2
+				&& x < (yLabelXOrigin + 5) + labelLetterHeight / 2) {
+			over = 1;
+		}
+
+		return over;
+
 	}
 
 	private void drawXValues() {
@@ -508,7 +524,7 @@ public class SubSketch2 {
 			mySketch.ellipse(x, y, size, size);
 
 			if (clusterItem.getId() == chosenClusterId)
-				highlight(clusterItem);
+				highlight(clusterItem, clusterItem.getId());
 		}
 	}
 
@@ -568,7 +584,8 @@ public class SubSketch2 {
 			mySketch.fill(0);
 			mySketch.text("Cluster " + clusterIds.get(i), textX, textY);
 
-			// if (clusterIds.get(i) == chosenClusterId) highlight(clusterItem);
+			if (clusterItem.getId() == chosenClusterId)
+				highlight(clusterItem, clusterItem.getId());
 		}
 	}
 
