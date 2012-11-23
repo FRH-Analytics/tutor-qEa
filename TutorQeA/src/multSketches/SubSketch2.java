@@ -11,7 +11,6 @@ import processing.core.PApplet;
 import processing.core.PVector;
 import util.CentroidData;
 import util.QeAData;
-import controlP5.ControlP5;
 
 public class SubSketch2 {
 
@@ -20,7 +19,7 @@ public class SubSketch2 {
 
 	private float xMin, xMax, yMin, yMax;
 
-	private String xAttributeName = "Scope", yAttributeName = "Dialogue";
+	private String xAttributeName = "Score", yAttributeName = "Answer Count";
 
 	private float labelSize, labelLetterWidth, labelLetterHeight;
 	private float xLabelYOrigin, xLabelXOrigin, labelXState;
@@ -28,6 +27,7 @@ public class SubSketch2 {
 
 	private float legendX1, legendY1;
 	private float legendX2, legendY2;
+	private float notesX1, notesX2;
 	private float legendPadding;
 	private float legendPartitionSize;
 	private float littleClusterSize;
@@ -44,6 +44,8 @@ public class SubSketch2 {
 
 	private float maxPointSize;
 	private float minPointSize;
+
+	private String textNote;
 
 	protected int myWidth;
 	protected int myHeight;
@@ -74,7 +76,7 @@ public class SubSketch2 {
 
 		// X Corners of the plot
 		plotX1 = myXOrigin + (myWidth * (float) 0.12);
-		plotX2 = myXOrigin + (myWidth * (float) 0.65);
+		plotX2 = myXOrigin + (myWidth * (float) 0.55);
 
 		labelSize = myWidth / 45;
 		labelLetterWidth = 8;
@@ -86,8 +88,14 @@ public class SubSketch2 {
 
 		// Legend
 		legendPadding = myWidth * (float) 0.0075;
-		legendX1 = myXOrigin + (myWidth * (float) 0.66);
-		legendX2 = myXOrigin + (myWidth * (float) 0.83);
+		legendX1 = myXOrigin + (myWidth * (float) 0.56);
+		legendX2 = myXOrigin + (myWidth * (float) 0.73);
+
+		// Notes
+		notesX1 = myXOrigin + (myWidth * (float) 0.74);
+		notesX2 = myXOrigin + (myWidth * (float) 0.99);
+
+		textNote = "";
 
 		/*
 		 * HEIGHT
@@ -160,6 +168,8 @@ public class SubSketch2 {
 			// Points
 			drawDataPoints();
 
+			drawNotes();
+
 			// Highlight Cluster (Hover query)
 			highlightClusterAndTooltip();
 		} else {
@@ -216,13 +226,15 @@ public class SubSketch2 {
 			mySketch.strokeWeight((float) 1);
 			mySketch.rectMode(PApplet.CENTER);
 			mySketch.rect(xInPixels + sizeInPixels / 2, yInPixels
-					- sizeInPixels / 2, mySketch.textWidth(tooltip) + 20, 20,
+					- sizeInPixels / 2, mySketch.textWidth(tooltip) + 30, 20,
 					5, 5);
 			mySketch.fill(255);
 			mySketch.textSize(12);
 			mySketch.textAlign(PApplet.CENTER, PApplet.CENTER);
 			mySketch.text(tooltip, xInPixels + sizeInPixels / 2, yInPixels
 					- sizeInPixels / 2);
+
+			textNote = getClusterTextNote(selectedClusterId);
 		}
 	}
 
@@ -258,7 +270,7 @@ public class SubSketch2 {
 		ChartData.removeAllData();
 
 		// Removes the questions and cluster of the Sketch 3
-		MainSketch.SKETCH_BOTTOM.removeQuestionsAndCluster();
+		// MainSketch.SKETCH_BOTTOM.removeQuestionsAndCluster();
 
 		float maxXValue = 0, minXValue = 1, maxYValue = 0, minYValue = 1;
 
@@ -289,9 +301,9 @@ public class SubSketch2 {
 		// Update the size of the Axis
 		if (ChartData.getSize() > 0) {
 			// Update Max and Min plot
-			xMin = 0;
+			xMin = minXValue;
 			xMax = (float) (maxXValue + ((maxXValue - minXValue) * 0.1));
-			yMin = 0;
+			yMin = minYValue;
 			yMax = (float) (maxYValue + ((maxYValue - minYValue) * 0.1));
 		}
 		// Re-Draw...
@@ -303,12 +315,12 @@ public class SubSketch2 {
 
 		if (att.equals("Score")) {
 			return centroidData.getMeanScore();
-		} else if (att.equals("Dialogue")) {
-			return centroidData.getMeanDialogue();
-		} else if (att.equals("Scope")) {
-			return centroidData.getMeanScope();
+		} else if (att.equals("Answer Count")) {
+			return centroidData.getMeanAnswerCount();
+		} else if (att.equals("Debate")) {
+			return centroidData.getMeanDebate();
 		} else {
-			return centroidData.getMeanEmpathy();
+			return centroidData.getMeanHotness();
 		}
 
 	}
@@ -355,6 +367,30 @@ public class SubSketch2 {
 		}
 
 		return (clusterId);
+	}
+
+	private void drawNotes() {
+
+		mySketch.fill(240);
+		mySketch.rectMode(PApplet.CORNER);
+		mySketch.rect(notesX1, myYOrigin, (notesX2 - notesX1), myHeight - 20,
+				20, 20);
+
+		String notesString = "Notes";
+		mySketch.fill(0);
+		mySketch.textSize(myHeight / 15);
+		mySketch.textAlign(PApplet.CENTER, PApplet.CENTER);
+		mySketch.text(notesString, (notesX1 + notesX2) / 2, myYOrigin + 10);
+
+		addTextNote();
+	}
+
+	private void addTextNote() {
+		mySketch.fill(0);
+		mySketch.textSize(myHeight / 17);
+		mySketch.textAlign(PApplet.LEFT);
+		mySketch.text(textNote, notesX1 + 8, myYOrigin + 30, notesX2 - notesX1
+				- 10, myHeight - myYOrigin - 15);
 	}
 
 	private void drawNoPlot() {
@@ -409,8 +445,8 @@ public class SubSketch2 {
 	}
 
 	private void updateLabels() {
-		String[] xSequence = { "Score", "Dialogue", "Scope", "Empathy" };
-		String[] ySequence = { "Dialogue", "Scope", "Empathy", "Score" };
+		String[] xSequence = { "Score", "Answer Count", "Debate", "Hotness" };
+		String[] ySequence = { "Answer Count", "Debate", "Hotness", "Score" };
 
 		xAttributeName = xSequence[(int) labelXState];
 		yAttributeName = ySequence[(int) labelYState];
@@ -450,7 +486,7 @@ public class SubSketch2 {
 		float fixedYPlace = plotY2 + mySketch.textAscent() + 5;
 		float nextXPlace = plotX1;
 
-		DecimalFormat decimalForm = new DecimalFormat("#.###");
+		DecimalFormat decimalForm = new DecimalFormat("#.##");
 		float xValue = xMin;
 
 		float xInterval = (xMax - xMin) / valueDivisions;
@@ -476,7 +512,7 @@ public class SubSketch2 {
 		float yValue = yMax;
 		float yInterval = (yMax - yMin) / valueDivisions;
 
-		DecimalFormat decimalForm = new DecimalFormat("#.###");
+		DecimalFormat decimalForm = new DecimalFormat("#.##");
 
 		while (yValue >= yMin) {
 
@@ -577,11 +613,65 @@ public class SubSketch2 {
 			textX = legendX1 + littleClusterSize + (2 * legendPadding);
 			textY = littleClusterY + (littleClusterSize / 4);
 			mySketch.fill(0);
-			mySketch.text("Cluster " + clusterIds.get(i), textX, textY);
+			mySketch.text(getClusterName(clusterIds.get(i)), textX, textY);
 
 			if (clusterItem.getId() == chosenClusterId)
 				highlight(clusterItem, clusterItem.getId());
 		}
+	}
+
+	public String getClusterName(int index) {
+		String name = "...";
+		switch (index) {
+		case (1):
+			name = "Advanced";
+			break;
+		case (2):
+			name = "FAQ";
+			break;
+		case (3):
+			name = "Zeroed...";
+			break;
+		case (4):
+			name = "Big 'n Fast";
+			break;
+		case (5):
+			name = "High Debated";
+			break;
+		case (6):
+			name = "Uninteresting";
+			break;
+		default:
+
+		}
+		return (name);
+	}
+
+	private String getClusterTextNote(int index) {
+		String note = "...";
+		switch (index) {
+		case (1):
+			note = "Questions with few answers appearing to be difficult.";
+			break;
+		case (2):
+			note = "Frequently Asked Question!";
+			break;
+		case (3):
+			note = "No up vote, no answer, no debate on average.";
+			break;
+		case (4):
+			note = "Well voted question with big and quick answers.";
+			break;
+		case (5):
+			note = "The question started an interesting debate over the questioner and the answerers.";
+			break;
+		case (6):
+			note = "Badly voted question without answers on average.";
+			break;
+		default:
+
+		}
+		return (note);
 	}
 
 	private float getLegendLittleClusterX() {

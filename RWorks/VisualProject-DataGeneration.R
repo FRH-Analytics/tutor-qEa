@@ -92,10 +92,10 @@ if (Sys.info()["sysname"] == "Linux"){
 }
 
 # Data Collect - Treatment
-# source("DataAnalysis.R")
-# MainDataAnalysis()
-# source("Clustering.R")
-# MainClustering()
+source("DataAnalysis.R")
+MainDataAnalysis()
+source("Clustering.R")
+MainClustering()
 
 # Visual Analytics Project - Data Generation
 print(noquote(""))

@@ -136,6 +136,7 @@ public class SketchTop extends EmbeddedSketch {
 
 	public void controlEvent(ControlEvent theEvent) {
 		SKETCH_1.controlEvent(theEvent);
+		MainSketch.SKETCH_BOTTOM.removeQuestionsAndCluster();
 		SKETCH_2.updatePlot();
 	}
 
@@ -154,8 +155,8 @@ public class SketchTop extends EmbeddedSketch {
 		int clusterId = MainSketch.SKETCH_TOP.SKETCH_2.getChosenClusterId();
 
 		// Header
-		String middleTitle = (clusterId == -1) ? "Questions and Answers by Cluster"
-				: "Questions and Answers - Cluster " + clusterId;
+		String middleTitle = (clusterId == -1) ? "Questions and Answers by Group"
+				: "Questions and Answers - " + SKETCH_2.getClusterName(clusterId) ;
 
 		fill(0);
 		textAlign(PApplet.CENTER, PApplet.CENTER);
@@ -178,7 +179,7 @@ public class SketchTop extends EmbeddedSketch {
 		if (clusterId != -1) {
 			featureString = QuestionData.getFeatureNameOfSortIndex();
 		} else {
-			featureString = "Feature...";
+			featureString = "Attribute...";
 		}
 		// TODO: Change to the real cluster name
 		String questionsString = "Question's Title";

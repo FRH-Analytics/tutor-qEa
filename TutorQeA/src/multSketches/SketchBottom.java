@@ -86,7 +86,7 @@ public class SketchBottom extends EmbeddedSketch {
 				float qTotalHeight = sortedQuestions.size() * qHeight
 						+ (sortedQuestions.size() - 1) * questionRectYPadding;
 
-				float multRotation = 10;
+				float multRotation = 9;
 				// Does NOT permit that the questions disappear!!!
 				if (mwe.getWheelRotation() > 0) {
 					if ((newYOrigin + qTotalHeight + qHeight / 2) > myHeight) {
@@ -348,7 +348,7 @@ public class SketchBottom extends EmbeddedSketch {
 		textSize((y2 - y1) / (float) 5);
 
 		// Draw value and name of feature
-		DecimalFormat decimalForm = new DecimalFormat("#.###");
+		DecimalFormat decimalForm = new DecimalFormat("#.##");
 		double value = qData.getFeatureValueOfSortIndex();
 		String postName = QuestionData.getFeaturePostNameOfSortIndex();
 		if (value == 1) {
