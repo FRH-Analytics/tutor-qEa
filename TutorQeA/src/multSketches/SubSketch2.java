@@ -32,7 +32,7 @@ public class SubSketch2 {
 	private float legendPadding;
 	private float legendPartitionSize;
 	private float littleClusterSize;
-	
+
 	private float xInPixels, yInPixels, sizeInPixels;
 
 	private static float valueDivisions = 5;
@@ -112,10 +112,10 @@ public class SubSketch2 {
 
 		// No Cluster selected
 		selectedClusterId = -1;
-		
-		//No Cluster chosen
+
+		// No Cluster chosen
 		chosenClusterId = -1;
-		
+
 		// Legend (starts in the top and goes to the bottom of the plot)
 		legendY1 = plotY1;
 		legendY2 = plotY2;
@@ -165,8 +165,8 @@ public class SubSketch2 {
 		}
 	}
 
-	public int getSelectedClusterId() {
-		return selectedClusterId;
+	public int getChosenClusterId() {
+		return chosenClusterId;
 	}
 
 	public void mousePressed() {
@@ -188,8 +188,6 @@ public class SubSketch2 {
 						mySketch.mouseY);
 			}
 		}
-		// Re-Draw...
-		mySketch.loop();
 	}
 
 	private boolean isMouseOver() {
@@ -236,10 +234,10 @@ public class SubSketch2 {
 					- sizeInPixels / 2);
 		}
 	}
-	
-	private void highlight(ChartItem clusterItem){
+
+	private void highlight(ChartItem clusterItem) {
 		int clusterIndex = ChartData.getIndexById(selectedClusterId);
-		
+
 		mySketch.fill(clusterItem.getColor(ChartItem.RED),
 				clusterItem.getColor(ChartItem.GREEN),
 				clusterItem.getColor(ChartItem.BLUE));
@@ -260,7 +258,7 @@ public class SubSketch2 {
 		sizeInPixels = getPointSizeInPixels(clusterItem.getSize());
 
 		mySketch.ellipse(xInPixels, yInPixels, sizeInPixels, sizeInPixels);
-		
+
 		mySketch.noStroke();
 	}
 
@@ -370,13 +368,15 @@ public class SubSketch2 {
 
 	private void drawNoPlot() {
 		String noTag = "No tag selected...";
-		mySketch.fill(150, 100);
-		mySketch.strokeWeight((float) 2);
-		mySketch.rectMode(PApplet.CENTER);
-		mySketch.rect(myXOrigin + myWidth / 2, myYOrigin + myHeight / 2,
-				mySketch.textWidth(noTag), 30, 5, 5);
-		mySketch.fill(0);
-		mySketch.textSize(myHeight / 17);
+
+		mySketch.noStroke();
+		mySketch.fill(220);
+		mySketch.rectMode(PApplet.CORNER);
+		mySketch.rect(myXOrigin + 10, myYOrigin + 10, myWidth - 20,
+				myYOrigin + myHeight - 55, 50, 50);
+		mySketch.fill(255);
+
+		mySketch.textSize(myHeight / 12);
 		mySketch.textAlign(PApplet.CENTER, PApplet.CENTER);
 		mySketch.text(noTag, myXOrigin + myWidth / 2, myYOrigin + myHeight / 2);
 		mySketch.textAlign(PApplet.CENTER, PApplet.CENTER);
@@ -394,7 +394,6 @@ public class SubSketch2 {
 		mySketch.textAlign(PApplet.CENTER, PApplet.BOTTOM);
 		addAxisDropDownList();
 		mySketch.text(xAttributeName, (plotX1 + plotX2) / 2, xLabelYOrigin);
-		
 
 		// Y Label (with rotation)
 		mySketch.textAlign(PApplet.CENTER, PApplet.CENTER);
@@ -413,19 +412,21 @@ public class SubSketch2 {
 					.addItems(attributes)
 					.setColorBackground(mySketch.color(235))
 					.setColorForeground(mySketch.color(highlightColor))
-					.setColorLabel(0)
-					.getCaptionLabel().toUpperCase(false).setLetterSpacing(3)
-					.setColor(0);
+					.setColorLabel(0).getCaptionLabel().toUpperCase(false)
+					.setLetterSpacing(3).setColor(0);
 		}
 		if (cp5_2.getGroup("Y axis") == null) {
-			cp5_2.addDropdownList("Y axis")
-					.setPosition(yLabelXOrigin, 60/*(plotY1 + plotY2) / 2*/)
+			cp5_2.addDropdownList("Y axis").setPosition(yLabelXOrigin, 60/*
+																		 * (plotY1
+																		 * +
+																		 * plotY2
+																		 * ) / 2
+																		 */)
 					.addItems(attributes)
 					.setColorBackground(mySketch.color(235))
 					.setColorForeground(mySketch.color(highlightColor))
-					.setColorLabel(0)
-					.getCaptionLabel().toUpperCase(false).setLetterSpacing(3)
-					.setColor(0);
+					.setColorLabel(0).getCaptionLabel().toUpperCase(false)
+					.setLetterSpacing(3).setColor(0);
 		}
 	}
 
@@ -499,14 +500,15 @@ public class SubSketch2 {
 			size = getPointSizeInPixels(clusterItem.getSize());
 			x = getPointXInPixels(clusterItem.getPoint().x);
 			y = getPointYInPixels(clusterItem.getPoint().y);
-			
+
 			mySketch.fill(clusterItem.getColor(ChartItem.RED),
 					clusterItem.getColor(ChartItem.GREEN),
 					clusterItem.getColor(ChartItem.BLUE),
 					clusterItem.getColor(ChartItem.ALPHA));
 			mySketch.ellipse(x, y, size, size);
-			
-			if (clusterItem.getId() == chosenClusterId) highlight(clusterItem);
+
+			if (clusterItem.getId() == chosenClusterId)
+				highlight(clusterItem);
 		}
 	}
 
@@ -565,8 +567,8 @@ public class SubSketch2 {
 			textY = littleClusterY + (littleClusterSize / 4);
 			mySketch.fill(0);
 			mySketch.text("Cluster " + clusterIds.get(i), textX, textY);
-			
-//			if (clusterIds.get(i) == chosenClusterId) highlight(clusterItem);
+
+			// if (clusterIds.get(i) == chosenClusterId) highlight(clusterItem);
 		}
 	}
 
@@ -695,7 +697,7 @@ class ChartItem implements Comparable<ChartItem> {
 	public int getColor(int component) {
 		return (RGBA_CATHEGORICAL_COLOURS[id - 1][component]);
 	}
-	
+
 	@Override
 	public boolean equals(Object obj) {
 		if (this == obj)

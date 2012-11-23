@@ -116,12 +116,20 @@ public class QeAData {
 					centroidIdsToData.put(questionDataTmp.getCluster(),
 							new CentroidData(questionDataTmp.getCluster()));
 				}
+
+				// TODO: Change this! The addQuestion will receive the
+				// questionDataTmp and will iterate over the values summing up
+				// The names are going to be the same of QuestionData and all
+				// the other classes that uses the features, should do it
+				// anonymously
 				centroidIdsToData.get(questionDataTmp.getCluster())
 						.addQuestion(
 								questionDataTmp.getId(),
 								questionDataTmp.getFeatureValueByName("Scope"),
-								questionDataTmp.getFeatureValueByName("Dialogue"),
-								questionDataTmp.getFeatureValueByName("Empathy"),
+								questionDataTmp
+										.getFeatureValueByName("Dialogue"),
+								questionDataTmp
+										.getFeatureValueByName("Empathy"),
 								questionDataTmp.getFeatureValueByName("Score"));
 			}
 		}
@@ -221,6 +229,7 @@ public class QeAData {
 
 		ArrayList<Float> values = new ArrayList<Float>();
 		ArrayList<String> names = new ArrayList<String>();
+		ArrayList<String> postNames = new ArrayList<String>();
 
 		// Reads the file header and set the names
 		String[] nextLine = csvReader.readNext();
@@ -229,7 +238,16 @@ public class QeAData {
 		names.add(nextLine[4]);
 		names.add(nextLine[5]);
 		QuestionData.setFeatureNames(names);
+		// Set the postNames (HARDCODED...)
+		postNames.add("votes");
+		postNames.add("answers");
+		postNames.add("points");
+		postNames.add("points");
+		QuestionData.setFeaturePostNames(postNames);
+		// Set the initial index of the feature to sort by 
 		QuestionData.setSortByIndex(0);
+		
+		// Read the data
 		while ((nextLine = csvReader.readNext()) != null) {
 			questionId = Integer.valueOf(nextLine[0]);
 			title = nextLine[1];

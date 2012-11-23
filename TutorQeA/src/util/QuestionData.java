@@ -6,6 +6,7 @@ public class QuestionData implements Comparable<QuestionData> {
 
 	private static ArrayList<String> featureNames;
 	private static int sortByIndex;
+	private static ArrayList<String> featurePostNames;
 
 	private int id;
 	private String title;
@@ -16,7 +17,8 @@ public class QuestionData implements Comparable<QuestionData> {
 	public QuestionData(int id, String title, ArrayList<Float> values,
 			int cluster) {
 
-		if (values.size() <= 0 || values.size() != QuestionData.featureNames.size()) {
+		if (values.size() <= 0
+				|| values.size() != QuestionData.featureNames.size()) {
 			throw new RuntimeException(
 					"The Values and Names of the features are not of the same size or are empty!");
 		}
@@ -32,6 +34,12 @@ public class QuestionData implements Comparable<QuestionData> {
 		QuestionData.featureNames = (ArrayList<String>) featureNames.clone();
 	}
 
+	@SuppressWarnings("unchecked")
+	public static void setFeaturePostNames(ArrayList<String> featurePostNames) {
+		QuestionData.featurePostNames = (ArrayList<String>) featurePostNames
+				.clone();
+	}
+
 	public static void setSortByIndex(int sortByIndex) {
 		if (sortByIndex < QuestionData.featureNames.size()) {
 			QuestionData.sortByIndex = sortByIndex;
@@ -45,10 +53,18 @@ public class QuestionData implements Comparable<QuestionData> {
 		return QuestionData.featureNames.get(sortByIndex);
 	}
 	
+	public static String getFeaturePostNameOfSortIndex() {
+		return QuestionData.featurePostNames.get(sortByIndex);
+	}
+
 	public static ArrayList<String> getFeatureNames() {
 		return QuestionData.featureNames;
 	}
 
+	public static ArrayList<String> getFeaturePostNames() {
+		return featurePostNames;
+	}
+	
 	public static int getSortByIndex() {
 		return sortByIndex;
 	}

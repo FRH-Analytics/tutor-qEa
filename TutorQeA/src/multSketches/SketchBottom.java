@@ -1,6 +1,5 @@
 package multSketches;
 
-import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.io.IOException;
@@ -26,21 +25,17 @@ public class SketchBottom extends EmbeddedSketch {
 	private float maxAnswerScoreOfAll;
 
 	private ConcurrentSkipListSet<QuestionData> sortedQuestions;
-	private int clusterTitleId;
 
 	protected float myWidth;
 	protected float myHeight;
 
 	private float newYOrigin;
 
-	private float qX1;
-	private float qX2;
-	private float qFeatureX1;
-	private float qFeatureX2;
-	private float qTitleX1;
-	private float qTitleX2;
-	private float qAnswerX1;
-	private float qAnswerX2;
+	private float qX1, qX2;
+	private float qFeatureX1, qFeatureX2;
+	private float qTitleX1, qTitleX2;
+	private float qAnswerX1, qAnswerX2;
+	private float scrollBarX1, scrollBarX2, scrollBarY1;
 
 	private int selectedQuestionIndex;
 
@@ -66,7 +61,7 @@ public class SketchBottom extends EmbeddedSketch {
 
 		// Fixed X Values (Question Rectangles)
 		qX1 = questionRectXPadding;
-		qX2 = qX1 + myWidth - 2 * questionRectXPadding;
+		qX2 = qX1 + myWidth - 3 * questionRectXPadding;
 
 		qFeatureX1 = qX1;
 		qFeatureX2 = qFeatureX1 + ((qX2 - qX1) * (float) 0.07);
@@ -77,15 +72,30 @@ public class SketchBottom extends EmbeddedSketch {
 		qAnswerX1 = qX1 + ((qX2 - qX1) * (float) 0.53);
 		qAnswerX2 = qX1 + ((qX2 - qX1) * (float) 1);
 
-		// Set no cluster
-		clusterTitleId = -1;
+		// Scroll Bar
+		scrollBarX1 = qX2 + questionRectXPadding;
+		scrollBarX2 = myWidth;
+		scrollBarY1 = 0;
 
 		selectedQuestionIndex = -1;
 
 		// Mouse Wheel
 		addMouseWheelListener(new MouseWheelListener() {
 			public void mouseWheelMoved(MouseWheelEvent mwe) {
-				newYOrigin -= (mwe.getWheelRotation() * 12);
+
+				float qTotalHeight = sortedQuestions.size() * qHeight
+						+ (sortedQuestions.size() - 1) * questionRectYPadding;
+
+				// Does NOT permit that the questions disappear!!!
+				if (mwe.getWheelRotation() > 0) {
+					if ((newYOrigin + qTotalHeight + qHeight / 2) > myHeight) {
+						newYOrigin -= (mwe.getWheelRotation() * 12);
+					}
+				} else {
+					if (newYOrigin < 0) {
+						newYOrigin -= (mwe.getWheelRotation() * 12);
+					}
+				}
 
 				// Re-Draw...
 				loop();
@@ -102,6 +112,7 @@ public class SketchBottom extends EmbeddedSketch {
 		if (sortedQuestions.size() > 0) {
 			translate(0, newYOrigin);
 			drawQuestions();
+			drawScrollBar();
 		} else {
 			drawNoCluster();
 		}
@@ -118,29 +129,7 @@ public class SketchBottom extends EmbeddedSketch {
 	}
 
 	public void mousePressed() {
-
-		if (mouseEvent.getClickCount() == 1) {
-			// Change the Question Order
-			int selectedQuestion = getSelectedQuestionIndex(mouseX, mouseY,
-					qFeatureX1, qFeatureX2);
-			if (selectedQuestion != -1) {
-				int newIndex = -1;
-				if (mouseEvent.getButton() == MouseEvent.BUTTON1) {
-					newIndex = (QuestionData.getSortByIndex() + 1)
-							% QuestionData.getFeatureNames().size();
-				} else {
-					if (QuestionData.getSortByIndex() != 0) {
-						newIndex = (QuestionData.getSortByIndex() - 1)
-								% QuestionData.getFeatureNames().size();
-					} else {
-						newIndex = QuestionData.getFeatureNames().size() - 1;
-					}
-				}
-
-				QuestionData.setSortByIndex(newIndex);
-				updateQuestionsByCluster(clusterTitleId);
-			}
-		} else if (mouseEvent.getClickCount() == 2) {
+		if (mouseEvent.getClickCount() == 2) {
 			// Call the Link of the STATS from StackExchange!!!
 			int selectedQuestion = getSelectedQuestionIndex(mouseX, mouseY,
 					qTitleX1, qTitleX2);
@@ -156,8 +145,28 @@ public class SketchBottom extends EmbeddedSketch {
 		}
 	}
 
-	public int getClusterTitleId() {
-		return clusterTitleId;
+	public float getqFeatureX1() {
+		return qFeatureX1;
+	}
+
+	public float getqFeatureX2() {
+		return qFeatureX2;
+	}
+
+	public float getqTitleX1() {
+		return qTitleX1;
+	}
+
+	public float getqTitleX2() {
+		return qTitleX2;
+	}
+
+	public float getqAnswerX1() {
+		return qAnswerX1;
+	}
+
+	public float getqAnswerX2() {
+		return qAnswerX2;
 	}
 
 	private void resetNewYOrigin() {
@@ -211,9 +220,6 @@ public class SketchBottom extends EmbeddedSketch {
 		// Remove everything...
 		removeQuestionsAndCluster();
 
-		// Set the cluster id to the title
-		clusterTitleId = clusterId;
-
 		// Reset the newYOrigin
 		resetNewYOrigin();
 
@@ -228,31 +234,45 @@ public class SketchBottom extends EmbeddedSketch {
 
 	public void removeQuestionsAndCluster() {
 		sortedQuestions.clear();
-		clusterTitleId = -1;
 		selectedQuestionIndex = -1;
 
 		// Re-Draw...
 		loop();
 	}
 
+	private void drawScrollBar() {
+		rectMode(PApplet.CORNER);
+		fill(245);
+		noStroke();
+		rect(scrollBarX1, -newYOrigin, scrollBarX2 - scrollBarX1, -newYOrigin
+				+ myHeight);
+
+		// TODO: The height should be adaptable.
+		// TODO: This bar should not appear when there is no necessity.
+		fill(225);
+		rect(scrollBarX1, -newYOrigin, scrollBarX2 - scrollBarX1 - 1,
+				-newYOrigin + 10);
+	}
+
 	private void drawNoCluster() {
+		 
 		String noCluster = "No cluster selected...";
-		stroke(100);
-		strokeWeight((float) 2);
-		fill(150, 100);
-		rectMode(CENTER);
-		rect(myWidth / 2, myHeight / 2, textWidth(noCluster) + 30, 30, 5, 5);
-		fill(0);
-		textSize(myHeight / 25);
-		textAlign(CENTER, CENTER);
+		noStroke();
+		fill(220);
+		rectMode(PApplet.CORNER);
+		rect(10, 0, myWidth - 20, myHeight - 10, 50, 50);
+		fill(255);
+		textSize(myHeight / 20);
+		textAlign(PApplet.CENTER, PApplet.CENTER);
 		text(noCluster, myWidth / 2, myHeight / 2);
+
 	}
 
 	private void drawQuestions() {
 
 		// First Rectangle boundaries (not 0 to avoid hidding the tooltips)
-		float qY1 = 20;
-		float qY2 = 20;
+		float qY1 = 0;
+		float qY2 = 0;
 
 		strokeWeight((float) 1.5);
 
@@ -322,13 +342,16 @@ public class SketchBottom extends EmbeddedSketch {
 		// Draw value and name of feature
 		DecimalFormat decimalForm = new DecimalFormat("#.###");
 		double value = qData.getFeatureValueOfSortIndex();
-		String featureString = QuestionData.getFeatureNameOfSortIndex();
+		String postName = QuestionData.getFeaturePostNameOfSortIndex();
+		if (value == 1) {
+			postName = postName.substring(0, postName.length() - 2);
+		}
 		float y1Feature = y2 - (float) 2 * textAscent();
 
 		fill(0);
 
 		textAlign(PApplet.CENTER, PApplet.CENTER);
-		text(featureString, x1, y1Feature, x2, y2);
+		text(postName, x1, y1Feature, x2, y2);
 
 		// Draw number
 		textSize((y2 - y1) / (float) 3);

@@ -70,8 +70,8 @@ public class SubSketch1 {
 
 		ddlX = myXOrigin + 20;
 		ddlY = (int) tagsOfInterestY + 30;
-		ddlWidth = 150;
-		ddlHeight = 30;
+		ddlWidth = 140;
+		ddlHeight = 25;
 
 		highlightColor = 200;
 
@@ -100,8 +100,9 @@ public class SubSketch1 {
 
 	private void drawTexts() {
 
-		mySketch.textSize(15);
+		mySketch.fill(0);
 		mySketch.textAlign(PApplet.LEFT);
+		mySketch.textSize(15);
 
 		String text = "Search:";
 		mySketch.text(text, searchX, searchY);

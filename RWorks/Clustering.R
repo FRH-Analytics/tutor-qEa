@@ -228,10 +228,6 @@ createFeatures.tutorQeA = function(preprocessedDir){
                           AnswerCount = questions$AnswerCount)
     features = merge(features, question.features, by = "Id")
     
-    # Normalize the new Features between 0 and 1
-    features$Debate = (features$Debate - min(features$Debate))/(max(features$Debate) - min(features$Debate))
-    features$Hotness = (features$Hotness - min(features$Hotness))/(max(features$Hotness) - min(features$Hotness))
-    
     return(features)
 }
 
