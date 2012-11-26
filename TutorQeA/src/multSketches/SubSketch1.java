@@ -107,6 +107,7 @@ public class SubSketch1 {
 		String text = "Search:";
 		mySketch.text(text, searchX, searchY);
 
+		mySketch.textSize(12);
 		text = "Tags of Interest:";
 		mySketch.text(text, tagsOfInterestX, tagsOfInterestY);
 	}

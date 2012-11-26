@@ -11,19 +11,22 @@ import processing.core.PApplet;
 import processing.core.PVector;
 import util.CentroidData;
 import util.QeAData;
+import util.QuestionData;
 
 public class SubSketch2 {
+
+	private static final int X_AXIS = 0;
+	private static final int Y_AXIS = 1;
 
 	private float plotX1, plotY1;
 	private float plotX2, plotY2;
 
 	private float xMin, xMax, yMin, yMax;
 
-	private String xAttributeName = "Score", yAttributeName = "Answer Count";
+	private int xAttributeIndex, yAttributeIndex;
 
-	private float labelSize, labelLetterWidth, labelLetterHeight;
-	private float xLabelYOrigin, xLabelXOrigin, labelXState;
-	private float yLabelYOrigin, yLabelXOrigin, labelYState;
+	private float labelSize;
+	private float xLabelYOrigin, yLabelXOrigin;
 
 	private float legendX1, legendY1;
 	private float legendX2, legendY2;
@@ -39,8 +42,8 @@ public class SubSketch2 {
 	private float gridGrayColor;
 
 	private int maxClusterNumber;
-	private int selectedClusterId;
-	private int chosenClusterId;
+	private int mouseOverClusterId;
+	private int clickedClusterId;
 
 	private float maxPointSize;
 	private float minPointSize;
@@ -64,68 +67,39 @@ public class SubSketch2 {
 	}
 
 	public void setup() {
-		/*
-		 * WIDTHs (based on myWidth)
-		 * 
-		 * 12% to the y label + y values
-		 * 
-		 * 70% to the plot
-		 * 
-		 * 18% to the legend
-		 */
 
 		// X Corners of the plot
-		plotX1 = myXOrigin + (myWidth * (float) 0.12);
+		plotX1 = myXOrigin + (myWidth * (float) 0.08);
 		plotX2 = myXOrigin + (myWidth * (float) 0.55);
-
-		labelSize = myWidth / 45;
-		labelLetterWidth = 8;
-		labelLetterHeight = 10;
-
-		xLabelYOrigin = myYOrigin + myHeight;
-		xLabelXOrigin = (plotX1 + plotX2) / 2;
-		labelXState = 0;
 
 		// Legend
 		legendPadding = myWidth * (float) 0.0075;
 		legendX1 = myXOrigin + (myWidth * (float) 0.56);
-		legendX2 = myXOrigin + (myWidth * (float) 0.73);
+		legendX2 = myXOrigin + (myWidth * (float) 0.70);
 
 		// Notes
-		notesX1 = myXOrigin + (myWidth * (float) 0.74);
-		notesX2 = myXOrigin + (myWidth * (float) 0.99);
+		notesX1 = myXOrigin + (myWidth * (float) 0.73);
+		notesX2 = myXOrigin + (myWidth * (float) 0.98);
 
 		textNote = "";
 
-		/*
-		 * HEIGHT
-		 * 
-		 * 7.5% -> title
-		 * 
-		 * 5% -> subtitle
-		 * 
-		 * 70% -> plot
-		 * 
-		 * 15% to the x label
-		 */
-
 		// Plot
 		plotY1 = myYOrigin + (myHeight * (float) 0.05);
-		plotY2 = myYOrigin + (myHeight * (float) 0.85);
+		plotY2 = myYOrigin + (myHeight * (float) 0.83);
 
 		// Label
-		yLabelXOrigin = myXOrigin + (myWidth * (float) 0.02); // LEFT
-		yLabelYOrigin = (plotY1 + plotY2) / 2;
-		labelYState = 0;
+		labelSize = myWidth / 57;
+		xLabelYOrigin = myYOrigin + (myHeight * (float) 0.95);
+		yLabelXOrigin = myXOrigin + (myWidth * (float) 0.00);
 
 		// FIXED NUMBER OF CLUSTER
 		maxClusterNumber = 6;
 
 		// No Cluster selected
-		selectedClusterId = -1;
+		mouseOverClusterId = -1;
 
 		// No Cluster chosen
-		chosenClusterId = -1;
+		clickedClusterId = -1;
 
 		// Legend (starts in the top and goes to the bottom of the plot)
 		legendY1 = plotY1;
@@ -137,7 +111,7 @@ public class SubSketch2 {
 		 * Values of the plot
 		 */
 		// Value Size
-		valueSize = myWidth / 60;
+		valueSize = myWidth / 63;
 
 		gridGrayColor = 235;
 
@@ -159,6 +133,8 @@ public class SubSketch2 {
 			// Use thin, gray lines to draw the grid
 			mySketch.stroke(gridGrayColor);
 			mySketch.strokeWeight((float) 1);
+
+			// Draw Values by axis
 			drawXValues();
 			drawYValues();
 
@@ -168,36 +144,51 @@ public class SubSketch2 {
 			// Points
 			drawDataPoints();
 
+			// Notes
 			drawNotes();
 
 			// Highlight Cluster (Hover query)
-			highlightClusterAndTooltip();
+			clusterHighlights();
+
+			// Draw Axis Label Tooltips
+			drawTooltipAxis();
+
 		} else {
 			drawNoPlot();
 		}
 	}
 
-	public int getChosenClusterId() {
-		return chosenClusterId;
+	private void clusterHighlights() {
+		if (clickedClusterId != -1) {
+			highlightCluster(clickedClusterId);
+		}
+		if (mouseOverClusterId != -1) {
+			highlightAndTooltipCluster(mouseOverClusterId);
+		}
+	}
+
+	public int getClickedClusterId() {
+		return clickedClusterId;
 	}
 
 	public void mousePressed() {
 		if (isMouseOver() && mySketch.mouseButton == PApplet.LEFT) {
 			changeLabel();
-			if (selectedClusterId != -1) {
-				chosenClusterId = selectedClusterId;
+			clickedClusterId = mouseOverClusterId;
+
+			if (mouseOverClusterId != -1) {
 				MainSketch.SKETCH_BOTTOM
-						.updateQuestionsByCluster(selectedClusterId);
+						.updateQuestionsByCluster(mouseOverClusterId);
 			}
 		}
 	}
 
 	public void mouseMoved() {
 		if (isMouseOver()) {
-			selectedClusterId = getClusterInLegend(mySketch.mouseX,
+			mouseOverClusterId = getClusterInLegend(mySketch.mouseX,
 					mySketch.mouseY);
-			if (selectedClusterId == -1) {
-				selectedClusterId = getClusterInPlot(mySketch.mouseX,
+			if (mouseOverClusterId == -1) {
+				mouseOverClusterId = getClusterInPlot(mySketch.mouseX,
 						mySketch.mouseY);
 			}
 		}
@@ -210,37 +201,31 @@ public class SubSketch2 {
 				+ myHeight);
 	}
 
-	private void highlightClusterAndTooltip() {
-		if (selectedClusterId != -1) {
+	private void highlightAndTooltipCluster(int clusterId) {
+		String tooltip;
+		ChartItem clusterItem = ChartData.getItemById(clusterId);
 
-			String tooltip;
-			ChartItem clusterItem = ChartData.getItemById(selectedClusterId);
+		highlightCluster(clusterId);
 
-			highlight(clusterItem, selectedClusterId);
+		// Draw ToolTip
+		tooltip = String.valueOf((int) clusterItem.getSize()) + " question(s)";
 
-			// Draw ToolTip
-			tooltip = String.valueOf((int) clusterItem.getSize())
-					+ " question(s)";
+		mySketch.fill(50, 100);
+		mySketch.strokeWeight((float) 1);
+		mySketch.rectMode(PApplet.CENTER);
+		mySketch.rect(xInPixels + sizeInPixels / 2, yInPixels - sizeInPixels
+				/ 2, mySketch.textWidth(tooltip) + 30, 20, 5, 5);
+		mySketch.fill(255);
+		mySketch.textSize(12);
+		mySketch.textAlign(PApplet.CENTER, PApplet.CENTER);
+		mySketch.text(tooltip, xInPixels + sizeInPixels / 2, yInPixels
+				- sizeInPixels / 2);
 
-			mySketch.fill(50, 100);
-			mySketch.strokeWeight((float) 1);
-			mySketch.rectMode(PApplet.CENTER);
-			mySketch.rect(xInPixels + sizeInPixels / 2, yInPixels
-					- sizeInPixels / 2, mySketch.textWidth(tooltip) + 30, 20,
-					5, 5);
-			mySketch.fill(255);
-			mySketch.textSize(12);
-			mySketch.textAlign(PApplet.CENTER, PApplet.CENTER);
-			mySketch.text(tooltip, xInPixels + sizeInPixels / 2, yInPixels
-					- sizeInPixels / 2);
-
-			textNote = getClusterTextNote(selectedClusterId);
-		}
+		textNote = getClusterTextNote(clusterId);
 	}
 
-	private void highlight(ChartItem clusterItem, int clusterId) {
-		int clusterIndex = ChartData.getIndexById(selectedClusterId);
-
+	private void highlightCluster(int clusterId) {
+		ChartItem clusterItem = ChartData.getItemById(clusterId);
 		mySketch.fill(clusterItem.getColor(ChartItem.RED),
 				clusterItem.getColor(ChartItem.GREEN),
 				clusterItem.getColor(ChartItem.BLUE));
@@ -250,7 +235,7 @@ public class SubSketch2 {
 
 		// Highlight LittleCluster (LEGEND)
 		xInPixels = getLegendLittleClusterX();
-		yInPixels = getLegendLittleClusterY(clusterIndex);
+		yInPixels = getLegendLittleClusterY(ChartData.getIndexById(clusterId));
 		sizeInPixels = littleClusterSize;
 
 		mySketch.ellipse(xInPixels, yInPixels, sizeInPixels, sizeInPixels);
@@ -265,64 +250,108 @@ public class SubSketch2 {
 		mySketch.noStroke();
 	}
 
+	private void drawTooltipAxis() {
+		int isOverLabel = isOverWhichLabel(mySketch.mouseX, mySketch.mouseY);
+		if (isOverLabel != -1) {
+			String tooltip = "Click to change the\naxis attribute";
+
+			float tooltipX = mySketch.mouseX + 35;
+			float tooltipY = mySketch.mouseY - 35;
+
+			mySketch.fill(35, 100);
+			mySketch.strokeWeight((float) 1);
+			mySketch.rectMode(PApplet.CENTER);
+			mySketch.rect(tooltipX, tooltipY, mySketch.textWidth(tooltip), 40,
+					5, 5);
+
+			mySketch.textSize(12);
+			mySketch.textLeading(15);
+			mySketch.fill(255);
+			mySketch.textAlign(PApplet.CENTER, PApplet.CENTER);
+			mySketch.text(tooltip, tooltipX, tooltipY);
+		}
+	}
+
+	private void changeLabel() {
+		int label = isOverWhichLabel(mySketch.mouseX, mySketch.mouseY);
+		if (label != -1) {
+			if (label == X_AXIS) {
+				xAttributeIndex++;
+				xAttributeIndex %= QuestionData.getFeatureNames().size();
+			}
+			if (label == Y_AXIS) {
+				yAttributeIndex++;
+				yAttributeIndex %= QuestionData.getFeatureNames().size();
+			}
+
+			updatePlot();
+		}
+	}
+
+	private int isOverWhichLabel(int x, int y) {
+		int over;
+
+		String xAttributeName = QuestionData.getFeatureNames().get(
+				xAttributeIndex);
+		String yAttributeName = QuestionData.getFeatureNames().get(
+				yAttributeIndex);
+
+		if (x > (plotX1 + plotX2) / 2 - mySketch.textWidth(xAttributeName) / 2
+				&& x < (plotX1 + plotX2) / 2
+						+ mySketch.textWidth(xAttributeName) / 2
+				&& y > (xLabelYOrigin - labelSize / 2)
+				&& y < (xLabelYOrigin + labelSize / 2)) {
+			over = X_AXIS;
+
+		} else if (x > (yLabelXOrigin - labelSize / 2)
+				&& x < (yLabelXOrigin + labelSize / 2)
+				&& y > (plotY1 + plotY2) / 2
+						- mySketch.textWidth(yAttributeName) / 2
+				&& y < (plotY1 + plotY2) / 2
+						+ mySketch.textWidth(yAttributeName) / 2) {
+			over = Y_AXIS;
+
+		} else {
+			over = -1;
+		}
+
+		return over;
+	}
+
 	public void updatePlot() {
 		// Removes the plot data
 		ChartData.removeAllData();
 
-		// Removes the questions and cluster of the Sketch 3
-		// MainSketch.SKETCH_BOTTOM.removeQuestionsAndCluster();
-
-		float maxXValue = 0, minXValue = 1, maxYValue = 0, minYValue = 1;
+		// Remove the clusters selection and click
+		clickedClusterId = -1;
+		mouseOverClusterId = -1;
 
 		// Update the plot data
 		Collection<CentroidData> centroids = QeAData.getCentroidDataList();
 		for (CentroidData centroidData : centroids) {
-			float centroidXValue = getMeanByAttName("x", centroidData);
-			float centroidYValue = getMeanByAttName("y", centroidData);
-
-			if (centroidXValue > maxXValue) {
-				maxXValue = centroidXValue;
-			}
-			if (centroidXValue < minXValue) {
-				minXValue = centroidXValue;
-			}
-
-			if (centroidYValue > maxYValue) {
-				maxYValue = centroidYValue;
-			}
-			if (centroidYValue < minYValue) {
-				minYValue = centroidYValue;
-			}
-
-			ChartData.addData(centroidXValue, centroidYValue,
+			ChartData.addData(centroidData.getMeanByIndex(xAttributeIndex),
+					centroidData.getMeanByIndex(yAttributeIndex),
 					centroidData.getClusterSize(), centroidData.getClusterId());
 		}
 
 		// Update the size of the Axis
 		if (ChartData.getSize() > 0) {
 			// Update Max and Min plot
-			xMin = minXValue;
-			xMax = (float) (maxXValue + ((maxXValue - minXValue) * 0.1));
-			yMin = minYValue;
-			yMax = (float) (maxYValue + ((maxYValue - minYValue) * 0.1));
+			float precisionDiff = (float) 0.0001;
+			float diffX = (ChartData.maxX - ChartData.minX > precisionDiff) ? (ChartData.maxX - ChartData.minX)
+					* (float) 0.1
+					: 1;
+			float diffY = (ChartData.maxY - ChartData.minY > precisionDiff) ? (ChartData.maxY - ChartData.minY)
+					* (float) 0.1
+					: 1;
+
+			xMin = ChartData.minX;
+			xMax = ChartData.maxX + diffX;
+			yMin = ChartData.minY;
+			yMax = ChartData.maxY + diffY;
 		}
 		// Re-Draw...
 		mySketch.loop();
-	}
-
-	private float getMeanByAttName(String axis, CentroidData centroidData) {
-		String att = axis.equals("x") ? xAttributeName : yAttributeName;
-
-		if (att.equals("Score")) {
-			return centroidData.getMeanScore();
-		} else if (att.equals("Answer Count")) {
-			return centroidData.getMeanAnswerCount();
-		} else if (att.equals("Debate")) {
-			return centroidData.getMeanDebate();
-		} else {
-			return centroidData.getMeanHotness();
-		}
-
 	}
 
 	private int getClusterInPlot(int x, int y) {
@@ -411,70 +440,21 @@ public class SubSketch2 {
 
 	private void drawAxisLabels() {
 		mySketch.fill(0);
-		mySketch.textSize(labelSize);
-
-		// Space in pixels between lines (depends on the size of the
-		// mySketch.text)
-		mySketch.textLeading(labelSize * (float) 1.25);
 
 		// X Label
-		mySketch.textAlign(PApplet.CENTER, PApplet.BOTTOM);
-		mySketch.text(xAttributeName, (plotX1 + plotX2) / 2, xLabelYOrigin);
+		mySketch.textSize(labelSize);
+		mySketch.textAlign(PApplet.CENTER, PApplet.CENTER);
+		mySketch.text(QuestionData.getFeatureNames().get(xAttributeIndex),
+				(plotX1 + plotX2) / 2, xLabelYOrigin);
 
 		// Y Label (with rotation)
+		mySketch.textSize(labelSize);
 		mySketch.textAlign(PApplet.CENTER, PApplet.CENTER);
 		mySketch.pushMatrix();
 		mySketch.translate(yLabelXOrigin, (plotY1 + plotY2) / 2);
 		mySketch.rotate(-PApplet.PI / 2);
-		mySketch.text(yAttributeName, 0, 0);
+		mySketch.text(QuestionData.getFeatureNames().get(yAttributeIndex), 0, 0);
 		mySketch.popMatrix();
-	}
-
-	private void changeLabel() {
-		int label = overLabel(mySketch.mouseX, mySketch.mouseY);
-		if (label != -1) {
-			if (label == 0) {
-				labelXState = labelXState == 3 ? 0 : labelXState + 1;
-			}
-			if (label == 1) {
-				labelYState = labelYState == 3 ? 0 : labelYState + 1;
-			}
-			updateLabels();
-			updatePlot();
-		}
-	}
-
-	private void updateLabels() {
-		String[] xSequence = { "Score", "Answer Count", "Debate", "Hotness" };
-		String[] ySequence = { "Answer Count", "Debate", "Hotness", "Score" };
-
-		xAttributeName = xSequence[(int) labelXState];
-		yAttributeName = ySequence[(int) labelYState];
-	}
-
-	private int overLabel(int x, int y) {
-		int over = -1;
-		// case x
-		if (x > xLabelXOrigin - (xAttributeName.length() * labelLetterWidth)
-				/ 2
-				&& x < xLabelXOrigin
-						+ (xAttributeName.length() * labelLetterWidth) / 2
-				&& y > (xLabelYOrigin - 8) - labelLetterHeight / 2
-				&& y < (xLabelYOrigin - 8) + labelLetterHeight / 2) {
-			over = 0;
-		}
-		// case y
-		if (y > yLabelYOrigin - (yAttributeName.length() * labelLetterWidth)
-				/ 2
-				&& y < yLabelYOrigin
-						+ (yAttributeName.length() * labelLetterWidth) / 2
-				&& x > (yLabelXOrigin + 5) - labelLetterHeight / 2
-				&& x < (yLabelXOrigin + 5) + labelLetterHeight / 2) {
-			over = 1;
-		}
-
-		return over;
-
 	}
 
 	private void drawXValues() {
@@ -483,7 +463,7 @@ public class SubSketch2 {
 		mySketch.textAlign(PApplet.CENTER);
 
 		float xSize = plotX2 - plotX1;
-		float fixedYPlace = plotY2 + mySketch.textAscent() + 5;
+		float fixedYPlace = plotY2 + mySketch.textAscent();
 		float nextXPlace = plotX1;
 
 		DecimalFormat decimalForm = new DecimalFormat("#.##");
@@ -491,7 +471,7 @@ public class SubSketch2 {
 
 		float xInterval = (xMax - xMin) / valueDivisions;
 
-		while (xValue <= xMax) {
+		for (int i = 0; i < valueDivisions + 1; i++) {
 			mySketch.text(decimalForm.format(xValue), nextXPlace, fixedYPlace);
 			mySketch.line(nextXPlace, plotY1, nextXPlace, plotY2);
 
@@ -507,20 +487,20 @@ public class SubSketch2 {
 
 		float ySize = plotY2 - plotY1;
 		float nextYPlace = plotY1;
-		float fixedXPlace = plotX1 - 10;
+		float fixedXPlace = plotX1 - 5;
 
 		float yValue = yMax;
 		float yInterval = (yMax - yMin) / valueDivisions;
 
-		DecimalFormat decimalForm = new DecimalFormat("#.##");
+		DecimalFormat decimalForm = new DecimalFormat("#.#");
 
-		while (yValue >= yMin) {
+		for (int i = 0; i < valueDivisions + 1; i++) {
 
 			float textOffset = mySketch.textAscent() / 2; // PApplet.CENTER
 															// vertically
-			if (yValue == yMin) {
+			if (i == valueDivisions) {
 				textOffset = 0; // Align by the bottom
-			} else if (yValue == yMax) {
+			} else if (i == 0) {
 				textOffset = mySketch.textAscent(); // Align by the top
 			}
 			mySketch.text(decimalForm.format(yValue), fixedXPlace, nextYPlace
@@ -554,8 +534,6 @@ public class SubSketch2 {
 					clusterItem.getColor(ChartItem.ALPHA));
 			mySketch.ellipse(x, y, size, size);
 
-			if (clusterItem.getId() == chosenClusterId)
-				highlight(clusterItem, clusterItem.getId());
 		}
 	}
 
@@ -615,8 +593,6 @@ public class SubSketch2 {
 			mySketch.fill(0);
 			mySketch.text(getClusterName(clusterIds.get(i)), textX, textY);
 
-			if (clusterItem.getId() == chosenClusterId)
-				highlight(clusterItem, clusterItem.getId());
 		}
 	}
 
@@ -758,21 +734,12 @@ class ChartItem implements Comparable<ChartItem> {
 
 	private static int alpha = 100;
 	private static final int[][] RGBA_CATHEGORICAL_COLOURS = {
-			{ 141, 211, 199, alpha }, { 255, 255, 179, alpha },
-			{ 190, 186, 218, alpha }, { 251, 128, 114, alpha },
-			{ 128, 177, 211, alpha }, { 253, 180, 98, alpha },
-			{ 179, 222, 105, alpha }, { 252, 205, 229, alpha },
-			{ 217, 217, 217, alpha }, { 188, 128, 189, alpha },
-			{ 204, 235, 197, alpha }, { 255, 237, 111, alpha } };
-
-	private static final int[][] RGBA_SEQUENTIAL_COLOURS = {
-			{ 255, 255, 204, alpha },
-			// { 255, 237, 160, alpha },
-			{ 254, 217, 118, alpha }, { 254, 178, 76, alpha },
-			{ 253, 141, 60, alpha }, { 252, 78, 42, alpha },
-			{ 227, 26, 28, alpha }
-	// { 177, 0, 38, alpha }
-	};
+			{ 141, 211, 199, alpha }, { 190, 186, 218, alpha },
+			{ 251, 128, 114, alpha }, { 128, 177, 211, alpha },
+			{ 253, 180, 98, alpha }, { 179, 222, 105, alpha },
+			{ 252, 205, 229, alpha }, { 217, 217, 217, alpha },
+			{ 188, 128, 189, alpha }, { 204, 235, 197, alpha },
+			{ 255, 255, 179, alpha }, { 255, 237, 111, alpha } };
 
 	private PVector point;
 	private float size;
@@ -824,5 +791,10 @@ class ChartItem implements Comparable<ChartItem> {
 	@Override
 	public int compareTo(ChartItem o) {
 		return this.getId() - o.getId();
+	}
+
+	@Override
+	public String toString() {
+		return "Cluster: " + this.point.x + " - " + this.point.y;
 	}
 }

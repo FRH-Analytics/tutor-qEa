@@ -56,6 +56,14 @@ public class QuestionData implements Comparable<QuestionData> {
 	public static String getFeaturePostNameOfSortIndex() {
 		return QuestionData.featurePostNames.get(sortByIndex);
 	}
+	
+//	public static String getFeatureNameByIndex(int index) {
+//		if (index >= 0 && index < featureNames.size()){
+//			return QuestionData.featureNames.get(sortByIndex);			
+//		}else{
+//			return null;
+//		}
+//	}
 
 	public static ArrayList<String> getFeatureNames() {
 		return QuestionData.featureNames;

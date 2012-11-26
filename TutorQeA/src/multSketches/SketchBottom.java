@@ -35,7 +35,7 @@ public class SketchBottom extends EmbeddedSketch {
 	private float qFeatureX1, qFeatureX2;
 	private float qTitleX1, qTitleX2;
 	private float qAnswerX1, qAnswerX2;
-	private float scrollBarX1, scrollBarX2, scrollBarY1;
+	private float scrollBarX1, scrollBarX2;
 
 	private int selectedQuestionIndex;
 
@@ -75,7 +75,6 @@ public class SketchBottom extends EmbeddedSketch {
 		// Scroll Bar
 		scrollBarX1 = qX2 + questionRectXPadding;
 		scrollBarX2 = myWidth;
-		scrollBarY1 = 0;
 
 		selectedQuestionIndex = -1;
 
@@ -107,7 +106,8 @@ public class SketchBottom extends EmbeddedSketch {
 	public void draw() {
 
 		super.draw();
-
+		
+		textFont(MainSketch.mainFont);
 		background(255);
 
 		if (sortedQuestions.size() > 0) {
@@ -362,8 +362,10 @@ public class SketchBottom extends EmbeddedSketch {
 		text(postName, x1, y1Feature, x2, y2);
 
 		// Draw number
-		textSize((y2 - y1) / (float) 3);
-		text(decimalForm.format(value), x1, y1, x2, y1Feature);
+		textSize(27);
+		textLeading(1);
+		// Change this... If the font changes..
+		text(decimalForm.format(value), x1, y1 - 7, x2, y1Feature + 10);
 	}
 
 	private void drawQuestionTitle(QuestionData qData, float x1, float y1,
@@ -392,15 +394,19 @@ public class SketchBottom extends EmbeddedSketch {
 		textAlign(PApplet.LEFT, PApplet.CENTER);
 
 		// Adapt the text size to the width of the title
+		float qTextSize;
 		float textRectRatio = (textWidth(qData.getTitle()) * (float) 1.05)
 				/ (x2 - x1 - 6);
 
 		if (textRectRatio > 2) {
-			textSize((y2 - y1) / (float) (3.6 + textRectRatio - 1.5));
+			qTextSize = (y2 - y1) / (float) (3.6 + textRectRatio - 1.5);
+			textSize(qTextSize);
 		} else {
-			textSize((y2 - y1) / (float) (3.6));
+			qTextSize = (y2 - y1) / (float) (3.6);
+			textSize(qTextSize);
 		}
-
+		
+		textLeading(qTextSize + 5);
 		text(qData.getTitle(), x1 + 3, y1, x2 - 3, y2);
 
 		if (highlightQuestion && mouseX >= qTitleX1 && mouseX <= qTitleX2) {
@@ -420,7 +426,7 @@ public class SketchBottom extends EmbeddedSketch {
 		fill(50, 100);
 		strokeWeight((float) 1);
 		rectMode(PApplet.CENTER);
-		rect(tooltipX, tooltipY, textWidth(tooltip) / (float) 1.25, 20, 5, 5);
+		rect(tooltipX, tooltipY, textWidth(tooltip), 20, 5, 5);
 
 		textSize(12);
 		fill(255);
@@ -505,7 +511,7 @@ public class SketchBottom extends EmbeddedSketch {
 		// Distance
 		double dist = Math.sqrt(Math.pow(mouseX - ballXCenter, 2)
 				+ Math.pow(mouseY - ballYCenter - newYOrigin, 2));
-		float tooltipX, tooltipY, tooltipHeight = 40;
+		float tooltipX, tooltipY, tooltipHeight = 35;
 		String tooltip = "";
 
 		if (dist <= ballRadius) {
@@ -514,7 +520,7 @@ public class SketchBottom extends EmbeddedSketch {
 				tooltipHeight += tooltipHeight / 2;
 			}
 
-			tooltip += "Score: " + ans.getScore() + " - Comments: "
+			tooltip += "Score: " + ans.getScore() + ", Comments: "
 					+ ans.getCommentsCount() + "\n" + ans.getCreationDate();
 
 			tooltipX = ballXCenter - textWidth(tooltip) / 2;
@@ -523,10 +529,11 @@ public class SketchBottom extends EmbeddedSketch {
 			fill(50, 100);
 			strokeWeight((float) 1);
 			rectMode(PApplet.CENTER);
-			rect(tooltipX, tooltipY, textWidth(tooltip) - 5, tooltipHeight, 5,
+			rect(tooltipX, tooltipY, textWidth(tooltip) - 10, tooltipHeight, 5,
 					5);
 			fill(255);
 			textSize(12);
+			textLeading(15);
 			textAlign(PApplet.CENTER, PApplet.CENTER);
 			text(tooltip, tooltipX, tooltipY);
 		}

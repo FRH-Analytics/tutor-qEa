@@ -114,7 +114,8 @@ public class QeAData {
 				if (!centroidIdsToData
 						.containsKey(questionDataTmp.getCluster())) {
 					centroidIdsToData.put(questionDataTmp.getCluster(),
-							new CentroidData(questionDataTmp.getCluster()));
+							new CentroidData(questionDataTmp.getCluster(),
+									QuestionData.getFeatureNames().size()));
 				}
 
 				// TODO: Change this! The addQuestion will receive the
@@ -123,14 +124,7 @@ public class QeAData {
 				// the other classes that uses the features, should do it
 				// anonymously
 				centroidIdsToData.get(questionDataTmp.getCluster())
-						.addQuestion(
-								questionDataTmp.getId(),
-								questionDataTmp.getFeatureValueByName("Score"),
-								questionDataTmp
-										.getFeatureValueByName("AnswerCount"),
-								questionDataTmp
-										.getFeatureValueByName("Debate"),
-								questionDataTmp.getFeatureValueByName("Hotness"));
+						.addQuestion(questionDataTmp);
 			}
 		}
 	}
@@ -244,9 +238,9 @@ public class QeAData {
 		postNames.add("points");
 		postNames.add("points");
 		QuestionData.setFeaturePostNames(postNames);
-		// Set the initial index of the feature to sort by 
+		// Set the initial index of the feature to sort by
 		QuestionData.setSortByIndex(0);
-		
+
 		// Read the data
 		while ((nextLine = csvReader.readNext()) != null) {
 			questionId = Integer.valueOf(nextLine[0]);

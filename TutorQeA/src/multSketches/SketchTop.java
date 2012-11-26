@@ -26,9 +26,8 @@ public class SketchTop extends EmbeddedSketch {
 		myWidth = width;
 		myHeight = height;
 
-		SKETCH_1 = new SubSketch1(this, 0, 50, myWidth / 3, myHeight - 110);
-		SKETCH_2 = new SubSketch2(this, myWidth / 3, 50, 2 * myWidth / 3,
-				myHeight - 110);
+		SKETCH_1 = new SubSketch1(this, 0, 50, 350, myHeight - 110);
+		SKETCH_2 = new SubSketch2(this, 350, 50, myWidth - 350, myHeight - 110);
 	}
 
 	@Override
@@ -36,8 +35,8 @@ public class SketchTop extends EmbeddedSketch {
 		size(myWidth, myHeight);
 		smooth();
 
-		middleHeaderY = myHeight - 50;
-		middleSubHeaderY = myHeight - 25;
+		middleHeaderY = myHeight - 45;
+		middleSubHeaderY = myHeight - 15;
 
 		SKETCH_1.setup();
 		SKETCH_2.setup();
@@ -57,6 +56,7 @@ public class SketchTop extends EmbeddedSketch {
 
 		// Draw Background
 		background(255);
+		textFont(MainSketch.mainFont);
 
 		SKETCH_1.draw();
 		SKETCH_2.draw();
@@ -75,7 +75,7 @@ public class SketchTop extends EmbeddedSketch {
 	public void mousePressed() {
 		SKETCH_2.mousePressed();
 
-		if (MainSketch.SKETCH_TOP.SKETCH_2.getChosenClusterId() != -1
+		if (MainSketch.SKETCH_TOP.SKETCH_2.getClickedClusterId() != -1
 				&& isMouseOverFeature()) {
 			changeQuestionOrdering();
 			// Re-draw...
@@ -113,7 +113,7 @@ public class SketchTop extends EmbeddedSketch {
 		QuestionData.setSortByIndex(newIndex);
 		MainSketch.SKETCH_BOTTOM
 				.updateQuestionsByCluster(MainSketch.SKETCH_TOP.SKETCH_2
-						.getChosenClusterId());
+						.getClickedClusterId());
 	}
 
 	private boolean isMouseOverFeature() {
@@ -146,17 +146,18 @@ public class SketchTop extends EmbeddedSketch {
 	private void drawMainTitle() {
 		fill(0);
 		textAlign(PApplet.CENTER, PApplet.CENTER);
-		textSize(30);
+		textSize(35);
 		text("Tutor Q&A", width / 2, 25);
 	}
 
 	private void drawMiddleHeader() {
 		float headerPadding = 10;
-		int clusterId = MainSketch.SKETCH_TOP.SKETCH_2.getChosenClusterId();
+		int clusterId = MainSketch.SKETCH_TOP.SKETCH_2.getClickedClusterId();
 
 		// Header
 		String middleTitle = (clusterId == -1) ? "Questions and Answers by Group"
-				: "Questions and Answers - " + SKETCH_2.getClusterName(clusterId) ;
+				: SKETCH_2.getClusterName(clusterId)
+						+ " - Questions and Answers";
 
 		fill(0);
 		textAlign(PApplet.CENTER, PApplet.CENTER);
@@ -169,10 +170,10 @@ public class SketchTop extends EmbeddedSketch {
 		float xAfterTitle = xBeforeTitle + titleLength;
 
 		stroke(100);
-		line(2 * headerPadding, middleHeaderY, xBeforeTitle - headerPadding,
-				middleHeaderY);
-		line(myWidth - 2 * headerPadding, middleHeaderY, xAfterTitle
-				+ headerPadding, middleHeaderY);
+		line(2 * headerPadding, middleHeaderY + 3,
+				xBeforeTitle - headerPadding, middleHeaderY + 3);
+		line(myWidth - 2 * headerPadding, middleHeaderY + 3, xAfterTitle
+				+ headerPadding, middleHeaderY + 3);
 
 		// Subheader
 		String featureString;
@@ -206,26 +207,6 @@ public class SketchTop extends EmbeddedSketch {
 		if (clusterId != -1 && isMouseOverFeature()) {
 			drawTooltipFeatureChange();
 		}
-
-		// Draw lines
-		// stroke(100);
-		//
-		// line(headerPadding, middleSubHeaderY, featureCenterX
-		// - textWidth(featureString) / 2 - headerPadding,
-		// middleSubHeaderY);
-		// line(featureCenterX + textWidth(featureString) / 2 +
-		// headerPadding,
-		// middleSubHeaderY, questionCenterX - textWidth(questionsString) /
-		// 2
-		// - headerPadding, middleSubHeaderY);
-		// line(questionCenterX + textWidth(questionsString) / 2
-		// + headerPadding, middleSubHeaderY, answersCenterX
-		// - textWidth(answersString) / 2 - headerPadding,
-		// middleSubHeaderY);
-		// line(answersCenterX + textWidth(answersString) / 2 +
-		// headerPadding,
-		// middleSubHeaderY, myWidth - headerPadding, middleSubHeaderY);
-		// }
 	}
 
 	private void drawTooltipFeatureChange() {
@@ -240,13 +221,9 @@ public class SketchTop extends EmbeddedSketch {
 		rect(tooltipX, tooltipY, textWidth(tooltip), 40, 5, 5);
 
 		textSize(12);
+		textLeading(15);
 		fill(255);
 		textAlign(PApplet.CENTER, PApplet.CENTER);
 		text(tooltip, tooltipX, tooltipY);
 	}
-
-	// private void drawMiddleDivision() {
-	// stroke(100);
-	// line(myWidth / 3, 55, myWidth / 3, myHeight - 50);
-	// }
 }
