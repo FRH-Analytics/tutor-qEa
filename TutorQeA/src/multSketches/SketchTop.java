@@ -17,8 +17,6 @@ public class SketchTop extends EmbeddedSketch {
 	private int myWidth;
 	private int myHeight;
 
-	PImage statsImage;
-	
 	private float middleHeaderY;
 	private float middleSubHeaderY;
 
@@ -38,8 +36,6 @@ public class SketchTop extends EmbeddedSketch {
 		size(myWidth, myHeight);
 		smooth();
 
-		statsImage = loadImage("stats.stackexchange.com.png");
-		
 		middleHeaderY = myHeight - 45;
 		middleSubHeaderY = myHeight - 15;
 
