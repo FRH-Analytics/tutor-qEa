@@ -269,6 +269,13 @@ public class SubSketch2 {
 			mySketch.fill(255);
 			mySketch.textAlign(PApplet.CENTER, PApplet.CENTER);
 			mySketch.text(tooltip, tooltipX, tooltipY);
+
+			// Draw note about the attribute
+			if (isOverLabel == X_AXIS) {
+				textNote = getAttributeTextNote(xAttributeIndex);
+			} else {
+				textNote = getAttributeTextNote(yAttributeIndex);
+			}
 		}
 	}
 
@@ -402,21 +409,19 @@ public class SubSketch2 {
 
 		mySketch.fill(240);
 		mySketch.rectMode(PApplet.CORNER);
-		mySketch.rect(notesX1, myYOrigin, (notesX2 - notesX1), myHeight - 20,
+		mySketch.rect(notesX1, myYOrigin, (notesX2 - notesX1), myHeight - 10,
 				20, 20);
 
-		String notesString = "Notes";
+		String notesString = "NOTES";
 		mySketch.fill(0);
 		mySketch.textSize(myHeight / 15);
 		mySketch.textAlign(PApplet.CENTER, PApplet.CENTER);
 		mySketch.text(notesString, (notesX1 + notesX2) / 2, myYOrigin + 10);
 
-		addTextNote();
-	}
-
-	private void addTextNote() {
+		// Draw the textNote string, that is changed elsewhere
 		mySketch.fill(0);
 		mySketch.textSize(myHeight / 17);
+		mySketch.textLeading(myHeight / 10);
 		mySketch.textAlign(PApplet.LEFT);
 		mySketch.text(textNote, notesX1 + 8, myYOrigin + 30, notesX2 - notesX1
 				- 10, myHeight - myYOrigin - 15);
@@ -627,22 +632,45 @@ public class SubSketch2 {
 		String note = "...";
 		switch (index) {
 		case (1):
-			note = "Questions with few answers appearing to be difficult.";
+			note = "Advanced: Questions with few answers appearing to be difficult.";
 			break;
 		case (2):
-			note = "Frequently Asked Question!";
+			note = "FAQ: Frequently Asked Question!";
 			break;
 		case (3):
-			note = "No up vote, no answer, no debate on average.";
+			note = "Zeroed...: No up vote, no answer, no debate on average.";
 			break;
 		case (4):
-			note = "Well voted question with big and quick answers.";
+			note = "Big 'n Fast: Well voted question with big and quick answers.";
 			break;
 		case (5):
-			note = "The question started an interesting debate over the questioner and the answerers.";
+			note = "High Debated: The question started an interesting debate over the questioner and the answerers.";
 			break;
 		case (6):
-			note = "Badly voted question without answers on average.";
+			note = "Uninteresting: Badly voted question without answers on average.";
+			break;
+		default:
+
+		}
+		return (note);
+	}
+
+	// TODO: Refactor it. Hardcode in wrong place, It should go to the
+	// QuestionData creation at the QeAData class
+	private String getAttributeTextNote(int index) {
+		String note = "...";
+		switch (index) {
+		case (0):
+			note = "Score: The amount of votes a question received.";
+			break;
+		case (1):
+			note = "Answer Count: The quantity of answers a question received.";
+			break;
+		case (2):
+			note = "Debate: The amount of \"talk\" between the questioner and the answerers observing a question, its answers and all comments as a sequenced dialogue.";
+			break;
+		case (3):
+			note = "Hotness: The ratio between the Score and the Hours elapsed until the first answer to appear. Or -1 if there isn't an answer.";
 			break;
 		default:
 

@@ -7,6 +7,7 @@ import java.awt.event.MouseWheelListener;
 import org.gicentre.utils.multisketch.EmbeddedSketch;
 
 import processing.core.PApplet;
+import processing.core.PImage;
 import util.QuestionData;
 import controlP5.ControlEvent;
 
@@ -16,6 +17,8 @@ public class SketchTop extends EmbeddedSketch {
 	private int myWidth;
 	private int myHeight;
 
+	PImage statsImage;
+	
 	private float middleHeaderY;
 	private float middleSubHeaderY;
 
@@ -35,6 +38,8 @@ public class SketchTop extends EmbeddedSketch {
 		size(myWidth, myHeight);
 		smooth();
 
+		statsImage = loadImage("stats.stackexchange.com.png");
+		
 		middleHeaderY = myHeight - 45;
 		middleSubHeaderY = myHeight - 15;
 
@@ -147,7 +152,7 @@ public class SketchTop extends EmbeddedSketch {
 		fill(0);
 		textAlign(PApplet.CENTER, PApplet.CENTER);
 		textSize(35);
-		text("Tutor Q&A", width / 2, 25);
+		text("Tutor Q&A - Cross Validated", width / 2, 25);
 	}
 
 	private void drawMiddleHeader() {
