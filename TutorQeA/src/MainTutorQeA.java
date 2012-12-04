@@ -20,6 +20,7 @@ public class MainTutorQeA extends PApplet {
 	
 	public void setup() {
 		try {
+			QeAData.setPApplet(this);
 			QeAData.readTagLinksFile();
 			QeAData.readTagDictionaryFile();
 			QeAData.readPostTagsFile();

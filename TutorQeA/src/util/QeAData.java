@@ -6,15 +6,18 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.TreeMap;
 
-import au.com.bytecode.opencsv.CSVReader;
+import processing.core.PApplet;
 
 public class QeAData {
+	
+	private static PApplet pApplet;
 
 	private static final String POST_TAGS_FILE = "data/PostTags.csv";
 	private static final String QUESTIONS_DATA_FILE = "data/QuestionData.csv";
@@ -141,14 +144,14 @@ public class QeAData {
 
 	@SuppressWarnings("unchecked")
 	public static void readPostTagsFile() throws IOException {
-		CSVReader csvReader = new CSVReader(new FileReader(POST_TAGS_FILE));
+		String[] reader = pApplet.loadStrings(POST_TAGS_FILE);
 
 		int question, tag;
 		ArrayList<Integer> tmpList;
 
 		// Reads the file header
-		String[] nextLine = csvReader.readNext();
-		while ((nextLine = csvReader.readNext()) != null) {
+		for (int i = 1;i<reader.length;i++) {
+			String[] nextLine = reader[i].replace("\"",	"").split(",");
 			question = Integer.valueOf(nextLine[0]);
 			tag = Integer.valueOf(nextLine[1]);
 
@@ -186,10 +189,10 @@ public class QeAData {
 
 	public static void readTagLinksFile() throws IOException {
 
-		CSVReader reader = new CSVReader(new FileReader(TAG_LINKS_FILE));
+		String[] reader = pApplet.loadStrings(TAG_LINKS_FILE);
 
-		String[] nextLine = reader.readNext();
-		while ((nextLine = reader.readNext()) != null) {
+		for (int i = 1;i<reader.length;i++) {
+			String[] nextLine = reader[i].replace("\"",	"").split(",");
 			int key = Integer.valueOf(nextLine[0]);
 			if (tagLinks.containsKey(key)) {
 				tagLinks.put(Integer.valueOf(nextLine[0]),
@@ -199,23 +202,20 @@ public class QeAData {
 				tagLinks.put(Integer.valueOf(nextLine[0]), nextLine[1]);
 			}
 		}
-		reader.close();
-
 	}
 
 	public static void readTagDictionaryFile() throws IOException {
 
-		CSVReader reader = new CSVReader(new FileReader(TAGS_FILE));
+		String[] reader = pApplet.loadStrings(TAGS_FILE);
 
-		String[] nextLine = reader.readNext();
-		while ((nextLine = reader.readNext()) != null) {
+		for (int i = 1;i<reader.length;i++) {
+			String[] nextLine = reader[i].replace("\"",	"").split(",");
 			tagDictionary.put(Integer.valueOf(nextLine[0]), nextLine[1]);
 		}
-		reader.close();
 	}
 
 	public static void readQuestionsDataFile() throws IOException {
-		CSVReader csvReader = new CSVReader(new FileReader(QUESTIONS_DATA_FILE));
+		String[] reader = pApplet.loadStrings(QUESTIONS_DATA_FILE);
 
 		// Unique columns used... At this moment...
 		int questionId, cluster;
@@ -226,7 +226,7 @@ public class QeAData {
 		ArrayList<String> postNames = new ArrayList<String>();
 
 		// Reads the file header and set the names
-		String[] nextLine = csvReader.readNext();
+		String[] nextLine = parseQuestion(reader[0].replace("\"",""));
 		names.add(nextLine[2]);
 		names.add(nextLine[3]);
 		names.add(nextLine[4]);
@@ -242,7 +242,8 @@ public class QeAData {
 		QuestionData.setSortByIndex(0);
 
 		// Read the data
-		while ((nextLine = csvReader.readNext()) != null) {
+		for (int i = 1;i<reader.length;i++) {
+			nextLine = parseQuestion(reader[i].replace("\"",""));
 			questionId = Integer.valueOf(nextLine[0]);
 			title = nextLine[1];
 			values.add(Float.valueOf(nextLine[2]));
@@ -269,12 +270,11 @@ public class QeAData {
 
 		DateFormat format = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
 
-		CSVReader csvReader = new CSVReader(new FileReader(
-				QUESTION_ANSWERS_FILE));
+		String[] reader = pApplet.loadStrings(QUESTION_ANSWERS_FILE);
 
 		// Reads the file header
-		String[] nextLine = csvReader.readNext();
-		while ((nextLine = csvReader.readNext()) != null) {
+		for (int i = 1;i<reader.length;i++) {
+			String[] nextLine = reader[i].replace("\"",	"").split(",");
 			questionId = Integer.valueOf(nextLine[0]);
 			answerId = Integer.valueOf(nextLine[1]);
 			score = Integer.valueOf(nextLine[2]);
@@ -291,6 +291,24 @@ public class QeAData {
 					new AnswerData(answerId, score, creationDate,
 							answerCommentsCount, isAccepted));
 		}
+	}
+	
+	private static String[] parseQuestion(String line){
+		String[] result = new String[7];
+		String workingLine = line;
+		int index;
+		for (int i = 6; i>1;i--){
+			index = workingLine.lastIndexOf(",");
+			result[i] =  workingLine.substring(index+1, workingLine.length());
+			workingLine = workingLine.substring(0, index);
+		}
+		index = workingLine.indexOf(",");
+		result[0] = workingLine.substring(0, index);
+		workingLine = workingLine.substring(index+1, workingLine.length());
+		result[1] = workingLine;
+		
+		
+		return result;
 	}
 
 	public static Hashtable<Integer, ArrayList<Integer>> getTagToQuestions() {
@@ -335,5 +353,10 @@ public class QeAData {
 
 	public static HashMap<Integer, String> getTagDictionary() {
 		return tagDictionary;
+	}
+
+	public static void setPApplet(PApplet applet) {
+		pApplet = applet;
+		
 	}
 }
