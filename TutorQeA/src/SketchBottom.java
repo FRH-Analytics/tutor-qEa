@@ -1,3 +1,4 @@
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.io.IOException;
@@ -81,24 +82,7 @@ public class SketchBottom extends EmbeddedSketch {
 		// Mouse Wheel
 		addMouseWheelListener(new MouseWheelListener() {
 			public void mouseWheelMoved(MouseWheelEvent mwe) {
-
-				float qTotalHeight = sortedQuestions.size() * qHeight
-						+ (sortedQuestions.size() - 1) * questionRectYPadding;
-
-				float multRotation = 9;
-				// Does NOT permit that the questions disappear!!!
-				if (mwe.getWheelRotation() > 0) {
-					if ((newYOrigin + qTotalHeight + qHeight / 2) > myHeight) {
-						newYOrigin -= (mwe.getWheelRotation() * multRotation);
-					}
-				} else {
-					if (newYOrigin < 0) {
-						newYOrigin -= (mwe.getWheelRotation() * multRotation);
-					}
-				}
-
-				// Re-Draw...
-				loop();
+				slideQuestionsAtBottom(mwe.getWheelRotation());
 			}
 		});
 	}
@@ -144,6 +128,37 @@ public class SketchBottom extends EmbeddedSketch {
 				}
 			}
 		}
+	}
+
+	@Override
+	public void keyPressed(KeyEvent e) {
+		if (key == CODED) {
+			if (keyCode == UP) {
+				slideQuestionsAtBottom(-1);
+			} else if (keyCode == DOWN) {
+				slideQuestionsAtBottom(1);
+			}
+		}
+	}
+
+	public synchronized void slideQuestionsAtBottom(int steps) {
+		float qTotalHeight = sortedQuestions.size() * qHeight
+				+ (sortedQuestions.size() - 1) * questionRectYPadding;
+
+		float multRotation = 9;
+		// Does NOT permit that the questions disappear!!!
+		if (steps > 0) {
+			if ((newYOrigin + qTotalHeight + qHeight / 2) > myHeight) {
+				newYOrigin -= (steps * multRotation);
+			}
+		} else {
+			if (newYOrigin < 0) {
+				newYOrigin -= (steps * multRotation);
+			}
+		}
+
+		// Re-Draw...
+		loop();
 	}
 
 	public float getqFeatureX1() {
@@ -247,13 +262,13 @@ public class SketchBottom extends EmbeddedSketch {
 		// Re-Draw...
 		loop();
 	}
-
+	
 	private void drawScrollBar() {
 		rectMode(PApplet.CORNER);
 		fill(245);
 		noStroke();
-		rect(scrollBarX1, -newYOrigin, scrollBarX2 - scrollBarX1, -newYOrigin
-				+ myHeight);
+		rect(scrollBarX1, -newYOrigin - 50, scrollBarX2 - scrollBarX1,
+				-newYOrigin + myHeight + 50);
 
 		float qTotalHeight = sortedQuestions.size() * qHeight
 				+ (sortedQuestions.size() - 1) * questionRectYPadding;
@@ -261,11 +276,11 @@ public class SketchBottom extends EmbeddedSketch {
 		float barHeight = 40;
 		float barY1 = Math.min(1, -newYOrigin
 				/ ((qTotalHeight + qHeight / 2) - myHeight));
+		barY1 = -newYOrigin + barY1 * (myHeight - barHeight);
 
 		if (qTotalHeight > myHeight) {
 			fill(225);
-			rect(scrollBarX1, -newYOrigin + barY1 * (myHeight - barHeight),
-					scrollBarX2 - scrollBarX1 - 1, barHeight);
+			rect(scrollBarX1, barY1, scrollBarX2 - scrollBarX1 - 1, barHeight);
 		}
 	}
 
