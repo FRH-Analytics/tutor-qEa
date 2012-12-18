@@ -114,6 +114,31 @@ hotness.function = function(question, ans){
     }
 }
 
+
+CorrelationAnalysis = function(data, outputDir, title = ""){
+    
+    print(noquote("Correlation Analysis..."))
+    
+    # panel.smooth function is built in.
+    # panel.cor puts correlation in upper panels, size proportional to correlation
+    panel.cor <- function(x, y, digits=2, prefix="", cex.cor, ...)
+    {
+        usr <- par("usr"); on.exit(par(usr))
+        par(usr = c(0, 1, 0, 1))
+        correlation = cor(x, y, method="pearson")
+        txt <- paste(prefix, format(correlation, digits=2), sep="")
+        text(0.5, 0.5, txt, cex = max(5 * abs(correlation), 1.5))
+    }
+    
+    png(paste(outputDir, "Correlation-Default&DerivedFeatures.png", sep = ""), width = 800, height = 850)
+    pairs(data,
+          lower.panel=panel.smooth, upper.panel=panel.cor, pch=20, main=title)
+    dev.off()
+    
+    print(noquote("Correlation Analysis: DONE!"))
+    print(noquote(""))
+}
+
 MainDerivedFeatures = function(){
     library(foreach)
     
@@ -143,7 +168,13 @@ MainDerivedFeatures = function(){
                    Hotness = hotness)
     }
     
-    print(noquote("Persisting: DerivedFeatures..."))
+    print(noquote("Analysing: Correlation between Derived and Default Features..."))
+    CorrelationAnalysis(data = data.frame(questions[,c("Score", "ViewCount", "CommentCount", "AnswerCount", "FavoriteCount")],
+                                   Debate = DerivedFeatures$Debate,
+                                   Hotness = DerivedFeatures$Hotness),
+                        outputDir = "output/clustering/")
+    
+    rint(noquote("Persisting: DerivedFeatures..."))
     write.csv(DerivedFeatures, file = paste(preprocessedDir,
                                              "DerivedFeatures.csv", sep = ""), row.names = F)   
 }
