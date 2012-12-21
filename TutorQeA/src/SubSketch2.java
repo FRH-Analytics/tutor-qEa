@@ -614,7 +614,7 @@ public class SubSketch2 {
 			name = "FAQ";
 			break;
 		case (3):
-			name = "Zeroed...";
+			name = "3 Shots";
 			break;
 		case (4):
 			name = "Big 'n Fast";
@@ -641,7 +641,7 @@ public class SubSketch2 {
 			note = "FAQ: Frequently Asked Question!";
 			break;
 		case (3):
-			note = "Zeroed...: No up vote, no answer, no debate on average.";
+			note = "3 Shots: Questions with low score, little debated and no more than 3 answers!";
 			break;
 		case (4):
 			note = "Big 'n Fast: Well voted question with big and quick answers.";
